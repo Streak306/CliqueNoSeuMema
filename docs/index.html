@@ -3,9 +3,9 @@
 <title>Clique no seu Mema</title>
 <style>
   :root{
-    --maxw: 1200px;
-    --gap: 20px;
-    --sidew: 280px;
+    --maxw: 1400px;
+    --gap: 24px;
+    --sidew: 340px;
 
     /* Tema escuro suave */
     --bg:        #14171c;
@@ -24,9 +24,11 @@
     --pill-bg:   #181d25;
 
     --stage-border: #2d3441;
+    --accent:    #60a5fa;
   }
 
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
     margin:0; font-family:system-ui;
     color:var(--fg);
@@ -34,22 +36,23 @@
       radial-gradient(900px 500px at 10% -10%, var(--bg-grad-1) 0%, transparent 40%),
       radial-gradient(900px 500px at 110% -10%, var(--bg-grad-2) 0%, transparent 35%),
       linear-gradient(180deg, #13171c 0%, var(--bg) 100%);
+    line-height:1.45;
   }
 
   .wrap{max-width:var(--maxw);margin:0 auto;padding:28px}
 
   /* Topo */
-  header{ text-align:center; }
+  header{ text-align:center; position:sticky; top:0; z-index:10; padding-bottom:10px; backdrop-filter:saturate(140%) blur(4px) }
   h1{
     margin:6px 0 12px 0;
-    font-size:2.4rem;
+    font-size:2.6rem;
     letter-spacing:.3px;
   }
   .stats{
-    display:flex;gap:10px;flex-wrap:wrap;justify-content:center
+    display:flex;gap:12px;flex-wrap:wrap;justify-content:center
   }
   .pill{
-    display:inline-block;padding:6px 12px;border:1px solid var(--border);
+    display:inline-block;padding:8px 14px;border:1px solid var(--border);
     background:var(--pill-bg); border-radius:999px; color:var(--fg)
   }
   #pts{font-size:1.6rem;font-variant-numeric:tabular-nums}
@@ -63,7 +66,7 @@
     margin-top: 20px;
   }
   .card{
-    border:1px solid var(--border);border-radius:14px;padding:14px;
+    border:1px solid var(--border);border-radius:16px;padding:16px;
     background:var(--card-bg);
   }
   .card p{ color:var(--muted); }
@@ -71,16 +74,16 @@
   /* Palco central com Mema */
   .stage{
     display:grid; place-items:center;
-    min-height: min(70vh, 720px);
-    border:1px dashed var(--stage-border); border-radius:14px;
+    min-height: min(76vh, 820px);
+    border:1px dashed var(--stage-border); border-radius:16px;
     background:var(--panel-bg);
   }
   .click-img{
-    width:clamp(220px, 40vw, 380px);
-    height:clamp(220px, 40vw, 380px);
+    width:clamp(260px, 42vw, 420px);
+    height:clamp(260px, 42vw, 420px);
     object-fit:cover;
-    border:1px solid var(--border);border-radius:16px;cursor:pointer;
-    box-shadow:0 8px 24px rgba(0,0,0,.35);
+    border:1px solid var(--border);border-radius:18px;cursor:pointer;
+    box-shadow:0 10px 28px rgba(0,0,0,.38);
     transition:transform .06s ease, filter .15s ease;
     user-select:none;
   }
@@ -89,12 +92,13 @@
 
   /* Botões */
   .btn{
-    padding:10px 14px;border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;border:1px solid var(--border);border-radius:12px;
     cursor:pointer;background:var(--btn-bg);color:var(--fg);width:100%;
-    transition:background .15s ease, filter .15s ease;
+    transition:background .15s ease, filter .15s ease, transform .08s ease;
   }
   .btn:hover{ background:var(--btn-hover); filter:brightness(1.03); }
-  .btn + .btn{margin-top:12px}
+  .btn:active{ transform:translateY(1px) }
+  .btn[disabled]{ opacity:.5; cursor:not-allowed }
 
   .btn-danger{border-color:#3a2224;background:#24181a;color:#ef4444}
   .btn-danger:hover{background:#2a1b1e}
@@ -102,7 +106,7 @@
   /* Indicador de save (canto inferior) */
   .save-toast{
     position:fixed; right:16px; bottom:16px;
-    background:#0b1f47; color:#60a5fa; /* azul legível no dark */
+    background:#0b1f47; color:var(--accent);
     border:1px solid #1d4ed8; border-radius:999px;
     padding:8px 12px; font-weight:700; font-size:14px;
     box-shadow:0 4px 16px rgba(0,0,0,.35);
@@ -112,22 +116,33 @@
   }
   .save-toast.show{ opacity:1; transform:translateY(0); }
 
-  /* LOJA – tabela */
-  .shop-title{margin:8px 0 10px;font-weight:700}
-  table.shop{width:100%; border-collapse:separate; border-spacing:0 8px}
-  .shop thead th{font-size:12px; text-align:left; opacity:.7; padding:0 8px}
-  .shop tbody tr{background:var(--panel-bg); border:1px solid var(--border)}
-  .shop tbody td{padding:8px}
-  .shop tbody tr{border-radius:10px; overflow:hidden}
-  .shop .name{font-weight:600}
-  .shop .limit{opacity:.8}
-  .shop .buy .btn{padding:8px 10px}
-  .muted{opacity:.7}
+  /* LOJA – tabela linda */
+  .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px}
+  table.shop{width:100%; border-collapse:separate; border-spacing:0 12px}
+  .shop thead th{font-size:12px; text-align:left; opacity:.75; padding:0 10px}
+  .shop tbody tr{background:var(--panel-bg); border:1px solid var(--border); border-radius:12px}
+  .shop tbody td{padding:12px 10px; vertical-align:middle}
+  .shop .name{font-weight:700}
+  .shop .limit{opacity:.85}
+  .shop .buy .btn{padding:10px 12px}
+  .muted{opacity:.75}
 
+  .row{
+    border:1px solid var(--border); border-radius:12px; padding:12px; background:var(--panel-bg);
+  }
+
+  /* feedback “faltam pontos” */
+  .need{ font-size:12px; color:#93c5fd; opacity:.95; margin-top:6px }
+
+  /* micro animação de atenção */
+  @keyframes buzz{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-2px)} 40%{transform:translateX(2px)} 60%{transform:translateX(-1px)} 80%{transform:translateX(1px)}}
+  .buzz{ animation:buzz .15s linear 2 }
+  
   /* Responsivo: empilha em telas pequenas */
-  @media (max-width: 900px){
+  @media (max-width: 980px){
+    :root{ --sidew: 1fr }
     .grid{ grid-template-columns: 1fr; }
-    .stage{ min-height: 50vh; }
+    .stage{ min-height: 54vh; }
   }
 </style>
 
@@ -139,6 +154,7 @@
       <span class="pill">Pontos: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
       <span class="pill">Auto/s: <b id="cps">0</b></span>
+      <button class="btn btn-danger" id="deleteSave" style="max-width:220px">Apagar save</button>
     </div>
   </header>
 
@@ -155,18 +171,8 @@
       <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
     </section>
 
-    <!-- DIREITA: upgrades -->
+    <!-- DIREITA: Loja -->
     <aside class="card">
-      <button class="btn" id="buyAuto">Comprar Autoclick +1/s
-        (Custo: <span id="costAuto">10</span>)
-      </button>
-      <button class="btn" id="buyPower">Aumentar Poder do Clique +1
-        (Custo: <span id="costPow">50</span>)
-      </button>
-      <!-- Apagar save -->
-      <button class="btn btn-danger" id="deleteSave">Apagar save</button>
-
-      <!-- LOJA: Tabela -->
       <div class="shop-title">Loja</div>
       <table class="shop">
         <thead>
@@ -181,7 +187,7 @@
         </thead>
         <tbody id="shopBody"></tbody>
       </table>
-      <p class="muted" style="margin-top:8px">Os preços sobem a cada compra.</p>
+      <p class="muted" style="margin-top:8px">Os preços sobem a cada compra. O botão só trava quando chegar no limite.</p>
     </aside>
   </main>
 </div>
@@ -192,41 +198,38 @@
 <script>
 /* --- estado do jogo --- */
 let pts=0, clickPow=1, auto=0;
-let costAuto=10, costPow=50;
 
 /* --- imagens do Mema --- */
 const IMG_BACK  = 'mema_back.png';
 const IMG_FRONT = 'mema_front.png';
-const FRONT_TIME_MS = 400; // feedback rápido ao clicar
+const FRONT_TIME_MS = 400;
 let faceTimer = null;
 
 /* helpers */
 const el=(id)=>document.getElementById(id);
+const fmt=(n)=>Math.round(n);
 
+/* SAVE/LOAD */
+let shopState = null; // definido após catálogo
 function save(showToast=false){
-  // LOJA: inclui shopState no save
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto,costAuto,costPow, shopState}));
+  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto, shopState}));
   if(showToast) flashSave();
 }
-
 function load(){ try{
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; auto=d.auto??0;
-  costAuto=d.costAuto??10; costPow=d.costPow??50;
-  if(d.shopState) shopState = {...shopState, ...d.shopState};
+  if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
 } catch(e){} }
 
-function fmt(n){ return Math.round(n); }
+/* UI */
 function render(){
   el('pts').textContent=fmt(pts);
   el('pc').textContent=clickPow;
   el('cps').textContent=auto.toFixed(2);
-  el('costAuto').textContent=Math.ceil(costAuto);
-  el('costPow').textContent=Math.ceil(costPow);
-  renderShop(); // LOJA
+  renderShop();
 }
 
-/* vira de frente por um tempinho e volta */
+/* feedback imagem */
 function showFront(){
   const img = el('click');
   img.src = IMG_FRONT;
@@ -234,24 +237,9 @@ function showFront(){
   faceTimer = setTimeout(()=>{ img.src = IMG_BACK; }, FRONT_TIME_MS);
 }
 
-/* compras (originais) */
-function buyAuto(){
-  if(pts>=costAuto){
-    pts-=costAuto; auto+=1; costAuto*=1.15;
-    render(); save();
-  }
-}
-function buyPower(){
-  if(pts>=costPow){
-    pts-=costPow; clickPow+=1; costPow*=1.25;
-    render(); save();
-  }
-}
-
-/* Apagar save e resetar */
+/* reset */
 function resetState(){
-  pts=0; clickPow=1; auto=0; costAuto=10; costPow=50;
-  // LOJA: reseta também
+  pts=0; clickPow=1; auto=0;
   shopState = makeInitialShopState();
 }
 function deleteSave(){
@@ -272,11 +260,11 @@ function loop(){
   requestAnimationFrame(tick);
 }
 
-/* auto-save periódico + toast */
+/* auto-save + toast */
 let saveTimer = null;
 function startAutoSave(){
   if(saveTimer) clearInterval(saveTimer);
-  saveTimer = setInterval(()=> save(true), 5000); // a cada 5s
+  saveTimer = setInterval(()=> save(true), 5000);
 }
 let toastTimer=null;
 function flashSave(){
@@ -291,19 +279,19 @@ function flashSave(){
 (new Image()).src = IMG_BACK;
 (new Image()).src = IMG_FRONT;
 
-/* ===================== LOJA (tabela) ===================== */
-
+/* ===================== LOJA ===================== */
+/* Catálogo + limites + curva de preço */
 const SHOP = [
-  {id:'dedo',       name:'Dedo',       cps:0.10, base:15,   mul:1.15, limit:50},
-  {id:'roupa',      name:'Roupa',      cps:0.50, base:80,   mul:1.15, limit:20},
-  {id:'agua',       name:'Água',       cps:1.00, base:150,  mul:1.16, limit:20},
-  {id:'plantacao',  name:'Plantação',  cps:2.50, base:450,  mul:1.17, limit:12},
-  {id:'alojamento', name:'Alojamento', cps:5.00, base:900,  mul:1.18, limit:8},
-  {id:'casa',       name:'Casa',       cps:10.0, base:1800, mul:1.19, limit:5},
-  {id:'xbox',       name:'Xbox',       cps:15.0, base:3200, mul:1.20, limit:3},
-  {id:'computador', name:'Computador', cps:25.0, base:6000, mul:1.21, limit:3},
-  {id:'microfone',  name:'Microfone',  cps:40.0, base:10000,mul:1.22, limit:2},
-  {id:'namorada',   name:'Namorada',   cps:100.0,base:50000,mul:1.30, limit:1} // Meta máxima (limite 1)
+  {id:'dedo',       name:'Dedo',       cps:0.10, base:15,    mul:1.15, limit:50},
+  {id:'roupa',      name:'Roupa',      cps:0.50, base:80,    mul:1.15, limit:20},
+  {id:'agua',       name:'Água',       cps:1.00, base:150,   mul:1.16, limit:20},
+  {id:'plantacao',  name:'Plantação',  cps:2.50, base:450,   mul:1.17, limit:12},
+  {id:'alojamento', name:'Alojamento', cps:5.00, base:900,   mul:1.18, limit:8},
+  {id:'casa',       name:'Casa',       cps:10.0, base:1800,  mul:1.19, limit:5},
+  {id:'xbox',       name:'Xbox',       cps:15.0, base:3200,  mul:1.20, limit:3},
+  {id:'computador', name:'Computador', cps:25.0, base:6000,  mul:1.21, limit:3},
+  {id:'microfone',  name:'Microfone',  cps:40.0, base:10000, mul:1.22, limit:2},
+  {id:'namorada',   name:'Namorada',   cps:100.0,base:50000, mul:1.30, limit:1}
 ];
 
 function makeInitialShopState(){
@@ -311,8 +299,7 @@ function makeInitialShopState(){
   SHOP.forEach(it=> s[it.id] = {owned:0, cost:it.base});
   return s;
 }
-
-let shopState = makeInitialShopState();
+if(!shopState) shopState = makeInitialShopState();
 
 function renderShop(){
   const body = document.getElementById('shopBody');
@@ -321,42 +308,73 @@ function renderShop(){
   SHOP.forEach(it=>{
     const st = shopState[it.id];
     const atLimit = st.owned >= it.limit;
-    const canBuy = !atLimit && pts >= Math.ceil(st.cost);
+    const price = Math.ceil(st.cost);
+    const missing = Math.max(0, price - pts);
+
     const tr = document.createElement('tr');
+
     tr.innerHTML = `
       <td class="name">${it.name}</td>
-      <td>${it.cps.toFixed(2)}</td>
+      <td>+${it.cps.toFixed(2)}</td>
       <td>${st.owned}</td>
       <td class="limit">${it.limit}</td>
-      <td>${Math.ceil(st.cost)}</td>
+      <td>${price}</td>
       <td class="buy">
-        <button class="btn" data-buy="${it.id}" ${canBuy?'': 'disabled'}>${atLimit?'MAX':'Comprar'}</button>
+        <div>
+          <button class="btn" id="buy-${it.id}" ${atLimit ? 'disabled' : ''}>
+            ${atLimit ? 'MAX' : `Comprar`}
+          </button>
+          ${(!atLimit && missing>0) ? `<div class="need">Faltam ${missing} pts</div>` : ''}
+        </div>
       </td>
     `;
-    body.appendChild(tr);
-  });
 
-  // binds
-  body.querySelectorAll('[data-buy]').forEach(btn=>{
-    btn.onclick = ()=> buyItem(btn.getAttribute('data-buy'));
+    body.appendChild(tr);
+
+    const btn = tr.querySelector(`#buy-${it.id}`);
+    btn.onclick = ()=>{
+      buyItem(it.id, btn);
+    };
   });
 }
 
-function buyItem(id){
+function buyItem(id, btnEl){
   const it = SHOP.find(x=>x.id===id); if(!it) return;
   const st = shopState[id];
   const price = Math.ceil(st.cost);
-  if(st.owned >= it.limit) return;
-  if(pts < price) return;
 
-  // paga e aplica ganho
+  if(st.owned >= it.limit){
+    btnEl.disabled = true;
+    btnEl.textContent = 'MAX';
+    return;
+  }
+
+  if(pts < price){
+    // feedback rápido (sem travar o botão)
+    btnEl.classList.add('buzz');
+    const needEl = btnEl.parentElement.querySelector('.need');
+    if(needEl){
+      needEl.textContent = `Faltam ${price - pts} pts`;
+    }else{
+      const div = document.createElement('div');
+      div.className = 'need';
+      div.textContent = `Faltam ${price - pts} pts`;
+      btnEl.parentElement.appendChild(div);
+    }
+    setTimeout(()=> btnEl.classList.remove('buzz'), 320);
+    return;
+  }
+
+  // compra
   pts -= price;
   st.owned += 1;
   auto += it.cps;
 
-  // escala custo para próxima (se ainda houver espaço no limite)
   if(st.owned < it.limit){
     st.cost = Math.ceil(st.cost * it.mul);
+  }else{
+    btnEl.disabled = true;
+    btnEl.textContent = 'MAX';
   }
 
   render(); save(true);
@@ -365,9 +383,9 @@ function buyItem(id){
 /* init */
 load(); render(); loop(); startAutoSave();
 
-/* clique na imagem */
+/* clique na imagem (para juntar pontos) */
 el('click').onclick=()=>{ pts+=clickPow; render(); save(); showFront(); };
-el('buyAuto').onclick=buyAuto;
-el('buyPower').onclick=buyPower;
+
+/* ações */
 el('deleteSave').onclick=deleteSave;
 </script>
