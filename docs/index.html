@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mini Clicker Web</title>
+<style>
+  body{font-family:system-ui;margin:40px;max-width:680px}
+  .row{margin:14px 0}
+  button{padding:10px 14px;border:1px solid #ccc;border-radius:10px;cursor:pointer}
+  #pts{font-size:2rem;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:6px 10px;border:1px solid #ddd;border-radius:999px;margin-right:8px}
+</style>
+<h1>Mini Clicker Web</h1>
+<div class="row"><span class="pill">Pontos: <b id="pts">0</b></span>
+<span class="pill">Por clique: <b id="pc">1</b></span>
+<span class="pill">Auto/s: <b id="cps">0</b></span></div>
+<div class="row"><button id="click">CLICAR</button></div>
+<div class="row">
+  <button id="buyAuto">Comprar Autoclick +1/s (Custo: <span id="costAuto">10</span>)</button>
+</div>
+<div class="row">
+  <button id="buyPower">Aumentar Poder do Clique +1 (Custo: <span id="costPow">50</span>)</button>
+</div>
+<script>
+let pts=0, clickPow=1, auto=0;
+let costAuto=10, costPow=50;
+const el=(id)=>document.getElementById(id);
+function save(){localStorage.setItem('mcw',JSON.stringify({pts,clickPow,auto,costAuto,costPow}));}
+function load(){try{const d=JSON.parse(localStorage.getItem('mcw')||'{}');
+  pts=d.pts??0; clickPow=d.clickPow??1; auto=d.auto??0; costAuto=d.costAuto??10; costPow=d.costPow??50;}catch(e){}}
+function fmt(n){return Math.round(n);}
+function render(){
+  el('pts').textContent=fmt(pts); el('pc').textContent=clickPow; el('cps').textContent=auto;
+  el('costAuto').textContent=Math.ceil(costAuto); el('costPow').textContent=Math.ceil(costPow);
+}
+function buyAuto(){ if(pts>=costAuto){ pts-=costAuto; auto+=1; costAuto*=1.15; render(); save(); } }
+function buyPower(){ if(pts>=costPow){ pts-=costPow; clickPow+=1; costPow*=1.25; render(); save(); } }
+function loop(){ let last=performance.now(); function tick(){ const now=performance.now(), dt=(now-last)/1000; last=now; pts+=auto*dt; render(); requestAnimationFrame(tick);} requestAnimationFrame(tick); }
+load(); render(); loop();
+el('click').onclick=()=>{ pts+=clickPow; render(); save(); };
+el('buyAuto').onclick=buyAuto; el('buyPower').onclick=buyPower;
+</script>
