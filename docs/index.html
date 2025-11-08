@@ -8,7 +8,7 @@
   #pts{font-size:2rem;font-variant-numeric:tabular-nums}
   .pill{display:inline-block;padding:6px 10px;border:1px solid #ddd;border-radius:999px;margin-right:8px}
 
-  /* --- imagem clicável --- */
+  /* imagem clicável */
   .click-img{
     width:180px;height:180px;object-fit:cover;
     border:1px solid #ccc;border-radius:14px;cursor:pointer;
@@ -28,10 +28,9 @@
   <span class="pill">Auto/s: <b id="cps">0</b></span>
 </div>
 
-<!-- imagem que você clica -->
+<!-- IMAGEM que recebe o clique (começa de costas) -->
 <div class="row">
-  <!-- Coloque um arquivo docs/mema.png no repositório -->
-  <img id="click" class="click-img" src="mema.png" alt="Clique no seu Mema">
+  <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
 </div>
 
 <div class="row">
@@ -42,23 +41,25 @@
 </div>
 
 <script>
+/* --- estado do jogo --- */
 let pts=0, clickPow=1, auto=0;
 let costAuto=10, costPow=50;
 
+/* --- imagens do Mema --- */
+const IMG_BACK  = 'mema_back.png';
+const IMG_FRONT = 'mema_front.png';
+const FRONT_TIME_MS = 2000; // fica de frente por 2s após cada clique
+let faceTimer = null;
+
+/* helpers */
 const el=(id)=>document.getElementById(id);
-
-function save(){
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto,costAuto,costPow}));
-}
-function load(){
-  try{
-    const d = JSON.parse(localStorage.getItem('mcw')||'{}');
-    pts=d.pts??0; clickPow=d.clickPow??1; auto=d.auto??0;
-    costAuto=d.costAuto??10; costPow=d.costPow??50;
-  }catch(e){}
-}
+function save(){ localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto,costAuto,costPow})); }
+function load(){ try{
+  const d = JSON.parse(localStorage.getItem('mcw')||'{}');
+  pts=d.pts??0; clickPow=d.clickPow??1; auto=d.auto??0;
+  costAuto=d.costAuto??10; costPow=d.costPow??50;
+} catch(e){} }
 function fmt(n){ return Math.round(n); }
-
 function render(){
   el('pts').textContent=fmt(pts);
   el('pc').textContent=clickPow;
@@ -67,17 +68,23 @@ function render(){
   el('costPow').textContent=Math.ceil(costPow);
 }
 
-function buyAuto(){
-  if(pts>=costAuto){
-    pts-=costAuto; auto+=1; costAuto*=1.15; render(); save();
-  }
-}
-function buyPower(){
-  if(pts>=costPow){
-    pts-=costPow; clickPow+=1; costPow*=1.25; render(); save();
-  }
+/* Mema vira de frente por 2s ao clicar e depois volta */
+function showFront(){
+  const img = el('click');
+  img.src = IMG_FRONT;
+  if (faceTimer) clearTimeout(faceTimer);
+  faceTimer = setTimeout(()=>{ img.src = IMG_BACK; }, FRONT_TIME_MS);
 }
 
+/* compras */
+function buyAuto(){
+  if(pts>=costAuto){ pts-=costAuto; auto+=1; costAuto*=1.15; render(); save(); }
+}
+function buyPower(){
+  if(pts>=costPow){ pts-=costPow; clickPow+=1; costPow*=1.25; render(); save(); }
+}
+
+/* loop de pontos automáticos */
 function loop(){
   let last=performance.now();
   function tick(){
@@ -88,10 +95,15 @@ function loop(){
   requestAnimationFrame(tick);
 }
 
+/* preload das imagens para evitar “piscada” na primeira troca */
+(new Image()).src = IMG_BACK;
+(new Image()).src = IMG_FRONT;
+
+/* inicialização */
 load(); render(); loop();
 
-/* Clique na IMAGEM (id="click") */
-el('click').onclick=()=>{ pts+=clickPow; render(); save(); };
+/* clique na IMAGEM */
+el('click').onclick=()=>{ pts+=clickPow; render(); save(); showFront(); };
 el('buyAuto').onclick=buyAuto;
 el('buyPower').onclick=buyPower;
 </script>
