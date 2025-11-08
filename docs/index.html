@@ -49,9 +49,24 @@
   .click-img:hover{ filter:brightness(1.05); }
   .click-img:active{ transform:translateY(1px) scale(.98); }
 
-  /* Botões de upgrade (coluna direita) */
+  /* Botões */
   .btn{padding:10px 14px;border:1px solid #ccc;border-radius:10px;cursor:pointer;background:#fff;width:100%}
   .btn + .btn{margin-top:12px}
+  .btn-danger{border-color:#fecaca;background:#fff;color:#b91c1c}
+  .btn-danger:hover{background:#fff0f0}
+
+  /* Indicador de save (canto inferior) */
+  .save-toast{
+    position:fixed; right:16px; bottom:16px;
+    background:#e8f0ff; color:#1d4ed8;
+    border:1px solid #bfdbfe; border-radius:999px;
+    padding:8px 12px; font-weight:600; font-size:14px;
+    box-shadow:0 4px 16px rgba(0,0,0,.08);
+    opacity:0; transform:translateY(8px);
+    pointer-events:none;
+    transition:opacity .6s ease, transform .6s ease;
+  }
+  .save-toast.show{ opacity:1; transform:translateY(0); }
 
   /* Responsivo: empilha em telas pequenas */
   @media (max-width: 900px){
@@ -91,8 +106,13 @@
     <button class="btn" id="buyPower">Aumentar Poder do Clique +1
       (Custo: <span id="costPow">50</span>)
     </button>
+    <!-- NOVO: apagar save -->
+    <button class="btn btn-danger" id="deleteSave">Apagar save</button>
   </aside>
 </main>
+
+<!-- Indicador de save -->
+<div id="saveToast" class="save-toast">salvo</div>
 
 <script>
 /* --- estado do jogo --- */
@@ -107,12 +127,18 @@ let faceTimer = null;
 
 /* helpers */
 const el=(id)=>document.getElementById(id);
-function save(){ localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto,costAuto,costPow})); }
+
+function save(showToast=false){
+  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto,costAuto,costPow}));
+  if(showToast) flashSave();
+}
+
 function load(){ try{
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; auto=d.auto??0;
   costAuto=d.costAuto??10; costPow=d.costPow??50;
 } catch(e){} }
+
 function fmt(n){ return Math.round(n); }
 function render(){
   el('pts').textContent=fmt(pts);
@@ -132,10 +158,27 @@ function showFront(){
 
 /* compras */
 function buyAuto(){
-  if(pts>=costAuto){ pts-=costAuto; auto+=1; costAuto*=1.15; render(); save(); }
+  if(pts>=costAuto){
+    pts-=costAuto; auto+=1; costAuto*=1.15;
+    render(); save(); // salva normal (sem toast)
+  }
 }
 function buyPower(){
-  if(pts>=costPow){ pts-=costPow; clickPow+=1; costPow*=1.25; render(); save(); }
+  if(pts>=costPow){
+    pts-=costPow; clickPow+=1; costPow*=1.25;
+    render(); save(); // salva normal (sem toast)
+  }
+}
+
+/* NOVO: apagar save e resetar */
+function resetState(){
+  pts=0; clickPow=1; auto=0; costAuto=10; costPow=50;
+}
+function deleteSave(){
+  const ok = confirm('Apagar seu save? Esta ação não pode ser desfeita.');
+  if(!ok) return;
+  localStorage.removeItem('mcw');
+  resetState(); render();
 }
 
 /* loop de pontos automáticos */
@@ -149,15 +192,32 @@ function loop(){
   requestAnimationFrame(tick);
 }
 
+/* NOVO: auto-save periódico + toast */
+let saveTimer = null;
+function startAutoSave(){
+  // salva a cada 5 segundos e mostra o "salvo"
+  if(saveTimer) clearInterval(saveTimer);
+  saveTimer = setInterval(()=> save(true), 5000);
+}
+let toastTimer=null;
+function flashSave(){
+  const t = el('saveToast');
+  t.textContent = 'salvo';
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 1400);
+}
+
 /* preload imagens */
 (new Image()).src = IMG_BACK;
 (new Image()).src = IMG_FRONT;
 
 /* init */
-load(); render(); loop();
+load(); render(); loop(); startAutoSave();
 
 /* clique na imagem */
 el('click').onclick=()=>{ pts+=clickPow; render(); save(); showFront(); };
 el('buyAuto').onclick=buyAuto;
 el('buyPower').onclick=buyPower;
+el('deleteSave').onclick=deleteSave;
 </script>
