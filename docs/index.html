@@ -334,6 +334,24 @@ function renderShop(){
   });
 }
 
+/* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas */
+function updateAffordability(){
+  SHOP.forEach(it=>{
+    const st = shopState[it.id];
+    const row = document.querySelector(`tr[data-buy="${it.id}"]`);
+    if(!row) return;
+
+    const price = Math.ceil(st.cost);
+    const can = (st.owned < it.limit) && (pts >= price);
+
+    const costEl = row.querySelector('.cost');
+    if(costEl){
+      costEl.classList.toggle('can',  can);
+      costEl.classList.toggle('cant', !can);
+    }
+  });
+}
+
 /* Tenta comprar item ao clicar na linha */
 function tryBuy(id){
   const it = SHOP.find(x=>x.id===id); if(!it) return;
