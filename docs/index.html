@@ -381,8 +381,11 @@ function tryBuy(id){
       row.classList.add('buzz');
       const miss = Math.ceil(price - pts);
       const s = row.querySelector('.status');
-      if(s) s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
-      setTimeout(()=> row.classList.remove('buzz'), 320);
+      if(s){
+        s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
+        setTimeout(()=>{ if(s.querySelector('.need')) s.textContent = ''; }, 900);
+        }
+        setTimeout(()=> row.classList.remove('buzz'), 320);
     }
     return;
   }
