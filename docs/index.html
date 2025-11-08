@@ -6,15 +6,52 @@
     --maxw: 1200px;
     --gap: 20px;
     --sidew: 280px;
+
+    /* Tema escuro suave */
+    --bg:        #14171c;
+    --bg-grad-1: #1d222b;
+    --bg-grad-2: #171b22;
+    --fg:        #e7ebf0;
+    --muted:     #a3adba;
+
+    --card-bg:   #1b2029;
+    --panel-bg:  #161b22;
+    --border:    #2a303a;
+
+    --btn-bg:    #171c24;
+    --btn-hover: #1b212a;
+
+    --pill-bg:   #181d25;
+
+    --stage-border: #2d3441;
   }
+
   *{box-sizing:border-box}
-  body{font-family:system-ui;margin:0;background:#fff;color:#111}
+  body{
+    margin:0; font-family:system-ui;
+    color:var(--fg);
+    background:
+      radial-gradient(900px 500px at 10% -10%, var(--bg-grad-1) 0%, transparent 40%),
+      radial-gradient(900px 500px at 110% -10%, var(--bg-grad-2) 0%, transparent 35%),
+      linear-gradient(180deg, #13171c 0%, var(--bg) 100%);
+  }
+
   .wrap{max-width:var(--maxw);margin:0 auto;padding:28px}
 
   /* Topo */
-  h1{margin:0 0 10px 0;font-size:2.2rem}
-  .stats{display:flex;gap:10px;flex-wrap:wrap}
-  .pill{display:inline-block;padding:6px 12px;border:1px solid #ddd;border-radius:999px}
+  header{ text-align:center; }
+  h1{
+    margin:6px 0 12px 0;
+    font-size:2.4rem;
+    letter-spacing:.3px;
+  }
+  .stats{
+    display:flex;gap:10px;flex-wrap:wrap;justify-content:center
+  }
+  .pill{
+    display:inline-block;padding:6px 12px;border:1px solid var(--border);
+    background:var(--pill-bg); border-radius:999px; color:var(--fg)
+  }
   #pts{font-size:1.6rem;font-variant-numeric:tabular-nums}
 
   /* Grid principal: esquerda | centro | direita */
@@ -26,42 +63,49 @@
     margin-top: 20px;
   }
   .card{
-    border:1px solid #e4e4e7;border-radius:14px;padding:14px;
-    background:#fafafa;
+    border:1px solid var(--border);border-radius:14px;padding:14px;
+    background:var(--card-bg);
   }
+  .card p{ color:var(--muted); }
 
   /* Palco central com Mema */
   .stage{
     display:grid; place-items:center;
     min-height: min(70vh, 720px);
-    border:1px dashed #e5e7eb; border-radius:14px;
-    background:#fff;
+    border:1px dashed var(--stage-border); border-radius:14px;
+    background:var(--panel-bg);
   }
   .click-img{
     width:clamp(220px, 40vw, 380px);
     height:clamp(220px, 40vw, 380px);
     object-fit:cover;
-    border:1px solid #ccc;border-radius:16px;cursor:pointer;
-    box-shadow:0 8px 24px rgba(0,0,0,.12);
+    border:1px solid var(--border);border-radius:16px;cursor:pointer;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
     transition:transform .06s ease, filter .15s ease;
     user-select:none;
   }
-  .click-img:hover{ filter:brightness(1.05); }
+  .click-img:hover{ filter:brightness(1.06); }
   .click-img:active{ transform:translateY(1px) scale(.98); }
 
   /* Botões */
-  .btn{padding:10px 14px;border:1px solid #ccc;border-radius:10px;cursor:pointer;background:#fff;width:100%}
+  .btn{
+    padding:10px 14px;border:1px solid var(--border);border-radius:10px;
+    cursor:pointer;background:var(--btn-bg);color:var(--fg);width:100%;
+    transition:background .15s ease, filter .15s ease;
+  }
+  .btn:hover{ background:var(--btn-hover); filter:brightness(1.03); }
   .btn + .btn{margin-top:12px}
-  .btn-danger{border-color:#fecaca;background:#fff;color:#b91c1c}
-  .btn-danger:hover{background:#fff0f0}
+
+  .btn-danger{border-color:#3a2224;background:#24181a;color:#ef4444}
+  .btn-danger:hover{background:#2a1b1e}
 
   /* Indicador de save (canto inferior) */
   .save-toast{
     position:fixed; right:16px; bottom:16px;
-    background:#e8f0ff; color:#1d4ed8;
-    border:1px solid #bfdbfe; border-radius:999px;
-    padding:8px 12px; font-weight:600; font-size:14px;
-    box-shadow:0 4px 16px rgba(0,0,0,.08);
+    background:#0b1f47; color:#60a5fa; /* azul legível no dark */
+    border:1px solid #1d4ed8; border-radius:999px;
+    padding:8px 12px; font-weight:700; font-size:14px;
+    box-shadow:0 4px 16px rgba(0,0,0,.35);
     opacity:0; transform:translateY(8px);
     pointer-events:none;
     transition:opacity .6s ease, transform .6s ease;
@@ -75,41 +119,43 @@
   }
 </style>
 
-<!-- TOPO -->
-<header>
-  <h1>Clique no seu Mema</h1>
-  <div class="stats">
-    <span class="pill">Pontos: <b id="pts">0</b></span>
-    <span class="pill">Por clique: <b id="pc">1</b></span>
-    <span class="pill">Auto/s: <b id="cps">0</b></span>
-  </div>
-</header>
+<div class="wrap">
+  <!-- TOPO -->
+  <header>
+    <h1>Clique no seu Mema</h1>
+    <div class="stats">
+      <span class="pill">Pontos: <b id="pts">0</b></span>
+      <span class="pill">Por clique: <b id="pc">1</b></span>
+      <span class="pill">Auto/s: <b id="cps">0</b></span>
+    </div>
+  </header>
 
-<!-- GRID -->
-<main class="grid">
-  <!-- ESQUERDA: reservado -->
-  <aside class="card">
-    <h3 style="margin:6px 0 10px">Aba esquerda</h3>
-    <p style="margin:0;opacity:.75">Espaço reservado pra um modo/aba futura.</p>
-  </aside>
+  <!-- GRID -->
+  <main class="grid">
+    <!-- ESQUERDA: reservado -->
+    <aside class="card">
+      <h3 style="margin:6px 0 10px">Aba esquerda</h3>
+      <p style="margin:0;opacity:.85">Espaço reservado pra um modo/aba futura.</p>
+    </aside>
 
-  <!-- CENTRO: Mema grande -->
-  <section class="stage">
-    <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
-  </section>
+    <!-- CENTRO: Mema grande -->
+    <section class="stage">
+      <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
+    </section>
 
-  <!-- DIREITA: upgrades -->
-  <aside class="card">
-    <button class="btn" id="buyAuto">Comprar Autoclick +1/s
-      (Custo: <span id="costAuto">10</span>)
-    </button>
-    <button class="btn" id="buyPower">Aumentar Poder do Clique +1
-      (Custo: <span id="costPow">50</span>)
-    </button>
-    <!-- NOVO: apagar save -->
-    <button class="btn btn-danger" id="deleteSave">Apagar save</button>
-  </aside>
-</main>
+    <!-- DIREITA: upgrades -->
+    <aside class="card">
+      <button class="btn" id="buyAuto">Comprar Autoclick +1/s
+        (Custo: <span id="costAuto">10</span>)
+      </button>
+      <button class="btn" id="buyPower">Aumentar Poder do Clique +1
+        (Custo: <span id="costPow">50</span>)
+      </button>
+      <!-- Apagar save -->
+      <button class="btn btn-danger" id="deleteSave">Apagar save</button>
+    </aside>
+  </main>
+</div>
 
 <!-- Indicador de save -->
 <div id="saveToast" class="save-toast">salvo</div>
@@ -170,7 +216,7 @@ function buyPower(){
   }
 }
 
-/* NOVO: apagar save e resetar */
+/* Apagar save e resetar */
 function resetState(){
   pts=0; clickPow=1; auto=0; costAuto=10; costPow=50;
 }
@@ -192,12 +238,11 @@ function loop(){
   requestAnimationFrame(tick);
 }
 
-/* NOVO: auto-save periódico + toast */
+/* auto-save periódico + toast */
 let saveTimer = null;
 function startAutoSave(){
-  // salva a cada 5 segundos e mostra o "salvo"
   if(saveTimer) clearInterval(saveTimer);
-  saveTimer = setInterval(()=> save(true), 5000);
+  saveTimer = setInterval(()=> save(true), 5000); // a cada 5s
 }
 let toastTimer=null;
 function flashSave(){
