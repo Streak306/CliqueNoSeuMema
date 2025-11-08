@@ -104,6 +104,20 @@
   .cost.cant{ color:#ef4444 }   /* vermelho quando não pode comprar */
   .cost.can{  color:#10b981 }   /* verde quando pode comprar */
 
+  /* owned/limit estilo grande (novo) */
+  .owned-limit{ font-weight:800; font-size:1.05rem; letter-spacing:.6px; color:var(--fg); }
+  .owned-limit .owned{ color:var(--fg); opacity:0.95; margin-right:6px; }
+  .owned-limit .sep{ opacity:0.6; margin: 0 6px; color:var(--muted) }
+
+  /* botão comprar (novo) */
+  .buy-btn{
+    background:linear-gradient(180deg,#0f1724,#121827);
+    border:1px solid var(--border);
+    color:var(--fg); padding:8px 10px; border-radius:10px; font-weight:700;
+    cursor:pointer;
+  }
+  .buy-btn[disabled]{ opacity:.5; cursor:not-allowed; filter:grayscale(.1) }
+
   /* linha travada (não aparece até desbloquear) */
   .shop tr.locked{ display:none; }
 
@@ -150,9 +164,9 @@
           <tr>
             <th>Item</th>
             <th>+Auto/s</th>
-            <th>Possuído</th>
-            <th>Limite</th>
+            <th>Qtde</th>
             <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="shopBody"></tbody>
@@ -290,7 +304,6 @@ function renderShop(){
 
     if(locked){
       tr.className = 'locked';
-      // don't render hidden rows at all (they won't be visible)
     } else {
       tr.className = atLimit ? 'max' : 'clickable';
     }
@@ -304,48 +317,67 @@ function renderShop(){
         <div class="cost ${canAfford ? 'can' : 'cant'}">${price}</div>
       </td>
       <td>+${it.cps.toFixed(2)}</td>
-      <td>${st.owned}</td>
-      <td class="limit">${it.limit}</td>
+      <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
       <td class="status">${atLimit ? 'MAX' : ''}</td>
+      <td class="action"><button class="buy-btn" ${(!canAfford || atLimit) ? 'disabled' : ''}>Comprar</button></td>
     `;
 
     if(!locked){
       // clique na linha inteira
-      tr.addEventListener('click', ()=> tryBuy(it.id, tr));
+      tr.addEventListener('click', ()=> tryBuy(it.id));
       // acessibilidade básica (Enter/Space)
       tr.setAttribute('tabindex', atLimit ? '-1' : '0');
       tr.setAttribute('role','button');
       tr.addEventListener('keydown', (e)=>{
         if(atLimit) return;
         if(e.key==='Enter' || e.key===' '){
-          e.preventDefault(); tryBuy(it.id, tr);
+          e.preventDefault(); tryBuy(it.id);
         }
       });
+
+      // botão de comprar — impede propagation para evitar dupla chamada
+      const btn = tr.querySelector('.buy-btn');
+      if(btn){
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(btn.disabled) return;
+          tryBuy(it.id);
+        });
+      }
     }
 
     body.appendChild(tr);
   });
 }
 
-/* Tenta comprar item ao clicar na linha */
-function tryBuy(id, row){
+/* Tenta comprar item ao clicar na linha ou no botão */
+function tryBuy(id){
   const it = SHOP.find(x=>x.id===id); if(!it) return;
   const st = shopState[id];
   const price = Math.ceil(st.cost);
 
+  // encontrar a linha atual no DOM (pode ter sido re-renderizada)
+  const row = document.querySelector(`tr[data-buy="${id}"]`);
+
   if(st.owned >= it.limit){
-    row.classList.remove('clickable'); row.classList.add('max');
-    row.querySelector('.status').textContent = 'MAX';
+    if(row){
+      row.classList.remove('clickable'); row.classList.add('max');
+      const s = row.querySelector('.status');
+      if(s) s.textContent = 'MAX';
+      const btn = row.querySelector('.buy-btn'); if(btn) btn.disabled = true;
+    }
     return;
   }
 
   if(pts < price){
-    // feedback: buzz + "faltam X pts"
-    row.classList.add('buzz');
-    const miss = Math.ceil(price - pts);
-    const s = row.querySelector('.status');
-    s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
-    setTimeout(()=> row.classList.remove('buzz'), 320);
+    if(row){
+      // feedback: buzz + "faltam X pts"
+      row.classList.add('buzz');
+      const miss = Math.ceil(price - pts);
+      const s = row.querySelector('.status');
+      if(s) s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
+      setTimeout(()=> row.classList.remove('buzz'), 320);
+    }
     return;
   }
 
@@ -357,25 +389,35 @@ function tryBuy(id, row){
   if(st.owned < it.limit){
     st.cost = Math.ceil(st.cost * it.mul);
   }else{
-    row.classList.remove('clickable'); row.classList.add('max');
-    row.querySelector('.status').textContent = 'MAX';
+    if(row){
+      row.classList.remove('clickable'); row.classList.add('max');
+      const s = row.querySelector('.status'); if(s) s.textContent = 'MAX';
+      const btn = row.querySelector('.buy-btn'); if(btn) btn.disabled = true;
+    }
   }
 
-  // atualiza só esta linha (se ainda estiver renderizada)
-  // recomputar preço e se pode comprar agora
-  const priceNow = Math.ceil(st.cost);
-  const costEl = row.querySelector('.cost');
-  if(costEl) {
-    costEl.textContent = priceNow;
-    // atualiza cor com base na nova pts (após gastar)
-    const canAffordNow = pts >= priceNow && st.owned < it.limit;
-    costEl.classList.toggle('can', canAffordNow);
-    costEl.classList.toggle('cant', !canAffordNow);
-  }
+  // atualizar linha atual (se ainda estiver no DOM)
+  if(row){
+    const priceNow = Math.ceil(st.cost);
+    const costEl = row.querySelector('.cost');
+    if(costEl) {
+      costEl.textContent = priceNow;
+      const canAffordNow = pts >= priceNow && st.owned < it.limit;
+      costEl.classList.toggle('can', canAffordNow);
+      costEl.classList.toggle('cant', !canAffordNow);
+    }
 
-  // atualizar Possuído e Status
-  row.children[2].textContent = st.owned;           // Possuído (index shifted)
-  row.querySelector('.status').textContent = st.owned >= it.limit ? 'MAX' : '';
+    const ownedEl = row.querySelector('.owned');
+    const limitEl = row.querySelector('.limit-num');
+    if(ownedEl) ownedEl.textContent = st.owned;
+    if(limitEl) limitEl.textContent = it.limit;
+
+    const statusEl = row.querySelector('.status');
+    if(statusEl) statusEl.textContent = st.owned >= it.limit ? 'MAX' : '';
+
+    const btn = row.querySelector('.buy-btn');
+    if(btn) btn.disabled = !(pts >= Math.ceil(st.cost) && st.owned < it.limit);
+  }
 
   // Ao comprar, possivelmente desbloqueia o próximo item — re-render da loja
   renderHUD(); save(true);
