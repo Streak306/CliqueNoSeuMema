@@ -304,11 +304,16 @@ function renderShop(){
     // determinar se pode comprar agora (custo alcançável e não no limite)
     const canAfford = (!atLimit) && (pts >= price);
 
+    // Se o item estiver desbloqueado mas você ainda não possui NENHUM (owned === 0),
+    // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
+    // Itens ainda bloqueados (locked === true) continuam invisíveis como antes.
+    const displayName = (!locked && st.owned === 0) ? '?????' : it.name;
+
     // build row WITHOUT a buy button and WITHOUT a separate "status" column.
     // status messages (MAX / Faltam X) will be rendered inside the name cell.
     tr.innerHTML = `
       <td class="name">
-        <div>${it.name}</div>
+        <div>${displayName}</div>
         <div class="cost ${canAfford ? 'can' : 'cant'}">${price}</div>
         <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
