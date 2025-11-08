@@ -2,43 +2,97 @@
 <meta charset="utf-8">
 <title>Clique no seu Mema</title>
 <style>
-  body{font-family:system-ui;margin:40px;max-width:680px}
-  .row{margin:14px 0}
-  button{padding:10px 14px;border:1px solid #ccc;border-radius:10px;cursor:pointer}
-  #pts{font-size:2rem;font-variant-numeric:tabular-nums}
-  .pill{display:inline-block;padding:6px 10px;border:1px solid #ddd;border-radius:999px;margin-right:8px}
+  :root{
+    --maxw: 1200px;
+    --gap: 20px;
+    --sidew: 280px;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui;margin:0;background:#fff;color:#111}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px}
 
-  /* imagem clicável */
+  /* Topo */
+  h1{margin:0 0 10px 0;font-size:2.2rem}
+  .stats{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:6px 12px;border:1px solid #ddd;border-radius:999px}
+  #pts{font-size:1.6rem;font-variant-numeric:tabular-nums}
+
+  /* Grid principal: esquerda | centro | direita */
+  .grid{
+    display:grid;
+    grid-template-columns: var(--sidew) 1fr var(--sidew);
+    gap: var(--gap);
+    align-items:start;
+    margin-top: 20px;
+  }
+  .card{
+    border:1px solid #e4e4e7;border-radius:14px;padding:14px;
+    background:#fafafa;
+  }
+
+  /* Palco central com Mema */
+  .stage{
+    display:grid; place-items:center;
+    min-height: min(70vh, 720px);
+    border:1px dashed #e5e7eb; border-radius:14px;
+    background:#fff;
+  }
   .click-img{
-    width:180px;height:180px;object-fit:cover;
-    border:1px solid #ccc;border-radius:14px;cursor:pointer;
-    box-shadow:0 6px 18px rgba(0,0,0,.15);
+    width:clamp(220px, 40vw, 380px);
+    height:clamp(220px, 40vw, 380px);
+    object-fit:cover;
+    border:1px solid #ccc;border-radius:16px;cursor:pointer;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
     transition:transform .06s ease, filter .15s ease;
     user-select:none;
   }
   .click-img:hover{ filter:brightness(1.05); }
   .click-img:active{ transform:translateY(1px) scale(.98); }
+
+  /* Botões de upgrade (coluna direita) */
+  .btn{padding:10px 14px;border:1px solid #ccc;border-radius:10px;cursor:pointer;background:#fff;width:100%}
+  .btn + .btn{margin-top:12px}
+
+  /* Responsivo: empilha em telas pequenas */
+  @media (max-width: 900px){
+    .grid{ grid-template-columns: 1fr; }
+    .stage{ min-height: 50vh; }
+  }
 </style>
 
-<h1>Clique no seu Mema</h1>
+<!-- TOPO -->
+<header>
+  <h1>Clique no seu Mema</h1>
+  <div class="stats">
+    <span class="pill">Pontos: <b id="pts">0</b></span>
+    <span class="pill">Por clique: <b id="pc">1</b></span>
+    <span class="pill">Auto/s: <b id="cps">0</b></span>
+  </div>
+</header>
 
-<div class="row">
-  <span class="pill">Pontos: <b id="pts">0</b></span>
-  <span class="pill">Por clique: <b id="pc">1</b></span>
-  <span class="pill">Auto/s: <b id="cps">0</b></span>
-</div>
+<!-- GRID -->
+<main class="grid">
+  <!-- ESQUERDA: reservado -->
+  <aside class="card">
+    <h3 style="margin:6px 0 10px">Aba esquerda</h3>
+    <p style="margin:0;opacity:.75">Espaço reservado pra um modo/aba futura.</p>
+  </aside>
 
-<!-- IMAGEM que recebe o clique (começa de costas) -->
-<div class="row">
-  <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
-</div>
+  <!-- CENTRO: Mema grande -->
+  <section class="stage">
+    <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
+  </section>
 
-<div class="row">
-  <button id="buyAuto">Comprar Autoclick +1/s (Custo: <span id="costAuto">10</span>)</button>
-</div>
-<div class="row">
-  <button id="buyPower">Aumentar Poder do Clique +1 (Custo: <span id="costPow">50</span>)</button>
-</div>
+  <!-- DIREITA: upgrades -->
+  <aside class="card">
+    <button class="btn" id="buyAuto">Comprar Autoclick +1/s
+      (Custo: <span id="costAuto">10</span>)
+    </button>
+    <button class="btn" id="buyPower">Aumentar Poder do Clique +1
+      (Custo: <span id="costPow">50</span>)
+    </button>
+  </aside>
+</main>
 
 <script>
 /* --- estado do jogo --- */
@@ -48,7 +102,7 @@ let costAuto=10, costPow=50;
 /* --- imagens do Mema --- */
 const IMG_BACK  = 'mema_back.png';
 const IMG_FRONT = 'mema_front.png';
-const FRONT_TIME_MS = 400; // fica de frente por 2s após cada clique
+const FRONT_TIME_MS = 400; // feedback rápido ao clicar
 let faceTimer = null;
 
 /* helpers */
@@ -68,7 +122,7 @@ function render(){
   el('costPow').textContent=Math.ceil(costPow);
 }
 
-/* Mema vira de frente por 2s ao clicar e depois volta */
+/* vira de frente por um tempinho e volta */
 function showFront(){
   const img = el('click');
   img.src = IMG_FRONT;
@@ -95,14 +149,14 @@ function loop(){
   requestAnimationFrame(tick);
 }
 
-/* preload das imagens para evitar “piscada” na primeira troca */
+/* preload imagens */
 (new Image()).src = IMG_BACK;
 (new Image()).src = IMG_FRONT;
 
-/* inicialização */
+/* init */
 load(); render(); loop();
 
-/* clique na IMAGEM */
+/* clique na imagem */
 el('click').onclick=()=>{ pts+=clickPow; render(); save(); showFront(); };
 el('buyAuto').onclick=buyAuto;
 el('buyPower').onclick=buyPower;
