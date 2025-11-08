@@ -6,7 +6,7 @@
   :root{
     --maxw: 1400px;
     --gap: 24px;
-    --sidew: 340px;
+    --sidew: 380px;
 
     /* Tema escuro suave */
     --bg:        #14171c;
@@ -53,6 +53,9 @@
   .card{ border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--card-bg); }
   .card p{ color:var(--muted); }
 
+  /* make the shop card match stage height so items don't look "outside" */
+  .shop-card{ min-height: min(76vh, 820px); display:flex; flex-direction:column; }
+
   /* Palco */
   .stage{
     display:grid; place-items:center; min-height: min(76vh, 820px);
@@ -81,16 +84,16 @@
 
   /* LOJA – tabela clicável */
   .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px}
-  table.shop{width:100%; border-collapse:separate; border-spacing:0 12px}
+  table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-layout:fixed}
   .shop thead th{font-size:12px; text-align:left; opacity:.75; padding:0 10px}
   .shop tbody tr{
     background:var(--panel-bg); border:1px solid var(--border); border-radius:12px;
     transition:background .12s ease, transform .06s ease, box-shadow .12s ease, filter .12s ease;
   }
-  .shop tbody td{padding:14px 12px; vertical-align:middle}
+  .shop tbody td{padding:14px 12px; vertical-align:middle; overflow:hidden}
   .shop .name{font-weight:700}
   .shop .limit{opacity:.85}
-  .shop .status{font-size:12px; opacity:.85}
+  .shop .status{font-size:12px; opacity:.85; margin-top:6px}
 
   /* linha clicável */
   .shop tr.clickable{ cursor:pointer; }
@@ -109,21 +112,12 @@
   .owned-limit .owned{ color:var(--fg); opacity:0.95; margin-right:6px; }
   .owned-limit .sep{ opacity:0.6; margin: 0 6px; color:var(--muted) }
 
-  /* botão comprar (novo) */
-  .buy-btn{
-    background:linear-gradient(180deg,#0f1724,#121827);
-    border:1px solid var(--border);
-    color:var(--fg); padding:8px 10px; border-radius:10px; font-weight:700;
-    cursor:pointer;
-  }
-  .buy-btn[disabled]{ opacity:.5; cursor:not-allowed; filter:grayscale(.1) }
-
   /* linha travada (não aparece até desbloquear) */
   .shop tr.locked{ display:none; }
 
   /* “faltam pontos” + buzz */
   .need{ font-size:12px; color:#93c5fd; opacity:.95; margin-top:4px }
-  @keyframes buzz{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-2px)} 40%{transform:translateX(2px)} 60%{transform:translateX(-1px)} 80%{transform:translateX(1px)}}
+  @keyframes buzz{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-2px)} 40%{transform:translateX(2px)} 60%{transform:translateX(-1px)} 80%{transform:translateX(1px)} }
   .buzz{ animation:buzz .15s linear 2 }
 
   /* Responsivo */
@@ -131,6 +125,7 @@
     :root{ --sidew: 1fr }
     .grid{ grid-template-columns: 1fr; }
     .stage{ min-height: 54vh; }
+    .shop-card{ min-height: auto; }
   }
 </style>
 
@@ -139,7 +134,7 @@
   <header>
     <h1>Clique no seu Mema</h1>
     <div class="stats">
-      <span class="pill">Pontos: <b id="pts">0</b></span>
+      <span class="pill">Meminha: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
       <span class="pill">Auto/s: <b id="cps">0</b></span>
       <button class="btn" id="deleteSave" style="max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
@@ -157,7 +152,7 @@
       <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
     </section>
 
-    <aside class="card">
+    <aside class="card shop-card">
       <div class="shop-title">Loja</div>
       <table class="shop">
         <thead>
@@ -165,8 +160,6 @@
             <th>Item</th>
             <th>+Auto/s</th>
             <th>Qtde</th>
-            <th>Status</th>
-            <th></th>
           </tr>
         </thead>
         <tbody id="shopBody"></tbody>
@@ -311,15 +304,16 @@ function renderShop(){
     // determinar se pode comprar agora (custo alcançável e não no limite)
     const canAfford = (!atLimit) && (pts >= price);
 
+    // build row WITHOUT a buy button and WITHOUT a separate "status" column.
+    // status messages (MAX / Faltam X) will be rendered inside the name cell.
     tr.innerHTML = `
       <td class="name">
         <div>${it.name}</div>
         <div class="cost ${canAfford ? 'can' : 'cant'}">${price}</div>
+        <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
       <td>+${it.cps.toFixed(2)}</td>
       <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
-      <td class="status">${atLimit ? 'MAX' : ''}</td>
-      <td class="action"><button class="buy-btn" ${(!canAfford || atLimit) ? 'disabled' : ''}>Comprar</button></td>
     `;
 
     if(!locked){
@@ -334,23 +328,13 @@ function renderShop(){
           e.preventDefault(); tryBuy(it.id);
         }
       });
-
-      // botão de comprar — impede propagation para evitar dupla chamada
-      const btn = tr.querySelector('.buy-btn');
-      if(btn){
-        btn.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          if(btn.disabled) return;
-          tryBuy(it.id);
-        });
-      }
     }
 
     body.appendChild(tr);
   });
 }
 
-/* Tenta comprar item ao clicar na linha ou no botão */
+/* Tenta comprar item ao clicar na linha */
 function tryBuy(id){
   const it = SHOP.find(x=>x.id===id); if(!it) return;
   const st = shopState[id];
@@ -364,7 +348,6 @@ function tryBuy(id){
       row.classList.remove('clickable'); row.classList.add('max');
       const s = row.querySelector('.status');
       if(s) s.textContent = 'MAX';
-      const btn = row.querySelector('.buy-btn'); if(btn) btn.disabled = true;
     }
     return;
   }
@@ -392,7 +375,6 @@ function tryBuy(id){
     if(row){
       row.classList.remove('clickable'); row.classList.add('max');
       const s = row.querySelector('.status'); if(s) s.textContent = 'MAX';
-      const btn = row.querySelector('.buy-btn'); if(btn) btn.disabled = true;
     }
   }
 
@@ -414,9 +396,6 @@ function tryBuy(id){
 
     const statusEl = row.querySelector('.status');
     if(statusEl) statusEl.textContent = st.owned >= it.limit ? 'MAX' : '';
-
-    const btn = row.querySelector('.buy-btn');
-    if(btn) btn.disabled = !(pts >= Math.ceil(st.cost) && st.owned < it.limit);
   }
 
   // Ao comprar, possivelmente desbloqueia o próximo item — re-render da loja
