@@ -183,7 +183,7 @@ let faceTimer = null;
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
-const fmt=(n)=>Math.round(n);
+const fmt = (n)=> Math.floor(n); // evita exibir mais pontos do que você tem
 
 /* SAVE/LOAD */
 let shopState = null; // definido após catálogo
@@ -199,11 +199,10 @@ function load(){ try{
 
 /* HUD (topo) */
 function renderHUD(){
-  el('pts').textContent=fmt(pts);
-  el('pc').textContent=clickPow;
-  el('cps').textContent=auto.toFixed(2);
-  // atualizar loja (cores/visibilidade) sempre que o HUD muda
-  renderShop();
+  el('pts').textContent = fmt(pts);
+  el('pc').textContent = clickPow;
+  el('cps').textContent = auto.toFixed(2);
+  // não re-renderiza a loja aqui
 }
 
 /* feedback imagem */
@@ -231,8 +230,9 @@ function loop(){
   let last=performance.now();
   function tick(){
     const now=performance.now(), dt=(now-last)/1000; last=now;
-    pts+=auto*dt;
-    renderHUD(); // <— topo + loja a cada frame (pequena lista, é ok)
+    pts += auto*dt;
+    renderHUD();           // atualiza só o topo
+    updateAffordability(); // pinta se dá pra comprar, sem recriar DOM
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -399,7 +399,9 @@ function tryBuy(id){
   }
 
   // Ao comprar, possivelmente desbloqueia o próximo item — re-render da loja
-  renderHUD(); save(true);
+  renderShop();
+  renderHUD();
+  save(true);
 }
 
 /* init */
