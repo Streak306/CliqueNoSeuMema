@@ -1,5 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clique no seu Mema</title>
 <style>
   :root{
@@ -18,11 +19,7 @@
     --panel-bg:  #161b22;
     --border:    #2a303a;
 
-    --btn-bg:    #171c24;
-    --btn-hover: #1b212a;
-
     --pill-bg:   #181d25;
-
     --stage-border: #2d3441;
     --accent:    #60a5fa;
   }
@@ -30,115 +27,84 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; font-family:system-ui;
-    color:var(--fg);
+    margin:0; font-family:system-ui; line-height:1.45; color:var(--fg);
     background:
       radial-gradient(900px 500px at 10% -10%, var(--bg-grad-1) 0%, transparent 40%),
       radial-gradient(900px 500px at 110% -10%, var(--bg-grad-2) 0%, transparent 35%),
       linear-gradient(180deg, #13171c 0%, var(--bg) 100%);
-    line-height:1.45;
   }
-
   .wrap{max-width:var(--maxw);margin:0 auto;padding:28px}
 
   /* Topo */
   header{ text-align:center; position:sticky; top:0; z-index:10; padding-bottom:10px; backdrop-filter:saturate(140%) blur(4px) }
-  h1{
-    margin:6px 0 12px 0;
-    font-size:2.6rem;
-    letter-spacing:.3px;
-  }
-  .stats{
-    display:flex;gap:12px;flex-wrap:wrap;justify-content:center
-  }
+  h1{ margin:6px 0 12px 0; font-size:2.6rem; letter-spacing:.3px; }
+  .stats{ display:flex;gap:12px;flex-wrap:wrap;justify-content:center }
   .pill{
     display:inline-block;padding:8px 14px;border:1px solid var(--border);
     background:var(--pill-bg); border-radius:999px; color:var(--fg)
   }
   #pts{font-size:1.6rem;font-variant-numeric:tabular-nums}
 
-  /* Grid principal: esquerda | centro | direita */
+  /* Grid principal */
   .grid{
-    display:grid;
-    grid-template-columns: var(--sidew) 1fr var(--sidew);
-    gap: var(--gap);
-    align-items:start;
-    margin-top: 20px;
+    display:grid; grid-template-columns: var(--sidew) 1fr var(--sidew);
+    gap: var(--gap); align-items:start; margin-top: 20px;
   }
-  .card{
-    border:1px solid var(--border);border-radius:16px;padding:16px;
-    background:var(--card-bg);
-  }
+  .card{ border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--card-bg); }
   .card p{ color:var(--muted); }
 
-  /* Palco central com Mema */
+  /* Palco */
   .stage{
-    display:grid; place-items:center;
-    min-height: min(76vh, 820px);
-    border:1px dashed var(--stage-border); border-radius:16px;
-    background:var(--panel-bg);
+    display:grid; place-items:center; min-height: min(76vh, 820px);
+    border:1px dashed var(--stage-border); border-radius:16px; background:var(--panel-bg);
   }
   .click-img{
-    width:clamp(260px, 42vw, 420px);
-    height:clamp(260px, 42vw, 420px);
-    object-fit:cover;
+    width:clamp(260px, 42vw, 420px); height:clamp(260px, 42vw, 420px); object-fit:cover;
     border:1px solid var(--border);border-radius:18px;cursor:pointer;
     box-shadow:0 10px 28px rgba(0,0,0,.38);
-    transition:transform .06s ease, filter .15s ease;
-    user-select:none;
+    transition:transform .06s ease, filter .15s ease; user-select:none;
   }
   .click-img:hover{ filter:brightness(1.06); }
   .click-img:active{ transform:translateY(1px) scale(.98); }
 
-  /* Botões */
-  .btn{
-    padding:12px 14px;border:1px solid var(--border);border-radius:12px;
-    cursor:pointer;background:var(--btn-bg);color:var(--fg);width:100%;
-    transition:background .15s ease, filter .15s ease, transform .08s ease;
-  }
-  .btn:hover{ background:var(--btn-hover); filter:brightness(1.03); }
-  .btn:active{ transform:translateY(1px) }
-  .btn[disabled]{ opacity:.5; cursor:not-allowed }
-
-  .btn-danger{border-color:#3a2224;background:#24181a;color:#ef4444}
-  .btn-danger:hover{background:#2a1b1e}
-
-  /* Indicador de save (canto inferior) */
+  /* Indicador de save */
   .save-toast{
     position:fixed; right:16px; bottom:16px;
     background:#0b1f47; color:var(--accent);
     border:1px solid #1d4ed8; border-radius:999px;
     padding:8px 12px; font-weight:700; font-size:14px;
     box-shadow:0 4px 16px rgba(0,0,0,.35);
-    opacity:0; transform:translateY(8px);
-    pointer-events:none;
+    opacity:0; transform:translateY(8px); pointer-events:none;
     transition:opacity .6s ease, transform .6s ease;
   }
   .save-toast.show{ opacity:1; transform:translateY(0); }
 
-  /* LOJA – tabela linda */
+  /* LOJA – tabela clicável */
   .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px}
   table.shop{width:100%; border-collapse:separate; border-spacing:0 12px}
   .shop thead th{font-size:12px; text-align:left; opacity:.75; padding:0 10px}
-  .shop tbody tr{background:var(--panel-bg); border:1px solid var(--border); border-radius:12px}
-  .shop tbody td{padding:12px 10px; vertical-align:middle}
+  .shop tbody tr{
+    background:var(--panel-bg); border:1px solid var(--border); border-radius:12px;
+    transition:background .12s ease, transform .06s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  .shop tbody td{padding:14px 12px; vertical-align:middle}
   .shop .name{font-weight:700}
   .shop .limit{opacity:.85}
-  .shop .buy .btn{padding:10px 12px}
-  .muted{opacity:.75}
+  .shop .status{font-size:12px; opacity:.85}
 
-  .row{
-    border:1px solid var(--border); border-radius:12px; padding:12px; background:var(--panel-bg);
-  }
+  /* linha clicável */
+  .shop tr.clickable{ cursor:pointer; }
+  .shop tr.clickable:hover{ filter:brightness(1.06); box-shadow:0 6px 18px rgba(0,0,0,.25); }
+  .shop tr.clickable:active{ transform:scale(.995); }
+  /* limite atingido */
+  .shop tr.max{ opacity:.6; cursor:not-allowed; }
 
-  /* feedback “faltam pontos” */
-  .need{ font-size:12px; color:#93c5fd; opacity:.95; margin-top:6px }
-
-  /* micro animação de atenção */
+  /* “faltam pontos” + buzz */
+  .need{ font-size:12px; color:#93c5fd; opacity:.95; margin-top:4px }
   @keyframes buzz{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-2px)} 40%{transform:translateX(2px)} 60%{transform:translateX(-1px)} 80%{transform:translateX(1px)}}
   .buzz{ animation:buzz .15s linear 2 }
-  
-  /* Responsivo: empilha em telas pequenas */
+
+  /* Responsivo */
   @media (max-width: 980px){
     :root{ --sidew: 1fr }
     .grid{ grid-template-columns: 1fr; }
@@ -154,24 +120,21 @@
       <span class="pill">Pontos: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
       <span class="pill">Auto/s: <b id="cps">0</b></span>
-      <button class="btn btn-danger" id="deleteSave" style="max-width:220px">Apagar save</button>
+      <button class="btn" id="deleteSave" style="max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
     </div>
   </header>
 
   <!-- GRID -->
   <main class="grid">
-    <!-- ESQUERDA: reservado -->
     <aside class="card">
       <h3 style="margin:6px 0 10px">Aba esquerda</h3>
       <p style="margin:0;opacity:.85">Espaço reservado pra um modo/aba futura.</p>
     </aside>
 
-    <!-- CENTRO: Mema grande -->
     <section class="stage">
       <img id="click" class="click-img" src="mema_back.png" alt="Clique no seu Mema">
     </section>
 
-    <!-- DIREITA: Loja -->
     <aside class="card">
       <div class="shop-title">Loja</div>
       <table class="shop">
@@ -182,30 +145,29 @@
             <th>Possuído</th>
             <th>Limite</th>
             <th>Custo</th>
-            <th></th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody id="shopBody"></tbody>
       </table>
-      <p class="muted" style="margin-top:8px">Os preços sobem a cada compra. O botão só trava quando chegar no limite.</p>
+      <p class="muted" style="margin-top:8px">Passe o mouse e clique na linha para comprar. O item só trava quando atingir o limite.</p>
     </aside>
   </main>
 </div>
 
-<!-- Indicador de save -->
 <div id="saveToast" class="save-toast">salvo</div>
 
 <script>
-/* --- estado do jogo --- */
+/* ===== Estado do jogo ===== */
 let pts=0, clickPow=1, auto=0;
 
-/* --- imagens do Mema --- */
+/* Imagens (efeito clique) */
 const IMG_BACK  = 'mema_back.png';
 const IMG_FRONT = 'mema_front.png';
 const FRONT_TIME_MS = 400;
 let faceTimer = null;
 
-/* helpers */
+/* Helpers */
 const el=(id)=>document.getElementById(id);
 const fmt=(n)=>Math.round(n);
 
@@ -221,12 +183,11 @@ function load(){ try{
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
 } catch(e){} }
 
-/* UI */
-function render(){
+/* HUD (topo) */
+function renderHUD(){
   el('pts').textContent=fmt(pts);
   el('pc').textContent=clickPow;
   el('cps').textContent=auto.toFixed(2);
-  renderShop();
 }
 
 /* feedback imagem */
@@ -246,7 +207,7 @@ function deleteSave(){
   const ok = confirm('Apagar seu save? Esta ação não pode ser desfeita.');
   if(!ok) return;
   localStorage.removeItem('mcw');
-  resetState(); render();
+  resetState(); renderShop(); renderHUD();
 }
 
 /* loop de pontos automáticos */
@@ -254,7 +215,8 @@ function loop(){
   let last=performance.now();
   function tick(){
     const now=performance.now(), dt=(now-last)/1000; last=now;
-    pts+=auto*dt; render();
+    pts+=auto*dt;
+    renderHUD(); // <— só o topo a cada frame
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -279,8 +241,7 @@ function flashSave(){
 (new Image()).src = IMG_BACK;
 (new Image()).src = IMG_FRONT;
 
-/* ===================== LOJA ===================== */
-/* Catálogo + limites + curva de preço */
+/* ===== Loja ===== */
 const SHOP = [
   {id:'dedo',       name:'Dedo',       cps:0.10, base:15,    mul:1.15, limit:50},
   {id:'roupa',      name:'Roupa',      cps:0.50, base:80,    mul:1.15, limit:20},
@@ -301,67 +262,64 @@ function makeInitialShopState(){
 }
 if(!shopState) shopState = makeInitialShopState();
 
+/* Render da loja — só quando necessário */
 function renderShop(){
   const body = document.getElementById('shopBody');
   if(!body) return;
   body.innerHTML='';
+
   SHOP.forEach(it=>{
     const st = shopState[it.id];
     const atLimit = st.owned >= it.limit;
     const price = Math.ceil(st.cost);
-    const missing = Math.max(0, price - pts);
 
     const tr = document.createElement('tr');
-
+    tr.dataset.buy = it.id;
+    tr.className = atLimit ? 'max' : 'clickable';
     tr.innerHTML = `
       <td class="name">${it.name}</td>
       <td>+${it.cps.toFixed(2)}</td>
       <td>${st.owned}</td>
       <td class="limit">${it.limit}</td>
       <td>${price}</td>
-      <td class="buy">
-        <div>
-          <button class="btn" id="buy-${it.id}" ${atLimit ? 'disabled' : ''}>
-            ${atLimit ? 'MAX' : `Comprar`}
-          </button>
-          ${(!atLimit && missing>0) ? `<div class="need">Faltam ${missing} pts</div>` : ''}
-        </div>
-      </td>
+      <td class="status">${atLimit ? 'MAX' : ''}</td>
     `;
 
-    body.appendChild(tr);
+    // clique na linha inteira
+    tr.addEventListener('click', ()=> tryBuy(it.id, tr));
+    // acessibilidade básica (Enter/Space)
+    tr.setAttribute('tabindex', atLimit ? '-1' : '0');
+    tr.setAttribute('role','button');
+    tr.addEventListener('keydown', (e)=>{
+      if(atLimit) return;
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault(); tryBuy(it.id, tr);
+      }
+    });
 
-    const btn = tr.querySelector(`#buy-${it.id}`);
-    btn.onclick = ()=>{
-      buyItem(it.id, btn);
-    };
+    body.appendChild(tr);
   });
 }
 
-function buyItem(id, btnEl){
+/* Tenta comprar item ao clicar na linha */
+function tryBuy(id, row){
   const it = SHOP.find(x=>x.id===id); if(!it) return;
   const st = shopState[id];
   const price = Math.ceil(st.cost);
 
   if(st.owned >= it.limit){
-    btnEl.disabled = true;
-    btnEl.textContent = 'MAX';
+    row.classList.remove('clickable'); row.classList.add('max');
+    row.querySelector('.status').textContent = 'MAX';
     return;
   }
 
   if(pts < price){
-    // feedback rápido (sem travar o botão)
-    btnEl.classList.add('buzz');
-    const needEl = btnEl.parentElement.querySelector('.need');
-    if(needEl){
-      needEl.textContent = `Faltam ${price - pts} pts`;
-    }else{
-      const div = document.createElement('div');
-      div.className = 'need';
-      div.textContent = `Faltam ${price - pts} pts`;
-      btnEl.parentElement.appendChild(div);
-    }
-    setTimeout(()=> btnEl.classList.remove('buzz'), 320);
+    // feedback: buzz + "faltam X pts"
+    row.classList.add('buzz');
+    const miss = price - pts;
+    const s = row.querySelector('.status');
+    s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
+    setTimeout(()=> row.classList.remove('buzz'), 320);
     return;
   }
 
@@ -373,18 +331,24 @@ function buyItem(id, btnEl){
   if(st.owned < it.limit){
     st.cost = Math.ceil(st.cost * it.mul);
   }else{
-    btnEl.disabled = true;
-    btnEl.textContent = 'MAX';
+    row.classList.remove('clickable'); row.classList.add('max');
+    row.querySelector('.status').textContent = 'MAX';
   }
 
-  render(); save(true);
+  // atualiza só esta linha
+  const priceNow = Math.ceil(st.cost);
+  row.children[2].textContent = st.owned;           // Possuído
+  row.children[4].textContent = priceNow;           // Custo
+  row.querySelector('.status').textContent = st.owned >= it.limit ? 'MAX' : '';
+
+  renderHUD(); save(true);
 }
 
 /* init */
-load(); render(); loop(); startAutoSave();
+load(); renderShop(); renderHUD(); loop(); startAutoSave();
 
-/* clique na imagem (para juntar pontos) */
-el('click').onclick=()=>{ pts+=clickPow; render(); save(); showFront(); };
+/* clique na imagem = ganhar pontos */
+el('click').onclick=()=>{ pts+=clickPow; renderHUD(); save(); showFront(); };
 
 /* ações */
 el('deleteSave').onclick=deleteSave;
