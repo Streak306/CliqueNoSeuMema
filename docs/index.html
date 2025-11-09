@@ -180,20 +180,17 @@
     color:var(--fg);
     border:1px solid var(--border);
     border-radius:12px;
-    padding:10px 12px;
+    padding:10px 14px;
     box-shadow:0 12px 26px rgba(0,0,0,.45);
-
-    /* mudanças */
-    white-space: normal;          /* antes: pre-line */
-    overflow-wrap: anywhere;      /* evita palavras estourando */
-    width: max-content;           /* cresce conforme o texto */
-    min-width: 320px;             /* antes: 180px */
-    max-width: min(560px, 92vw);  /* antes: 240px */
-
+    white-space:normal;
+    overflow-wrap:anywhere;
+    width:max-content;
+    min-width:min(360px, 92vw);
+    max-width:min(620px, 92vw);
     pointer-events:none;
     opacity:0;
     transition:opacity .15s ease, transform .15s ease;
-    z-index: 9999;                /* antes: 20 (garante sobreposição) */
+    z-index:9999;
   }
   .tooltip-host::before{
     content:'';
@@ -208,8 +205,10 @@
     z-index:21;
     pointer-events:none;
   }
-  .tooltip-host:hover::after{ opacity:1; transform:translate(-50%, 0); }
-  .tooltip-host:hover::before{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-host:hover::after,
+  .tooltip-host:focus-visible::after{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-host:hover::before,
+  .tooltip-host:focus-visible::before{ opacity:1; transform:translate(-50%, 0); }
   .upgrade-tile.buzz{ animation:buzz .15s linear 2; }
 
   /* make the shop card match stage height so items don't look "outside" */
@@ -1521,16 +1520,20 @@ function updateUpgradeElement(el, up){
   el.classList.toggle('available', !purchased && affordable);
   el.classList.toggle('locked', !purchased && !affordable);
   el.disabled = purchased;
-  const nameEl = el.querySelector('.upgrade-name');
+
+  const refs = el.__ui || {};
+  const nameEl = refs.nameEl || el.querySelector('.upgrade-name');
   if(nameEl) nameEl.textContent = up.name;
-  const detailsEl = el.querySelector('.upgrade-details');
+
+  const detailsEl = refs.detailsEl || el.querySelector('.upgrade-details');
   if(detailsEl){
     const parts = [`Custo: ${fmtShort(cost)}`];
     const benefits = getUpgradeBenefitLines(up);
     if(benefits.length) parts.push(benefits.join(' • '));
     detailsEl.textContent = parts.join(' • ');
   }
-  const statusEl = el.querySelector('.upgrade-status');
+
+  const statusEl = refs.statusEl || el.querySelector('.upgrade-status');
   if(statusEl){
     let statusText = '';
     if(purchased){
@@ -1540,6 +1543,7 @@ function updateUpgradeElement(el, up){
     }
     statusEl.textContent = statusText;
   }
+
   if(el.classList.contains('tooltip-host')){
     el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable, 'grid');
   } else if(el.dataset.tooltip){
@@ -1639,6 +1643,7 @@ function renderUpgrades(){
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'upgrade-tile';
+    item.classList.add('tooltip-host');
     item.dataset.upgrade = up.id;
     item.setAttribute('aria-label', up.name);
 
@@ -1650,12 +1655,21 @@ function renderUpgrades(){
 
     const info = document.createElement('div');
     info.className = 'upgrade-info';
-    info.innerHTML = `
-      <strong class="upgrade-name"></strong>
-      <div class="upgrade-details"></div>
-      <div class="upgrade-status"></div>
-    `;
+
+    const nameEl = document.createElement('strong');
+    nameEl.className = 'upgrade-name';
+    info.appendChild(nameEl);
+
+    const detailsEl = document.createElement('div');
+    detailsEl.className = 'upgrade-details';
+    info.appendChild(detailsEl);
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'upgrade-status';
+    info.appendChild(statusEl);
+
     item.appendChild(info);
+    item.__ui = { nameEl, detailsEl, statusEl };
 
     const check = document.createElement('span');
     check.className = 'upgrade-check';
@@ -1685,12 +1699,14 @@ function updateAffordability(){
     if(!row) return;
 
     const priceSingle = precoProximo(it.base, it.r, st.owned);
-    const can = (st.owned < it.limit) && (pts >= priceSingle);
+    const underLimit = st.owned < it.limit;
+    const canPay = pts >= priceSingle;
+    const can = underLimit && canPay;
 
     const costEl = row.querySelector('.cost');
     if(costEl){
-      costEl.classList.toggle('can',  pts >= priceSingle && st.owned < it.limit);
-      costEl.classList.toggle('cant', !(pts >= priceSingle && st.owned < it.limit));
+      costEl.classList.toggle('can', can);
+      costEl.classList.toggle('cant', !can);
     }
     row.classList.toggle('afford', can);
   });
