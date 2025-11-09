@@ -73,6 +73,8 @@
     grid-template-columns:repeat(auto-fill, minmax(72px,1fr));
     gap:12px;
   }
+  .tooltip-host{ position:relative; }
+
   .upgrade-tile{
     position:relative;
     width:100%;
@@ -120,7 +122,7 @@
     justify-content:center;
   }
   .upgrade-tile.purchased .upgrade-check{ display:flex; }
-  .upgrade-tile::after{
+  .tooltip-host::after{
     content:attr(data-tooltip);
     position:absolute;
     left:50%;
@@ -141,7 +143,7 @@
     transition:opacity .15s ease, transform .15s ease;
     z-index:20;
   }
-  .upgrade-tile::before{
+  .tooltip-host::before{
     content:'';
     position:absolute;
     left:50%;
@@ -154,10 +156,10 @@
     z-index:21;
     pointer-events:none;
   }
-  .upgrade-tile:hover::after,
-  .upgrade-tile:focus-visible::after{ opacity:1; transform:translate(-50%, 0); }
-  .upgrade-tile:hover::before,
-  .upgrade-tile:focus-visible::before{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-host:hover::after,
+  .tooltip-host:focus-visible::after{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-host:hover::before,
+  .tooltip-host:focus-visible::before{ opacity:1; transform:translate(-50%, 0); }
   .upgrade-tile.buzz{ animation:buzz .15s linear 2; }
 
   /* make the shop card match stage height so items don't look "outside" */
@@ -547,7 +549,8 @@ function renderOwnedUpgradesCollection(){
   UPGRADE_DATA.forEach(up=>{
     const owned = isUpgradePurchased(up.id);
     const slot = document.createElement('div');
-    slot.className = owned ? 'collection-slot owned' : 'collection-slot';
+    slot.className = 'collection-slot tooltip-host';
+    if(owned) slot.classList.add('owned');
     slot.dataset.upgrade = up.id;
 
     if(owned){
@@ -555,11 +558,7 @@ function renderOwnedUpgradesCollection(){
       img.src = up.img;
       img.alt = up.name;
       slot.appendChild(img);
-
-      const name = document.createElement('div');
-      name.className = 'slot-name';
-      name.textContent = up.name;
-      slot.appendChild(name);
+      slot.dataset.tooltip = buildUpgradeTooltip(up, false, false, 'collection');
     } else {
       const placeholder = document.createElement('div');
       placeholder.className = 'slot-placeholder';
@@ -965,7 +964,6 @@ function setUpgradePurchased(id, value=true){
 }
 
 function canShowUpgrade(up){
-  if(isUpgradePurchased(up.id)) return true;
   if(up.requires && up.requires.some(reqId=> !isUpgradePurchased(reqId))) return false;
   const req = up.requirement;
   if(req?.type === 'building'){
@@ -992,6 +990,13 @@ function getUpgradeRequirementLines(up){
   return lines;
 }
 
+function getUpgradeBenefitLines(up){
+  const lines = [];
+  if(up.effect) lines.push(up.effect);
+  getUpgradeImprovementLines(up).forEach(line=> lines.push(line));
+  return lines;
+}
+
 function getUpgradeImprovementLines(up){
   const lines = [];
   if(up.bonus?.type === 'building'){
@@ -1004,29 +1009,30 @@ function getUpgradeImprovementLines(up){
   return lines;
 }
 
-function buildUpgradeTooltip(up, purchased, affordable){
-  const cost = up.cost ?? 0;
-  const lines = [up.name, `Custo: ${fmtShort(cost)}`];
-  if(up.effect) lines.push(up.effect);
-  getUpgradeImprovementLines(up).forEach(line=> lines.push(line));
-
-  if(purchased){
-    lines.push('Já comprado');
-  } else {
-    const miss = Math.max(0, Math.ceil(cost - pts));
-    if(miss > 0){
-      lines.push(`Faltam ${fmtShort(miss)} pts`);
-    } else if(affordable){
-      lines.push('Pronto para comprar');
+function buildUpgradeTooltip(up, purchased, affordable, context='grid'){
+  if(context === 'collection'){
+    const lines = [up.name];
+    const benefits = getUpgradeBenefitLines(up);
+    if(benefits.length){
+      lines.push('');
+      lines.push('Benefícios:');
+      benefits.forEach(line=> lines.push(`- ${line}`));
     }
+    const reqLines = getUpgradeRequirementLines(up);
+    if(reqLines.length){
+      lines.push('');
+      lines.push('Requisitos:');
+      reqLines.forEach(line=> lines.push(`- ${line}`));
+    }
+    return lines.join('\n');
   }
 
-  const reqLines = getUpgradeRequirementLines(up);
-  if(reqLines.length){
-    lines.push('');
-    lines.push('Requisitos:');
-    reqLines.forEach(line=> lines.push(`- ${line}`));
-  }
+  const benefitLine = getUpgradeBenefitLines(up)[0] ?? '';
+  const cost = up.cost ?? 0;
+  const miss = Math.max(0, Math.ceil(cost - pts));
+  const lines = [up.name];
+  if(benefitLine) lines.push(benefitLine);
+  lines.push(`Faltam ${fmtShort(miss)} pts`);
   return lines.join('\n');
 }
 
@@ -1038,7 +1044,7 @@ function updateUpgradeElement(el, up){
   el.classList.toggle('available', !purchased && affordable);
   el.classList.toggle('locked', !purchased && !affordable);
   el.disabled = purchased;
-  el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable);
+  el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable, 'grid');
 }
 
 function updateUpgradeAffordability(){
@@ -1124,12 +1130,13 @@ function renderUpgrades(){
 
   UPGRADE_DATA.forEach(up=>{
     const purchased = isUpgradePurchased(up.id);
-    const visible = purchased || canShowUpgrade(up);
+    if(purchased) return;
+    const visible = canShowUpgrade(up);
     if(!visible) return;
 
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'upgrade-tile';
+    item.className = 'upgrade-tile tooltip-host';
     item.dataset.upgrade = up.id;
     item.setAttribute('aria-label', up.name);
 
