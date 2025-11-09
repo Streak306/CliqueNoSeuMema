@@ -61,6 +61,25 @@
   }
   .card{ border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--card-bg); }
   .card p{ color:var(--muted); }
+  .muted{ color:var(--muted); }
+
+  /* Upgrades (aba esquerda) */
+  .upgrades-card{ display:flex; flex-direction:column; gap:16px; min-height: min(76vh, 820px); }
+  .upgrades-title{ margin:6px 0 0; font-size:1.35rem; letter-spacing:.4px; }
+  .upgrades-sub{ margin:0; font-size:.92rem; }
+  .upgrade-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px; }
+  .upgrade{ border:1px solid var(--border); border-radius:18px; padding:16px; background:linear-gradient(160deg, rgba(30,41,59,.65) 0%, rgba(15,23,42,.85) 100%); box-shadow:0 10px 24px rgba(0,0,0,.28); transition:transform .12s ease, box-shadow .15s ease, filter .15s ease; display:flex; flex-direction:column; gap:12px; }
+  .upgrade.unlocked{ box-shadow:0 14px 30px rgba(59,130,246,.28); border-color:rgba(96,165,250,.55); }
+  .upgrade.unlocked:hover{ transform:translateY(-3px); box-shadow:0 18px 34px rgba(59,130,246,.34); }
+  .upgrade.locked{ filter:saturate(.35) brightness(.8); opacity:.55; }
+  .upgrade.locked .upgrade-badge{ color:#fca5a5; }
+  .upgrade-img-wrap{ position:relative; border-radius:14px; overflow:hidden; }
+  .upgrade-img{ display:block; width:100%; height:auto; aspect-ratio:1; object-fit:cover; }
+  .upgrade-badge{ position:absolute; left:10px; bottom:10px; background:rgba(15,23,42,.88); color:var(--accent); padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
+  .upgrade-name{ font-weight:700; font-size:1rem; letter-spacing:.3px; }
+  .upgrade-effect{ font-size:.88rem; color:var(--fg); opacity:.92; }
+  .upgrade-req{ font-size:.78rem; color:var(--muted); line-height:1.4; }
+  .upgrade-req span{ display:block; }
 
   /* make the shop card match stage height so items don't look "outside" */
   .shop-card{ min-height: min(76vh, 820px); display:flex; flex-direction:column; }
@@ -118,14 +137,7 @@
   }
   .shop tr.afford:hover{
     filter:brightness(1.08);
-    box-shadow:0 0 0 1px rgba(16,185,129,.45), 0 8px 22px rgba(0,0,0,.30);
-  }
-
-  /* custo por baixo do nome (sem rótulo) */
-  .cost{ display:block; margin-top:6px; font-size:12px; opacity:.95; font-weight:700 }
-  .cost.cant{ color:#ef4444 }   /* vermelho quando não pode comprar */
-  .cost.can{  color:#10b981 }   /* verde quando pode comprar */
-
+@@ -132,447 +148,583 @@
   /* owned/limit estilo grande (novo) */
   .owned-limit{ font-weight:800; font-size:1.05rem; letter-spacing:.6px; color:var(--fg); }
   .owned-limit .owned{ color:var(--fg); opacity:0.95; margin-right:6px; }
@@ -151,6 +163,7 @@
     .grid{ grid-template-columns: 1fr; }
     .stage{ min-height: 54vh; }
     .shop-card{ min-height: auto; }
+    .upgrades-card{ min-height: auto; }
   }
 </style>
 
@@ -168,9 +181,10 @@
 
   <!-- GRID -->
   <main class="grid">
-    <aside class="card">
-      <h3 style="margin:6px 0 10px">Aba esquerda</h3>
-      <p style="margin:0;opacity:.85">Espaço reservado pra um modo/aba futura.</p>
+    <aside class="card upgrades-card">
+      <h3 class="upgrades-title">Upgrades</h3>
+      <p class="muted upgrades-sub">Desbloqueie melhorias comprando prédios específicos e conquiste cliques mais fortes.</p>
+      <div id="upgradesGrid" class="upgrade-grid"></div>
     </aside>
 
     <section class="stage">
@@ -199,6 +213,7 @@
 <script>
 /* ===== Estado do jogo ===== */
 let pts = 0, clickPow = 1, mps = 0;
+let upgradesState = null;
 
 /* Imagens (efeito clique) */
 const IMG_BACK  = 'imagens/variacoes-mema/mema_back.png';
@@ -223,19 +238,26 @@ function fmtShort(n){
 /* SAVE/LOAD */
 let shopState = null; // definido após catálogo
 function save(showToast=false){
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState}));
+  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState, upgradesState}));
   if(showToast) flashSave();
 }
 function load(){ try{
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
+  if(d.upgradesState){
+    const base = makeInitialUpgradeState();
+    upgradesState = {...base};
+    Object.keys(d.upgradesState).forEach(id=>{
+      if(base[id]) upgradesState[id] = {...base[id], ...d.upgradesState[id]};
+    });
+  }
 } catch(e){} }
 
 /* HUD (topo) */
 function renderHUD(){
   el('pts').textContent = fmtShort(pts);
-  el('pc').textContent = clickPow;
+  el('pc').textContent = Math.floor(clickPow);
   el('mps').textContent = mps.toFixed(2);
   // não re-renderiza a loja aqui
 }
@@ -252,12 +274,13 @@ function showFront(){
 function resetState(){
   pts=0; clickPow=1; mps=0;
   shopState = makeInitialShopState();
+  upgradesState = makeInitialUpgradeState();
 }
 function deleteSave(){
   const ok = confirm('Apagar seu save? Esta ação não pode ser desfeita.');
   if(!ok) return;
   localStorage.removeItem('mcw');
-  resetState(); renderShop(); renderHUD();
+  resetState(); renderShop(); renderUpgrades(); recalculateProduction(); renderHUD();
 }
 
 /* loop de meminhas automáticos (MPS) */
@@ -295,7 +318,6 @@ function flashSave(){
 /* ===== Loja =====
    Agora usamos as fórmulas exponenciais:
    precoProximo(base, escala, q) = ceil(base * escala^q)
-   payback = precoProximo / deltaMps
 */
 
 /* Parâmetros sugeridos (base, escala, mps/base) */
@@ -312,6 +334,114 @@ const SHOP = [
   {id:'namorada',   name:'Namorada',   base:75000000000, r:1.20, p:1600000.0,limit:1}
 ];
 
+const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{ acc[item.id] = item; return acc; }, {});
+
+const UPGRADE_DATA = [
+  {
+    id:'up-roupa-t1',
+    name:'Roupa Premium',
+    effect:'+10% MPS gerado por Roupa',
+    img:'imagens/melhorias-futuras/up-roupa-t1.png',
+    requirement:{type:'building', building:'roupa', count:1},
+    requirementText:'Compre 1 Roupa',
+    bonus:{type:'building', target:'roupa', amount:0.10}
+  },
+  {
+    id:'up-agua-t1',
+    name:'Purificador de Água',
+    effect:'+10% MPS gerado por Água',
+    img:'imagens/melhorias-futuras/up-agua-t1.png',
+    requirement:{type:'building', building:'agua', count:1},
+    requirementText:'Compre 1 Água',
+    bonus:{type:'building', target:'agua', amount:0.10}
+  },
+  {
+    id:'up-plantacao-t1',
+    name:'Adubo Especial',
+    effect:'+12% MPS gerado por Plantação',
+    img:'imagens/melhorias-futuras/up-plantacao-t1.png',
+    requirement:{type:'building', building:'plantacao', count:1},
+    requirementText:'Compre 1 Plantação',
+    bonus:{type:'building', target:'plantacao', amount:0.12}
+  },
+  {
+    id:'up-alojamento-t1',
+    name:'Suíte Completa',
+    effect:'+12% MPS gerado por Alojamento',
+    img:'imagens/melhorias-futuras/up-alojamento-t1.png',
+    requirement:{type:'building', building:'alojamento', count:1},
+    requirementText:'Compre 1 Alojamento',
+    bonus:{type:'building', target:'alojamento', amount:0.12}
+  },
+  {
+    id:'up-casa-t1',
+    name:'Projeto Moderno',
+    effect:'+15% MPS gerado por Casa',
+    img:'imagens/melhorias-futuras/up-casa-t1.png',
+    requirement:{type:'building', building:'casa', count:1},
+    requirementText:'Compre 1 Casa',
+    bonus:{type:'building', target:'casa', amount:0.15}
+  },
+  {
+    id:'up-xbox-t1',
+    name:'Game Pass Vitalício',
+    effect:'+15% MPS gerado por Xbox',
+    img:'imagens/melhorias-futuras/up-xbox-t1.png',
+    requirement:{type:'building', building:'xbox', count:1},
+    requirementText:'Compre 1 Xbox',
+    bonus:{type:'building', target:'xbox', amount:0.15}
+  },
+  {
+    id:'up-computador-t1',
+    name:'Cluster Otimizado',
+    effect:'+18% MPS gerado por Computador',
+    img:'imagens/melhorias-futuras/up-computador-t1.png',
+    requirement:{type:'building', building:'computador', count:1},
+    requirementText:'Compre 1 Computador',
+    bonus:{type:'building', target:'computador', amount:0.18}
+  },
+  {
+    id:'up-microfone-t1',
+    name:'Microfone Profissa',
+    effect:'+20% MPS gerado por Microfone',
+    img:'imagens/melhorias-futuras/up-microfone-t1.png',
+    requirement:{type:'building', building:'microfone', count:1},
+    requirementText:'Compre 1 Microfone',
+    bonus:{type:'building', target:'microfone', amount:0.20}
+  },
+  {
+    id:'up-dedo-t1',
+    name:'Dedo Ritmado',
+    effect:'Cada Dedo gera +1 clique extra',
+    img:'imagens/melhorias-futuras/up-dedo-t1.png',
+    requirement:{type:'building', building:'dedo', count:10},
+    requirementText:'Tenha 10 Dedos',
+    bonus:{type:'finger', perDedo:1}
+  },
+  {
+    id:'up-dedo-t2',
+    name:'Dedo Virtuose',
+    effect:'Cada Dedo gera +1 clique extra (acumula)',
+    img:'imagens/melhorias-futuras/up-dedo-t2.png',
+    requirement:{type:'building', building:'dedo', count:25},
+    requirementText:'Tenha 25 Dedos e o upgrade anterior',
+    requires:['up-dedo-t1'],
+    bonus:{type:'finger', perDedo:1}
+  },
+  {
+    id:'up-dedo-t3',
+    name:'Dedo Supremo',
+    effect:'Cada Dedo gera +1 clique extra (acumula)',
+    img:'imagens/melhorias-futuras/up-dedo-t3.png',
+    requirement:{type:'building', building:'dedo', count:40},
+    requirementText:'Tenha 40 Dedos e o upgrade anterior',
+    requires:['up-dedo-t2'],
+    bonus:{type:'finger', perDedo:1}
+  }
+];
+
+const UPGRADE_MAP = UPGRADE_DATA.reduce((acc, up)=>{ acc[up.id] = up; return acc; }, {});
+
 function makeInitialShopState(){
   const s={};
   SHOP.forEach(it=> s[it.id] = {owned:0});
@@ -319,16 +449,17 @@ function makeInitialShopState(){
 }
 if(!shopState) shopState = makeInitialShopState();
 
+function makeInitialUpgradeState(){
+  const s={};
+  UPGRADE_DATA.forEach(up=> s[up.id] = {unlocked:false});
+  return s;
+}
+if(!upgradesState) upgradesState = makeInitialUpgradeState();
+
 /* Fórmulas utilitárias */
 function precoProximo(base, escala, qPossuidas){
   return Math.ceil(base * Math.pow(escala, qPossuidas));
 }
-function paybackForUnit(base, escala, qPossuidas, pPerUnit){
-  const price = precoProximo(base, escala, qPossuidas);
-  const deltaMps = pPerUnit;
-  return price / Math.max(deltaMps, 1e-9);
-}
-
 /* Render da loja — atualiza visibilidade e cores com base em pts e desbloqueio */
 function renderShop(){
   const body = document.getElementById('shopBody');
@@ -361,14 +492,11 @@ function renderShop(){
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
     const displayName = (!locked && st.owned === 0) ? '?????' : it.name;
 
-    // payback para a próxima unidade
-    const pay = paybackForUnit(it.base, it.r, st.owned, it.p);
-
     tr.innerHTML = `
       <td class="name">
         <div>${displayName}</div>
         <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${fmtShort(priceSingle)}</div>
-        <div class="status">${atLimit ? 'MAX' : ('Payback: '+Math.round(pay))}</div>
+        <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
       <td>+${it.p.toFixed(2)}</td>
       <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
@@ -394,6 +522,108 @@ function renderShop(){
     }
 
     body.appendChild(tr);
+  });
+}
+
+function canUnlockUpgrade(up){
+  if(!upgradesState || !shopState) return false;
+  if(up.requires && up.requires.some(reqId=> !upgradesState[reqId] || !upgradesState[reqId].unlocked)){
+    return false;
+  }
+  const req = up.requirement;
+  if(req?.type === 'building'){
+    const owned = shopState[req.building]?.owned ?? 0;
+    if(owned < req.count) return false;
+  }
+  return true;
+}
+
+function checkUpgrades(){
+  let unlockedAny=false;
+  UPGRADE_DATA.forEach(up=>{
+    const st = upgradesState[up.id];
+    if(!st || st.unlocked) return;
+    if(canUnlockUpgrade(up)){
+      st.unlocked = true;
+      unlockedAny = true;
+    }
+  });
+  return unlockedAny;
+}
+
+function getBuildingMultiplier(buildingId){
+  let bonus = 0;
+  UPGRADE_DATA.forEach(up=>{
+    if(!upgradesState[up.id]?.unlocked) return;
+    if(up.bonus?.type === 'building' && up.bonus.target === buildingId){
+      bonus += up.bonus.amount;
+    }
+  });
+  return 1 + bonus;
+}
+
+function getFingerExtraPerDedo(){
+  let extra = 0;
+  UPGRADE_DATA.forEach(up=>{
+    if(!upgradesState[up.id]?.unlocked) return;
+    if(up.bonus?.type === 'finger'){
+      extra += up.bonus.perDedo ?? 0;
+    }
+  });
+  return extra;
+}
+
+function recalculateProduction(){
+  let total = 0;
+  SHOP.forEach(it=>{
+    const owned = shopState[it.id]?.owned ?? 0;
+    if(!owned) return;
+    const multiplier = getBuildingMultiplier(it.id);
+    total += owned * it.p * multiplier;
+  });
+  mps = total;
+  const dedos = shopState.dedo?.owned ?? 0;
+  const perDedo = getFingerExtraPerDedo();
+  clickPow = 1 + (dedos * perDedo);
+}
+
+function renderUpgrades(){
+  const grid = document.getElementById('upgradesGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  UPGRADE_DATA.forEach(up=>{
+    const st = upgradesState[up.id];
+    const unlocked = !!(st && st.unlocked);
+    const reqLines = [];
+    if(unlocked){
+      reqLines.push('Status: concluído');
+    } else {
+      if(up.requirementText) reqLines.push(up.requirementText);
+      if(up.requirement?.type === 'building'){
+        const owned = shopState[up.requirement.building]?.owned ?? 0;
+        reqLines.push(`${SHOP_LOOKUP[up.requirement.building].name}: ${Math.min(owned, up.requirement.count)}/${up.requirement.count}`);
+      }
+      if(up.requires && up.requires.length){
+        const pending = up.requires.filter(reqId=> !upgradesState[reqId]?.unlocked);
+        if(pending.length){
+          reqLines.push('Requer: ' + pending.map(id=>UPGRADE_MAP[id].name).join(', '));
+        }
+      }
+    }
+
+    const item = document.createElement('div');
+    item.className = 'upgrade ' + (unlocked ? 'unlocked' : 'locked');
+    item.innerHTML = `
+      <div class="upgrade-img-wrap">
+        <img class="upgrade-img" src="${up.img}" alt="${up.name}">
+        <span class="upgrade-badge">${unlocked ? 'Ativo' : 'Bloqueado'}</span>
+      </div>
+      <div class="upgrade-name">${up.name}</div>
+      <div class="upgrade-effect">${up.effect}</div>
+      <div class="upgrade-req">${reqLines.map(line=>`<span>${line}</span>`).join('')}</div>
+    `;
+    grid.appendChild(item);
   });
 }
 
@@ -442,10 +672,12 @@ function tryBuy(id){
     return;
   }
 
-  // compra: subtrai custo e atualiza owned / mps
+  // compra: subtrai custo e atualiza owned
   pts -= priceSingle;
   st.owned += 1;
-  mps += it.p;
+
+  checkUpgrades();
+  recalculateProduction();
 
   // If reached limit, visually mark
   if(st.owned >= it.limit){
@@ -457,6 +689,7 @@ function tryBuy(id){
 
   // Ao comprar, possivelmente desbloqueia o próximo item — re-render da loja
   renderShop();
+  renderUpgrades();
   renderHUD();
   save(true);
 
@@ -469,13 +702,19 @@ function tryBuy(id){
 }
 
 /* init */
-load(); renderShop(); renderHUD(); loop(); startAutoSave();
+load();
+const unlockedAtLoad = checkUpgrades();
+recalculateProduction();
+renderShop();
+renderUpgrades();
+renderHUD();
+if(unlockedAtLoad) save();
+loop();
+startAutoSave();
 
-/* clique na imagem = ganhar pontos
-   usar função getClickGain() para facilitar upgrades futuros */
+/* clique na imagem = ganhar pontos */
 function getClickGain(){
-  // por enquanto é só 1; depois aplicamos o divisor dos upgrades de Dedo
-  return 1;
+  return Math.max(1, Math.floor(clickPow));
 }
 el('click').onclick=()=>{ pts+=getClickGain(); renderHUD(); save(); showFront(); };
 
