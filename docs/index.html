@@ -338,6 +338,11 @@
     opacity:.65;
   }
   .collection-slot.owned{ border-style:solid; border-color:rgba(96,165,250,.55); box-shadow:0 10px 26px rgba(96,165,250,.24); }
+  .collection-slot.selected{
+    border-style:solid;
+    border-color:rgba(96,165,250,.75);
+    box-shadow:0 0 0 2px rgba(96,165,250,.35), 0 14px 32px rgba(96,165,250,.30);
+  }
   .collection-slot.owned .slot-placeholder{ display:none; }
   .collection-slot .slot-name{
     position:absolute;
@@ -679,6 +684,7 @@ let totalClicks = 0;
 let upgradesState = null;
 let achievementsState = null;
 let migratedLegacyUpgrades = false;
+let selectedCollectionUpgradeId = null;
 
 /* Imagens (efeito clique) */
 const IMG_BACK  = 'imagens/variacoes-mema/mema_back.png';
@@ -756,38 +762,70 @@ function resetCollectionDetail(){
   if(ownershipEl) ownershipEl.textContent = '';
 }
 
+function updateCollectionSelectionHighlight(){
+  const slots = document.querySelectorAll('.collection-slot');
+  slots.forEach(slot=>{
+    const isSelected = slot.dataset.upgrade === selectedCollectionUpgradeId;
+    slot.classList.toggle('selected', isSelected);
+    slot.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+  });
+}
+
+function selectCollectionUpgrade(up){
+  if(!up){
+    selectedCollectionUpgradeId = null;
+    updateCollectionSelectionHighlight();
+    resetCollectionDetail();
+    return;
+  }
+  selectedCollectionUpgradeId = up.id;
+  updateCollectionSelectionHighlight();
+  showUpgradeDetails(up);
+}
+
 function showUpgradeDetails(up){
   if(!up){
     resetCollectionDetail();
     return;
   }
+  const owned = isUpgradePurchased(up.id);
   const nameEl = el('collectionDetailName');
-  if(nameEl) nameEl.textContent = up.name;
+  if(nameEl) nameEl.textContent = owned ? up.name : '?????';
   const effectEl = el('collectionDetailEffect');
   if(effectEl){
-    const benefits = getUpgradeBenefitLines(up);
-    effectEl.textContent = benefits.length ? benefits.join(' • ') : 'Melhoria misteriosa';
+    if(owned){
+      const benefits = getUpgradeBenefitLines(up);
+      effectEl.textContent = benefits.length ? benefits.join(' • ') : 'Melhoria misteriosa';
+    } else {
+      effectEl.textContent = '???';
+    }
   }
   const costEl = el('collectionDetailCost');
-  if(costEl) costEl.textContent = fmtShort(up.cost ?? 0);
+  if(costEl) costEl.textContent = owned ? fmtShort(up.cost ?? 0) : '???';
   const reqEl = el('collectionDetailRequirements');
   if(reqEl){
     reqEl.innerHTML = '';
-    const reqLines = getUpgradeRequirementLines(up);
-    if(reqLines.length){
-      reqLines.forEach(line=>{
+    if(owned){
+      const reqLines = getUpgradeRequirementLines(up);
+      if(reqLines.length){
+        reqLines.forEach(line=>{
+          const li = document.createElement('li');
+          li.textContent = line;
+          reqEl.appendChild(li);
+        });
+      } else {
         const li = document.createElement('li');
-        li.textContent = line;
+        li.textContent = 'Sem requisitos adicionais';
         reqEl.appendChild(li);
-      });
+      }
     } else {
       const li = document.createElement('li');
-      li.textContent = 'Sem requisitos adicionais';
+      li.textContent = '???';
       reqEl.appendChild(li);
     }
   }
   const ownershipEl = el('collectionDetailOwnership');
-  if(ownershipEl) ownershipEl.textContent = isUpgradePurchased(up.id) ? 'Comprado' : 'Ainda não obtido';
+  if(ownershipEl) ownershipEl.textContent = owned ? 'Comprado' : '?????';
 }
 
 function renderOwnedUpgradesCollection(){
@@ -798,22 +836,16 @@ function renderOwnedUpgradesCollection(){
   }
   grid.innerHTML = '';
   const fragment = document.createDocumentFragment();
-  let firstOwned = null;
-  let firstAvailable = null;
   UPGRADE_DATA.forEach(up=>{
     const owned = isUpgradePurchased(up.id);
-    if(owned && !firstOwned) firstOwned = up;
-    if(!firstAvailable) firstAvailable = up;
     const slot = document.createElement('div');
     slot.className = 'collection-slot';
     if(owned) slot.classList.add('owned');
     slot.dataset.upgrade = up.id;
-
-    slot.classList.add('tooltip-host');
     slot.tabIndex = 0;
     slot.setAttribute('role','button');
-    slot.setAttribute('aria-label', up.name);
-    slot.dataset.tooltip = buildUpgradeTooltip(up, owned, owned, 'collection');
+    slot.setAttribute('aria-label', owned ? up.name : '?????');
+    slot.setAttribute('aria-pressed', 'false');
 
     if(owned){
       const img = document.createElement('img');
@@ -823,26 +855,34 @@ function renderOwnedUpgradesCollection(){
     } else {
       const placeholder = document.createElement('div');
       placeholder.className = 'slot-placeholder';
-      placeholder.textContent = '?';
+      placeholder.textContent = '?????';
       slot.appendChild(placeholder);
     }
 
-    const showDetails = ()=> showUpgradeDetails(up);
-    slot.addEventListener('mouseenter', showDetails);
-    slot.addEventListener('focus', showDetails);
-    slot.addEventListener('click', showDetails);
+    const handleSelect = ()=> selectCollectionUpgrade(up);
+    slot.addEventListener('click', handleSelect);
+    slot.addEventListener('keydown', (ev)=>{
+      if(ev.key === 'Enter' || ev.key === ' '){
+        ev.preventDefault();
+        handleSelect();
+      }
+    });
 
     fragment.appendChild(slot);
   });
   grid.appendChild(fragment);
-  renderStatsPanel();
-  if(firstOwned){
-    showUpgradeDetails(firstOwned);
-  } else if(firstAvailable){
-    showUpgradeDetails(firstAvailable);
+  updateCollectionSelectionHighlight();
+  if(selectedCollectionUpgradeId){
+    const selected = UPGRADE_MAP[selectedCollectionUpgradeId];
+    if(selected){
+      showUpgradeDetails(selected);
+    } else {
+      selectCollectionUpgrade(null);
+    }
   } else {
     resetCollectionDetail();
   }
+  renderStatsPanel();
 }
 
 function isAchievementUnlocked(id){
@@ -1085,6 +1125,7 @@ function resetState(){
   shopState = makeInitialShopState();
   upgradesState = makeInitialUpgradeState();
   achievementsState = makeInitialAchievementState();
+  selectedCollectionUpgradeId = null;
   achievementToastQueue.length = 0;
   if(achievementToastTimer) clearTimeout(achievementToastTimer);
   if(achievementToastHideTimer) clearTimeout(achievementToastHideTimer);
@@ -1495,7 +1536,11 @@ function updateUpgradeElement(el, up){
     }
     statusEl.textContent = statusText;
   }
-  el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable, 'grid');
+  if(el.classList.contains('tooltip-host')){
+    el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable, 'grid');
+  } else if(el.dataset.tooltip){
+    delete el.dataset.tooltip;
+  }
 }
 
 function updateUpgradeAffordability(){
@@ -1589,7 +1634,7 @@ function renderUpgrades(){
 
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'upgrade-tile tooltip-host';
+    item.className = 'upgrade-tile';
     item.dataset.upgrade = up.id;
     item.setAttribute('aria-label', up.name);
 
