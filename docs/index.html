@@ -144,7 +144,7 @@
     padding:8px 10px;
     display:flex;
     flex-direction:column;
-    gap:4px;
+    gap:6px;
     pointer-events:none;
     box-shadow:0 10px 20px rgba(0,0,0,.45);
     opacity:0;
@@ -160,18 +160,16 @@
     font-size:.82rem;
     line-height:1.2;
   }
-  .upgrade-info .upgrade-effect{
+  .upgrade-info .upgrade-details{
     font-size:.72rem;
     color:var(--muted);
+    line-height:1.35;
   }
-  .upgrade-info .upgrade-meta{
+  .upgrade-info .upgrade-status{
     font-size:.7rem;
     color:var(--muted);
-    display:flex;
-    justify-content:space-between;
-    gap:8px;
+    text-align:right;
   }
-  .upgrade-info .upgrade-meta span{ white-space:nowrap; }
   .tooltip-host::after{
     content:attr(data-tooltip);
     position:absolute;
@@ -307,10 +305,16 @@
   }
   .collection-count{ color:var(--muted); font-weight:600; }
 
+  .collection-section{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+  }
   .collection-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(88px,1fr));
     gap:14px;
+    flex:1 1 300px;
   }
   .collection-slot{
     position:relative;
@@ -346,6 +350,61 @@
     font-size:.7rem;
     text-align:center;
     color:var(--fg);
+  }
+
+  .collection-details{
+    flex:1 1 240px;
+    min-width:240px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--panel-bg);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .collection-details h4{
+    margin:0;
+    font-size:1.1rem;
+  }
+  .collection-details p{
+    margin:0;
+    color:var(--muted);
+    font-size:.9rem;
+    line-height:1.4;
+  }
+  .collection-detail-meta{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .collection-detail-meta .label{
+    display:block;
+    font-size:.75rem;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .collection-detail-meta strong{
+    font-size:.95rem;
+  }
+  .collection-detail-meta ul{
+    margin:0;
+    padding-left:18px;
+    color:var(--muted);
+    font-size:.9rem;
+    line-height:1.4;
+  }
+  .collection-detail-meta ul li{ margin-bottom:4px; }
+  .collection-detail-meta ul li:last-child{ margin-bottom:0; }
+  .collection-detail-ownership{
+    margin-top:auto;
+    font-size:.8rem;
+    color:var(--muted);
+  }
+  @media (max-width:720px){
+    .collection-details{ flex-basis:100%; }
   }
 
   .achievements-header{
@@ -579,7 +638,24 @@
           <h3 style="margin:0">Coleção de melhorias</h3>
           <span class="collection-count" id="collectionCount">Você tem 0/0 melhorias</span>
         </div>
-        <div class="collection-grid" id="ownedUpgradesGrid"></div>
+        <div class="collection-section">
+          <div class="collection-grid" id="ownedUpgradesGrid"></div>
+          <aside class="collection-details" id="collectionDetails">
+            <h4 id="collectionDetailName">Selecione uma melhoria</h4>
+            <p id="collectionDetailEffect">Passe o mouse ou toque em uma melhoria para ver detalhes.</p>
+            <div class="collection-detail-meta">
+              <div>
+                <span class="label">Custo</span>
+                <strong id="collectionDetailCost">—</strong>
+              </div>
+              <div>
+                <span class="label">Requisitos</span>
+                <ul id="collectionDetailRequirements"><li>—</li></ul>
+              </div>
+            </div>
+            <div class="collection-detail-ownership" id="collectionDetailOwnership"></div>
+          </aside>
+        </div>
       </div>
       <div class="modal-panel" data-panel="achievements" role="tabpanel" aria-hidden="true">
         <div class="achievements-header">
@@ -661,25 +737,89 @@ function renderStatsPanel(){
   if(achCountEl && typeof ACHIEVEMENT_DATA !== 'undefined') achCountEl.textContent = `Você desbloqueou ${getUnlockedAchievementCount()}/${ACHIEVEMENT_DATA.length} conquistas`;
 }
 
+function resetCollectionDetail(){
+  const nameEl = el('collectionDetailName');
+  if(!nameEl) return;
+  nameEl.textContent = 'Selecione uma melhoria';
+  const effectEl = el('collectionDetailEffect');
+  if(effectEl) effectEl.textContent = 'Passe o mouse ou toque em uma melhoria para ver detalhes.';
+  const costEl = el('collectionDetailCost');
+  if(costEl) costEl.textContent = '—';
+  const reqEl = el('collectionDetailRequirements');
+  if(reqEl){
+    reqEl.innerHTML = '';
+    const li = document.createElement('li');
+    li.textContent = '—';
+    reqEl.appendChild(li);
+  }
+  const ownershipEl = el('collectionDetailOwnership');
+  if(ownershipEl) ownershipEl.textContent = '';
+}
+
+function showUpgradeDetails(up){
+  if(!up){
+    resetCollectionDetail();
+    return;
+  }
+  const nameEl = el('collectionDetailName');
+  if(nameEl) nameEl.textContent = up.name;
+  const effectEl = el('collectionDetailEffect');
+  if(effectEl){
+    const benefits = getUpgradeBenefitLines(up);
+    effectEl.textContent = benefits.length ? benefits.join(' • ') : 'Melhoria misteriosa';
+  }
+  const costEl = el('collectionDetailCost');
+  if(costEl) costEl.textContent = fmtShort(up.cost ?? 0);
+  const reqEl = el('collectionDetailRequirements');
+  if(reqEl){
+    reqEl.innerHTML = '';
+    const reqLines = getUpgradeRequirementLines(up);
+    if(reqLines.length){
+      reqLines.forEach(line=>{
+        const li = document.createElement('li');
+        li.textContent = line;
+        reqEl.appendChild(li);
+      });
+    } else {
+      const li = document.createElement('li');
+      li.textContent = 'Sem requisitos adicionais';
+      reqEl.appendChild(li);
+    }
+  }
+  const ownershipEl = el('collectionDetailOwnership');
+  if(ownershipEl) ownershipEl.textContent = isUpgradePurchased(up.id) ? 'Comprado' : 'Ainda não obtido';
+}
+
 function renderOwnedUpgradesCollection(){
   const grid = el('ownedUpgradesGrid');
-  if(!grid || typeof UPGRADE_DATA === 'undefined') return;
+  if(!grid || typeof UPGRADE_DATA === 'undefined'){
+    resetCollectionDetail();
+    return;
+  }
   grid.innerHTML = '';
   const fragment = document.createDocumentFragment();
+  let firstOwned = null;
+  let firstAvailable = null;
   UPGRADE_DATA.forEach(up=>{
     const owned = isUpgradePurchased(up.id);
+    if(owned && !firstOwned) firstOwned = up;
+    if(!firstAvailable) firstAvailable = up;
     const slot = document.createElement('div');
     slot.className = 'collection-slot';
     if(owned) slot.classList.add('owned');
     slot.dataset.upgrade = up.id;
 
+    slot.classList.add('tooltip-host');
+    slot.tabIndex = 0;
+    slot.setAttribute('role','button');
+    slot.setAttribute('aria-label', up.name);
+    slot.dataset.tooltip = buildUpgradeTooltip(up, owned, owned, 'collection');
+
     if(owned){
-      slot.classList.add('tooltip-host');
       const img = document.createElement('img');
       img.src = up.img;
       img.alt = up.name;
       slot.appendChild(img);
-      slot.dataset.tooltip = buildUpgradeTooltip(up, true, true, 'collection');
     } else {
       const placeholder = document.createElement('div');
       placeholder.className = 'slot-placeholder';
@@ -687,10 +827,22 @@ function renderOwnedUpgradesCollection(){
       slot.appendChild(placeholder);
     }
 
+    const showDetails = ()=> showUpgradeDetails(up);
+    slot.addEventListener('mouseenter', showDetails);
+    slot.addEventListener('focus', showDetails);
+    slot.addEventListener('click', showDetails);
+
     fragment.appendChild(slot);
   });
   grid.appendChild(fragment);
   renderStatsPanel();
+  if(firstOwned){
+    showUpgradeDetails(firstOwned);
+  } else if(firstAvailable){
+    showUpgradeDetails(firstAvailable);
+  } else {
+    resetCollectionDetail();
+  }
 }
 
 function isAchievementUnlocked(id){
@@ -1294,13 +1446,15 @@ function buildUpgradeTooltip(up, purchased, affordable, context='grid'){
 
   if(context === 'grid'){
     const lines = [up.name];
-    lines.push(`Custo: ${fmtShort(up.cost ?? 0)}`);
-    if(effect) lines.push(effect);
+    const details = [`Custo: ${fmtShort(up.cost ?? 0)}`];
+    if(effect) details.push(effect);
+    lines.push(details.join(' • '));
     return lines.join('\n');
   }
 
   if(context === 'collection'){
     const lines = [up.name];
+    lines.push(`Custo: ${fmtShort(up.cost ?? 0)}`);
     if(effect) lines.push(effect);
     const reqLines = getUpgradeRequirementLines(up);
     if(reqLines.length){
@@ -1324,13 +1478,13 @@ function updateUpgradeElement(el, up){
   el.disabled = purchased;
   const nameEl = el.querySelector('.upgrade-name');
   if(nameEl) nameEl.textContent = up.name;
-  const effectEl = el.querySelector('.upgrade-effect');
-  if(effectEl){
+  const detailsEl = el.querySelector('.upgrade-details');
+  if(detailsEl){
+    const parts = [`Custo: ${fmtShort(cost)}`];
     const benefits = getUpgradeBenefitLines(up);
-    effectEl.textContent = benefits.length ? benefits.join(' • ') : 'Melhoria misteriosa';
+    if(benefits.length) parts.push(benefits.join(' • '));
+    detailsEl.textContent = parts.join(' • ');
   }
-  const costEl = el.querySelector('.upgrade-cost');
-  if(costEl) costEl.textContent = `Custo: ${fmtShort(cost)}`;
   const statusEl = el.querySelector('.upgrade-status');
   if(statusEl){
     let statusText = '';
@@ -1338,9 +1492,6 @@ function updateUpgradeElement(el, up){
       statusText = 'Comprado';
     } else if(affordable){
       statusText = 'Pronto para comprar';
-    } else {
-      const miss = Math.max(0, Math.ceil(cost - pts));
-      statusText = `Faltam ${fmtShort(miss)} pts`;
     }
     statusEl.textContent = statusText;
   }
@@ -1452,11 +1603,8 @@ function renderUpgrades(){
     info.className = 'upgrade-info';
     info.innerHTML = `
       <strong class="upgrade-name"></strong>
-      <div class="upgrade-effect"></div>
-      <div class="upgrade-meta">
-        <span class="upgrade-cost"></span>
-        <span class="upgrade-status"></span>
-      </div>
+      <div class="upgrade-details"></div>
+      <div class="upgrade-status"></div>
     `;
     item.appendChild(info);
 
@@ -1514,14 +1662,10 @@ function tryBuy(id){
 
   if(pts < priceSingle){
     if(row){
-      // feedback: buzz + "faltam X pts"
+      // feedback: buzz
       row.classList.add('buzz');
-      const miss = Math.ceil(priceSingle - pts);
       const s = row.querySelector('.status');
-      if(s){
-        s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
-        setTimeout(()=>{ if(s.querySelector('.need')) s.textContent = ''; }, 900);
-      }
+      if(s) s.textContent = '';
       setTimeout(()=> row.classList.remove('buzz'), 320);
     }
     return;
