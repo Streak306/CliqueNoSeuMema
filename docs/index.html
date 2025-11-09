@@ -170,45 +170,48 @@
     color:var(--muted);
     text-align:right;
   }
-  .tooltip-host::after{
-    content:attr(data-tooltip);
-    position:absolute;
-    left:50%;
-    bottom:calc(100% + 12px);
-    transform:translate(-50%, 10px);
-    background:rgba(13,17,23,.95);
+  .tooltip-card{
+    position:fixed;
+    pointer-events:none;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:200px;
+    max-width:min(260px, 92vw);
+    padding:14px 16px;
+    background:rgba(13,17,23,.96);
+    border:1px solid rgba(96,165,250,.35);
+    border-radius:14px;
+    box-shadow:0 16px 34px rgba(0,0,0,.5);
     color:var(--fg);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:10px 14px;
-    box-shadow:0 12px 26px rgba(0,0,0,.45);
-    white-space:normal;
-    overflow-wrap:anywhere;
-    width:max-content;
-    min-width:min(360px, 92vw);
-    max-width:min(620px, 92vw);
-    pointer-events:none;
     opacity:0;
-    transition:opacity .15s ease, transform .15s ease;
-    z-index:9999;
+    visibility:hidden;
+    transform:translateY(8px);
+    transition:opacity .16s ease, transform .16s ease;
+    z-index:60;
   }
-  .tooltip-host::before{
-    content:'';
-    position:absolute;
-    left:50%;
-    bottom:calc(100% + 6px);
-    transform:translate(-50%, 6px);
-    border:6px solid transparent;
-    border-top-color:rgba(13,17,23,.95);
-    opacity:0;
-    transition:opacity .15s ease, transform .15s ease;
-    z-index:21;
-    pointer-events:none;
+  .tooltip-card.visible{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
   }
-  .tooltip-host:hover::after,
-  .tooltip-host:focus-visible::after{ opacity:1; transform:translate(-50%, 0); }
-  .tooltip-host:hover::before,
-  .tooltip-host:focus-visible::before{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-card .tooltip-name{
+    font-weight:700;
+    font-size:.92rem;
+    line-height:1.25;
+  }
+  .tooltip-card .tooltip-effect{
+    font-size:.8rem;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .tooltip-card .tooltip-cost{
+    font-size:.78rem;
+    border-top:1px solid rgba(96,165,250,.25);
+    padding-top:8px;
+    margin-top:4px;
+    letter-spacing:.15px;
+  }
   .upgrade-tile.buzz{ animation:buzz .15s linear 2; }
 
   /* make the shop card match stage height so items don't look "outside" */
@@ -679,6 +682,12 @@
 <div id="saveToast" class="save-toast">salvo</div>
 <div id="achievementToast" class="achievement-toast" aria-live="polite"></div>
 
+<div id="upgradeTooltip" class="tooltip-card" role="tooltip" aria-hidden="true">
+  <div class="tooltip-name"></div>
+  <div class="tooltip-effect"></div>
+  <div class="tooltip-cost"></div>
+</div>
+
 <script>
 /* ===== Estado do jogo ===== */
 let pts = 0, clickPow = 1, mps = 0;
@@ -725,6 +734,98 @@ function getPurchasedUpgradeCount(){
   if(typeof UPGRADE_DATA === 'undefined') return 0;
   return UPGRADE_DATA.reduce((acc, up)=> acc + (isUpgradePurchased(up.id) ? 1 : 0), 0);
 }
+
+const tooltipCardEl = document.getElementById('upgradeTooltip');
+const tooltipNameEl = tooltipCardEl?.querySelector('.tooltip-name') ?? null;
+const tooltipEffectEl = tooltipCardEl?.querySelector('.tooltip-effect') ?? null;
+const tooltipCostEl = tooltipCardEl?.querySelector('.tooltip-cost') ?? null;
+let activeUpgradeTooltip = null;
+
+function refreshUpgradeTooltip(up){
+  if(!tooltipCardEl || !tooltipNameEl || !tooltipEffectEl || !tooltipCostEl) return;
+  tooltipNameEl.textContent = up.name;
+
+  const benefits = getUpgradeBenefitLines(up);
+  tooltipEffectEl.textContent = benefits.length ? benefits.join(' • ') : 'Sem efeito adicional';
+
+  const cost = up.cost ?? 0;
+  const purchased = isUpgradePurchased(up.id);
+  let statusText = '';
+  if(purchased){
+    statusText = 'Já comprado';
+  } else if(pts >= cost){
+    statusText = 'Pode comprar';
+  } else {
+    const missing = Math.max(0, cost - pts);
+    statusText = `Faltam ${fmtShort(missing)} pontos`;
+  }
+  tooltipCostEl.textContent = `Custo: ${fmtShort(cost)} – ${statusText}`;
+}
+
+function positionUpgradeTooltip(target, evt){
+  if(!tooltipCardEl || !activeUpgradeTooltip) return;
+  if(!target?.isConnected){
+    hideUpgradeTooltip();
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  const width = tooltipCardEl.offsetWidth;
+  const height = tooltipCardEl.offsetHeight;
+  const padding = 16;
+
+  let left = (evt?.clientX ?? rect.left + rect.width / 2) - width / 2;
+  let top = (evt?.clientY ?? rect.top) - height - padding;
+
+  if(top < 12){
+    top = rect.bottom + padding;
+  }
+
+  if(left < 12) left = 12;
+  const maxLeft = window.innerWidth - width - 12;
+  if(left > maxLeft) left = maxLeft;
+
+  const maxTop = window.innerHeight - height - 12;
+  if(top > maxTop) top = maxTop;
+  if(top < 12) top = 12;
+
+  tooltipCardEl.style.left = `${Math.round(left)}px`;
+  tooltipCardEl.style.top = `${Math.round(top)}px`;
+}
+
+function showUpgradeTooltip(target, up, evt){
+  if(!tooltipCardEl) return;
+  activeUpgradeTooltip = { target, up };
+  refreshUpgradeTooltip(up);
+  tooltipCardEl.setAttribute('aria-hidden', 'false');
+  tooltipCardEl.style.visibility = 'hidden';
+  tooltipCardEl.classList.add('visible');
+  positionUpgradeTooltip(target, evt);
+  tooltipCardEl.style.visibility = '';
+}
+
+function hideUpgradeTooltip(){
+  if(!tooltipCardEl) return;
+  activeUpgradeTooltip = null;
+  tooltipCardEl.classList.remove('visible');
+  tooltipCardEl.setAttribute('aria-hidden', 'true');
+}
+
+function repositionActiveUpgradeTooltip(){
+  if(!activeUpgradeTooltip) return;
+  const target = activeUpgradeTooltip.target;
+  if(!target || !target.isConnected){
+    hideUpgradeTooltip();
+    return;
+  }
+  if(activeUpgradeTooltip.up){
+    refreshUpgradeTooltip(activeUpgradeTooltip.up);
+  }
+  positionUpgradeTooltip(target);
+}
+
+window.addEventListener('scroll', repositionActiveUpgradeTooltip, {passive:true});
+window.addEventListener('resize', repositionActiveUpgradeTooltip);
 
 function renderStatsPanel(){
   const bancoEl = el('statBanco');
@@ -1485,33 +1586,6 @@ function getUpgradeImprovementLines(up){
   return lines;
 }
 
-function buildUpgradeTooltip(up, purchased, affordable, context='grid'){
-  const effect = up.effect || getUpgradeBenefitLines(up)[0] || '';
-
-  if(context === 'grid'){
-    const lines = [up.name];
-    const details = [`Custo: ${fmtShort(up.cost ?? 0)}`];
-    if(effect) details.push(effect);
-    lines.push(details.join(' • '));
-    return lines.join('\n');
-  }
-
-  if(context === 'collection'){
-    const lines = [up.name];
-    lines.push(`Custo: ${fmtShort(up.cost ?? 0)}`);
-    if(effect) lines.push(effect);
-    const reqLines = getUpgradeRequirementLines(up);
-    if(reqLines.length){
-      lines.push('');
-      lines.push('Requisitos:');
-      reqLines.forEach(line=> lines.push(`- ${line}`));
-    }
-    return lines.join('\n');
-  }
-
-  return up.name;
-}
-
 function updateUpgradeElement(el, up){
   const cost = up.cost ?? 0;
   const purchased = isUpgradePurchased(up.id);
@@ -1544,10 +1618,10 @@ function updateUpgradeElement(el, up){
     statusEl.textContent = statusText;
   }
 
-  if(el.classList.contains('tooltip-host')){
-    el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable, 'grid');
-  } else if(el.dataset.tooltip){
-    delete el.dataset.tooltip;
+  if(activeUpgradeTooltip && activeUpgradeTooltip.target === el){
+    activeUpgradeTooltip.up = up;
+    refreshUpgradeTooltip(up);
+    positionUpgradeTooltip(el);
   }
 }
 
@@ -1629,6 +1703,7 @@ function recalculateProduction(){
 function renderUpgrades(){
   const grid = document.getElementById('upgradesGrid');
   if(!grid) return;
+  hideUpgradeTooltip();
   grid.innerHTML = '';
   upgradeElements.clear();
 
@@ -1678,8 +1753,20 @@ function renderUpgrades(){
 
     updateUpgradeElement(item, up);
 
+    const handlePointerEnter = (ev)=> showUpgradeTooltip(item, up, ev);
+    const handlePointerMove = (ev)=> positionUpgradeTooltip(item, ev);
+    const handlePointerLeave = ()=> hideUpgradeTooltip();
+    item.addEventListener('pointerenter', handlePointerEnter);
+    item.addEventListener('pointermove', handlePointerMove);
+    item.addEventListener('pointerleave', handlePointerLeave);
+    item.addEventListener('focus', ()=> showUpgradeTooltip(item, up));
+    item.addEventListener('blur', hideUpgradeTooltip);
+
     if(!purchased){
-      item.addEventListener('click', ()=> tryBuyUpgrade(up.id));
+      item.addEventListener('click', ()=>{
+        hideUpgradeTooltip();
+        tryBuyUpgrade(up.id);
+      });
     }
 
     fragment.appendChild(item);
