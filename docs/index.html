@@ -411,7 +411,7 @@ function renderShop(){
 
     tr.innerHTML = `
       <td class="name">
-        <div>${displayName} <span style="font-weight:600;opacity:.75;font-size:.85rem;margin-left:8px">(${it.id})</span></div>
+        <div>${displayName}</div>
         <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Próx: ${fmtShort(priceSingle)}${bulkPrice? (' — Bulk: '+fmtShort(bulkPrice)) : ''}</div>
         <div class="status">${atLimit ? 'MAX' : ('Payback: '+Math.round(pay))}</div>
       </td>
