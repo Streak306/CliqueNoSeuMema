@@ -667,9 +667,6 @@ function getUpgradeRequirementLines(up){
 function buildUpgradeTooltip(up, purchased, affordable){
   const cost = up.cost ?? 0;
   const lines = [up.name, `Custo: ${fmtShort(cost)}`];
-  if(up.effect){
-    lines.push(`Efeito: ${up.effect}`);
-  }
   if(purchased){
     lines.push('Já comprado');
   } else {
