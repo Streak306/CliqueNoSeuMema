@@ -50,6 +50,7 @@
     padding:10px 14px;border:1px solid var(--border);border-radius:12px;
     background:#171c24;color:var(--fg);cursor:pointer;
     transition:filter .15s ease, transform .08s ease;
+    font-weight:600;
   }
   .btn:hover{ filter:brightness(1.06); }
   .btn:active{ transform:translateY(1px) }
@@ -162,6 +163,150 @@
   /* make the shop card match stage height so items don't look "outside" */
   .shop-card{ min-height: min(76vh, 820px); display:flex; flex-direction:column; }
 
+  /* Modal de configurações */
+  .settings-btn{ display:flex; align-items:center; gap:8px; }
+  .settings-btn svg{ width:18px; height:18px; }
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(10,12,18,.78);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:40;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-card{
+    width:min(760px, 92vw);
+    max-height:88vh;
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 24px 12px 24px;
+    border-bottom:1px solid var(--border);
+  }
+  .modal-header h2{ margin:0; font-size:1.5rem; }
+  .modal-close{
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:1.6rem;
+    line-height:1;
+    padding:4px 8px;
+  }
+  .modal-tabs{
+    display:flex;
+    gap:8px;
+    padding:14px 24px;
+    border-bottom:1px solid var(--border);
+  }
+  .modal-tab{
+    border:none;
+    border-radius:999px;
+    padding:8px 18px;
+    background:var(--pill-bg);
+    color:var(--muted);
+    cursor:pointer;
+    font-weight:600;
+    transition:filter .15s ease, background .15s ease, color .15s ease;
+  }
+  .modal-tab.active{
+    background:rgba(96,165,250,.16);
+    color:var(--fg);
+    box-shadow:0 0 0 1px rgba(96,165,250,.4);
+  }
+  .modal-content{
+    padding:24px;
+    overflow:auto;
+    flex:1;
+  }
+  .modal-panel{ display:none; }
+  .modal-panel.active{ display:block; }
+
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:16px;
+    margin-bottom:22px;
+  }
+  .stat-card{
+    background:var(--panel-bg);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px 16px;
+  }
+  .stat-card span{ display:block; font-size:.85rem; color:var(--muted); margin-bottom:6px; }
+  .stat-card strong{ font-size:1.1rem; letter-spacing:.3px; }
+
+  .collection-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .collection-count{ color:var(--muted); font-weight:600; }
+
+  .collection-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(88px,1fr));
+    gap:14px;
+  }
+  .collection-slot{
+    position:relative;
+    aspect-ratio:1;
+    border:1px dashed var(--border);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--panel-bg);
+    overflow:hidden;
+  }
+  .collection-slot img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .slot-placeholder{
+    font-size:2rem;
+    color:var(--muted);
+    opacity:.65;
+  }
+  .collection-slot.owned{ border-style:solid; border-color:rgba(96,165,250,.55); box-shadow:0 10px 26px rgba(96,165,250,.24); }
+  .collection-slot.owned .slot-placeholder{ display:none; }
+  .collection-slot .slot-name{
+    position:absolute;
+    left:8px;
+    right:8px;
+    bottom:8px;
+    background:rgba(13,17,23,.78);
+    border-radius:12px;
+    padding:4px 6px;
+    font-size:.7rem;
+    text-align:center;
+    color:var(--fg);
+  }
+
+  .achievements-placeholder{
+    border:1px dashed var(--border);
+    border-radius:16px;
+    padding:24px;
+    text-align:center;
+    color:var(--muted);
+    background:var(--panel-bg);
+  }
+
   /* Palco */
   .stage{
     display:grid; place-items:center; min-height: min(76vh, 820px);
@@ -252,7 +397,13 @@
       <span class="pill">Meminha: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
       <span class="pill">MPS: <b id="mps">0</b></span>
-      <button class="btn" id="deleteSave" style="max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
+      <button class="btn settings-btn" id="openSettings" aria-haspopup="dialog">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.51.41 1.08.4 1.66V11a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Configurações
+      </button>
     </div>
   </header>
 
@@ -285,11 +436,51 @@
   </main>
 </div>
 
+<div id="settingsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Configurações</h2>
+      <button class="modal-close" id="closeSettings" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-tabs" role="tablist">
+      <button class="modal-tab active" data-tab="config" role="tab" aria-selected="true">Geral</button>
+      <button class="modal-tab" data-tab="upgrades" role="tab" aria-selected="false">Melhorias</button>
+      <button class="modal-tab" data-tab="achievements" role="tab" aria-selected="false">Conquistas</button>
+    </div>
+    <div class="modal-content">
+      <div class="modal-panel active" data-panel="config" role="tabpanel">
+        <p class="muted">Gerencie seu progresso e preferências.</p>
+        <button class="btn" id="deleteSave" style="margin-top:12px;max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
+      </div>
+      <div class="modal-panel" data-panel="upgrades" role="tabpanel" aria-hidden="true">
+        <div class="stats-grid">
+          <div class="stat-card"><span>Meminhas no banco</span><strong id="statBanco">0</strong></div>
+          <div class="stat-card"><span>Tempo de jogo</span><strong id="statTempo">0:00</strong></div>
+          <div class="stat-card"><span>Construções obtidas</span><strong id="statConstr">0</strong></div>
+          <div class="stat-card"><span>Meminhas por segundo</span><strong id="statMps">0</strong></div>
+          <div class="stat-card"><span>Meminhas por clique</span><strong id="statClique">0</strong></div>
+          <div class="stat-card"><span>Cliques no Meminha</span><strong id="statCliques">0</strong></div>
+        </div>
+        <div class="collection-header">
+          <h3 style="margin:0">Coleção de melhorias</h3>
+          <span class="collection-count" id="collectionCount">Você tem 0/0 melhorias</span>
+        </div>
+        <div class="collection-grid" id="ownedUpgradesGrid"></div>
+      </div>
+      <div class="modal-panel" data-panel="achievements" role="tabpanel" aria-hidden="true">
+        <div class="achievements-placeholder">As conquistas aparecerão aqui em breve.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="saveToast" class="save-toast">salvo</div>
 
 <script>
 /* ===== Estado do jogo ===== */
 let pts = 0, clickPow = 1, mps = 0;
+let playTimeSeconds = 0;
+let totalClicks = 0;
 let upgradesState = null;
 let migratedLegacyUpgrades = false;
 
@@ -301,8 +492,6 @@ let faceTimer = null;
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
-const fmt = (n)=> Math.floor(n); // evita exibir mais pontos do que você tem
-
 /* formatação curta legível (K/M/B/T) */
 function fmtShort(n){
   const abs = Math.abs(n);
@@ -313,16 +502,151 @@ function fmtShort(n){
   return Math.floor(n).toString();
 }
 
+function fmtTime(seconds){
+  const total = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  const base = `${minutes}:${secs.toString().padStart(2,'0')}`;
+  return hours > 0 ? `${hours}:${minutes.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}` : base;
+}
+
+function getTotalBuildingsOwned(){
+  if(typeof SHOP === 'undefined') return 0;
+  return SHOP.reduce((sum, it)=> sum + (shopState?.[it.id]?.owned ?? 0), 0);
+}
+
+function getPurchasedUpgradeCount(){
+  if(typeof UPGRADE_DATA === 'undefined') return 0;
+  return UPGRADE_DATA.reduce((acc, up)=> acc + (isUpgradePurchased(up.id) ? 1 : 0), 0);
+}
+
+function renderStatsPanel(){
+  const bancoEl = el('statBanco');
+  if(!bancoEl) return;
+  bancoEl.textContent = fmtShort(pts);
+  const tempoEl = el('statTempo');
+  if(tempoEl) tempoEl.textContent = fmtTime(playTimeSeconds);
+  const constrEl = el('statConstr');
+  if(constrEl) constrEl.textContent = getTotalBuildingsOwned();
+  const mpsEl = el('statMps');
+  if(mpsEl) mpsEl.textContent = mps.toFixed(2);
+  const cliqueEl = el('statClique');
+  if(cliqueEl) cliqueEl.textContent = Math.max(1, Math.floor(clickPow));
+  const cliquesEl = el('statCliques');
+  if(cliquesEl) cliquesEl.textContent = totalClicks;
+  const countEl = el('collectionCount');
+  if(countEl && typeof UPGRADE_DATA !== 'undefined') countEl.textContent = `Você tem ${getPurchasedUpgradeCount()}/${UPGRADE_DATA.length} melhorias`;
+}
+
+function renderOwnedUpgradesCollection(){
+  const grid = el('ownedUpgradesGrid');
+  if(!grid || typeof UPGRADE_DATA === 'undefined') return;
+  grid.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+  UPGRADE_DATA.forEach(up=>{
+    const owned = isUpgradePurchased(up.id);
+    const slot = document.createElement('div');
+    slot.className = owned ? 'collection-slot owned' : 'collection-slot';
+    slot.dataset.upgrade = up.id;
+
+    if(owned){
+      const img = document.createElement('img');
+      img.src = up.img;
+      img.alt = up.name;
+      slot.appendChild(img);
+
+      const name = document.createElement('div');
+      name.className = 'slot-name';
+      name.textContent = up.name;
+      slot.appendChild(name);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'slot-placeholder';
+      placeholder.textContent = '?';
+      slot.appendChild(placeholder);
+    }
+
+    fragment.appendChild(slot);
+  });
+  grid.appendChild(fragment);
+  renderStatsPanel();
+}
+
+function setupSettingsModal(){
+  const modal = el('settingsModal');
+  const openBtn = el('openSettings');
+  const closeBtn = el('closeSettings');
+  if(!modal || !openBtn || !closeBtn) return;
+
+  const tabs = Array.from(modal.querySelectorAll('.modal-tab'));
+  const panels = Array.from(modal.querySelectorAll('.modal-panel'));
+
+  function setActiveTab(tabId){
+    tabs.forEach(btn=>{
+      const active = btn.dataset.tab === tabId;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    panels.forEach(panel=>{
+      const active = panel.dataset.panel === tabId;
+      panel.classList.toggle('active', active);
+      panel.setAttribute('aria-hidden', active ? 'false' : 'true');
+    });
+    if(tabId === 'upgrades'){
+      renderOwnedUpgradesCollection();
+    } else {
+      renderStatsPanel();
+    }
+  }
+
+  function open(){
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setActiveTab('config');
+    renderStatsPanel();
+  }
+
+  function close(){
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  openBtn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', (ev)=>{
+    if(ev.target === modal) close();
+  });
+  document.addEventListener('keydown', (ev)=>{
+    if(ev.key === 'Escape' && modal.classList.contains('open')) close();
+  });
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=> setActiveTab(btn.dataset.tab));
+  });
+}
+
 /* SAVE/LOAD */
 let shopState = null; // definido após catálogo
 function save(showToast=false){
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState, upgradesState}));
+  localStorage.setItem('mcw', JSON.stringify({
+    pts,
+    clickPow,
+    mps,
+    playTimeSeconds,
+    totalClicks,
+    shopState,
+    upgradesState
+  }));
   if(showToast) flashSave();
 }
 function load(){ try{
   migratedLegacyUpgrades = false;
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
+  playTimeSeconds = d.playTimeSeconds ?? d.playTime ?? 0;
+  totalClicks = d.totalClicks ?? 0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
   if(d.upgradesState){
     const base = makeInitialUpgradeState();
@@ -345,6 +669,7 @@ function renderHUD(){
   el('pc').textContent = Math.floor(clickPow);
   el('mps').textContent = mps.toFixed(2);
   // não re-renderiza a loja aqui
+  renderStatsPanel();
 }
 
 /* feedback imagem */
@@ -358,6 +683,8 @@ function showFront(){
 /* reset */
 function resetState(){
   pts=0; clickPow=1; mps=0;
+  playTimeSeconds = 0;
+  totalClicks = 0;
   shopState = makeInitialShopState();
   upgradesState = makeInitialUpgradeState();
 }
@@ -374,6 +701,7 @@ function loop(){
   function tick(){
     const now=performance.now(), dt=(now-last)/1000; last=now;
     pts += mps*dt;
+    playTimeSeconds += dt;
     renderHUD();           // atualiza só o topo
     updateAffordability(); // pinta se dá pra comprar, sem recriar DOM
     requestAnimationFrame(tick);
@@ -664,9 +992,24 @@ function getUpgradeRequirementLines(up){
   return lines;
 }
 
+function getUpgradeImprovementLines(up){
+  const lines = [];
+  if(up.bonus?.type === 'building'){
+    const name = SHOP_LOOKUP[up.bonus.target]?.name ?? up.bonus.target;
+    lines.push(`Melhora: ${name}`);
+  }
+  if(up.bonus?.type === 'finger'){
+    lines.push('Melhora: Cliques no Meminha');
+  }
+  return lines;
+}
+
 function buildUpgradeTooltip(up, purchased, affordable){
   const cost = up.cost ?? 0;
   const lines = [up.name, `Custo: ${fmtShort(cost)}`];
+  if(up.effect) lines.push(up.effect);
+  getUpgradeImprovementLines(up).forEach(line=> lines.push(line));
+
   if(purchased){
     lines.push('Já comprado');
   } else {
@@ -676,6 +1019,13 @@ function buildUpgradeTooltip(up, purchased, affordable){
     } else if(affordable){
       lines.push('Pronto para comprar');
     }
+  }
+
+  const reqLines = getUpgradeRequirementLines(up);
+  if(reqLines.length){
+    lines.push('');
+    lines.push('Requisitos:');
+    reqLines.forEach(line=> lines.push(`- ${line}`));
   }
   return lines.join('\n');
 }
@@ -806,6 +1156,7 @@ function renderUpgrades(){
 
   grid.appendChild(fragment);
   updateUpgradeAffordability();
+  renderOwnedUpgradesCollection();
 }
 
 /* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas */
@@ -884,6 +1235,7 @@ function tryBuy(id){
 }
 
 /* init */
+setupSettingsModal();
 load();
 recalculateProduction();
 renderShop();
@@ -897,7 +1249,13 @@ startAutoSave();
 function getClickGain(){
   return Math.max(1, Math.floor(clickPow));
 }
-el('click').onclick=()=>{ pts+=getClickGain(); renderHUD(); save(); showFront(); };
+el('click').onclick=()=>{
+  pts+=getClickGain();
+  totalClicks += 1;
+  renderHUD();
+  save();
+  showFront();
+};
 
 /* ações */
 el('deleteSave').onclick=deleteSave;
