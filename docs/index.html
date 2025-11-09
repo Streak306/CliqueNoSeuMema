@@ -247,7 +247,7 @@
 <div class="wrap">
   <!-- TOPO -->
   <header>
-    <h1>Clique no seu Mema</h1>
+    <h1>Memarkez</h1>
     <div class="stats">
       <span class="pill">Meminha: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
@@ -665,24 +665,15 @@ function getUpgradeRequirementLines(up){
 
 function buildUpgradeTooltip(up, purchased, affordable){
   const cost = up.cost ?? 0;
-  const lines = [up.name, '', up.effect, `Custo: ${fmtShort(cost)}`];
-  const reqLines = getUpgradeRequirementLines(up);
-  if(reqLines.length){
-    lines.push('');
-    lines.push('Requisitos:');
-    reqLines.forEach(line=> lines.push('• ' + line));
-  }
-  lines.push('');
+  const lines = [up.name, `Custo: ${fmtShort(cost)}`];
   if(purchased){
-    lines.push('Status: comprado');
-  } else if(affordable){
-    lines.push('Clique para comprar');
+    lines.push('Já comprado');
   } else {
     const miss = Math.max(0, Math.ceil(cost - pts));
     if(miss > 0){
       lines.push(`Faltam ${fmtShort(miss)} pts`);
-    } else {
-      lines.push('Custo disponível');
+    } else if(affordable){
+      lines.push('Pronto para comprar');
     }
   }
   return lines.join('\n');
