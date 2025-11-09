@@ -45,6 +45,15 @@
   }
   #pts{font-size:1.6rem;font-variant-numeric:tabular-nums}
 
+  /* simple button style (missing before) */
+  .btn{
+    padding:10px 14px;border:1px solid var(--border);border-radius:12px;
+    background:#171c24;color:var(--fg);cursor:pointer;
+    transition:filter .15s ease, transform .08s ease;
+  }
+  .btn:hover{ filter:brightness(1.06); }
+  .btn:active{ transform:translateY(1px) }
+
   /* Grid principal */
   .grid{
     display:grid; grid-template-columns: var(--sidew) 1fr var(--sidew);
@@ -213,21 +222,33 @@ let faceTimer = null;
 const el=(id)=>document.getElementById(id);
 const fmt = (n)=> Math.floor(n); // evita exibir mais pontos do que você tem
 
+/* formatação curta legível (K/M/B/T) */
+function fmtShort(n){
+  const abs = Math.abs(n);
+  if(abs >= 1e12) return (n/1e12).toFixed(3)+'T';
+  if(abs >= 1e9)  return (n/1e9 ).toFixed(3)+'B';
+  if(abs >= 1e6)  return (n/1e6 ).toFixed(2)+'M';
+  if(abs >= 1e3)  return (n/1e3 ).toFixed(2)+'K';
+  return Math.floor(n).toString();
+}
+
 /* SAVE/LOAD */
 let shopState = null; // definido após catálogo
+let selectedBulk = 1; // persistido
 function save(showToast=false){
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState}));
+  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState, bulkSel: selectedBulk}));
   if(showToast) flashSave();
 }
 function load(){ try{
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
+  if(d.bulkSel !== undefined) selectedBulk = d.bulkSel;
 } catch(e){} }
 
 /* HUD (topo) */
 function renderHUD(){
-  el('pts').textContent = fmt(pts);
+  el('pts').textContent = fmtShort(pts);
   el('pc').textContent = clickPow;
   el('mps').textContent = mps.toFixed(2);
   // não re-renderiza a loja aqui
@@ -345,7 +366,6 @@ function paybackForUnit(base, escala, qPossuidas, pPerUnit){
 }
 
 /* Render da loja — atualiza visibilidade e cores com base em pts e desbloqueio */
-let selectedBulk = 1;
 function renderShop(){
   const body = document.getElementById('shopBody');
   if(!body) return;
@@ -392,7 +412,7 @@ function renderShop(){
     tr.innerHTML = `
       <td class="name">
         <div>${displayName} <span style="font-weight:600;opacity:.75;font-size:.85rem;margin-left:8px">(${it.id})</span></div>
-        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Próx: ${priceSingle}${bulkPrice? (' — Bulk: '+bulkPrice) : ''}</div>
+        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Próx: ${fmtShort(priceSingle)}${bulkPrice? (' — Bulk: '+fmtShort(bulkPrice)) : ''}</div>
         <div class="status">${atLimit ? 'MAX' : ('Payback: '+Math.round(pay))}</div>
       </td>
       <td>+${it.p.toFixed(2)}</td>
@@ -435,20 +455,34 @@ function renderShop(){
   });
 }
 
-/* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas */
+/* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas
+   Agora considera o bulk selecionado (inclusive "Máx") ao marcar afford */
 function updateAffordability(){
   SHOP.forEach(it=>{
-    const st = shopState[it.id];
-    const row = document.querySelector(`tr[data-buy="${it.id}"]`);
+    const st   = shopState[it.id];
+    const row  = document.querySelector(`tr[data-buy="${it.id}"]`);
     if(!row) return;
 
-    const price = precoProximo(it.base, it.r, st.owned);
-    const can = (st.owned < it.limit) && (pts >= price);
+    const priceSingle = precoProximo(it.base, it.r, st.owned);
+    let can = (st.owned < it.limit) && (pts >= priceSingle);
+
+    // considerar o bulk selecionado
+    let k = 0;
+    if(selectedBulk === 'max'){
+      const remaining = it.limit - st.owned;
+      k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
+    } else {
+      k = Math.min(st.owned < it.limit ? selectedBulk : 0, it.limit - st.owned);
+    }
+    if(k > 0){
+      const bulkPrice = custoLote(it.base, it.r, st.owned, k);
+      can = can || (pts >= bulkPrice);
+    }
 
     const costEl = row.querySelector('.cost');
     if(costEl){
-      costEl.classList.toggle('can',  can);
-      costEl.classList.toggle('cant', !can);
+      costEl.classList.toggle('can',  pts >= priceSingle && st.owned < it.limit);
+      costEl.classList.toggle('cant', !(pts >= priceSingle && st.owned < it.limit));
     }
     row.classList.toggle('afford', can);
   });
@@ -525,13 +559,19 @@ bulkSelectEl.addEventListener('click', (e)=>{
   const k = btn.dataset.k;
   selectedBulk = (k === 'max') ? 'max' : parseInt(k,10) || 1;
   renderShop();
+  save(); // persist selection for UX
 });
 
 /* init */
 load(); renderShop(); renderHUD(); loop(); startAutoSave();
 
-/* clique na imagem = ganhar pontos */
-el('click').onclick=()=>{ pts+=clickPow; renderHUD(); save(); showFront(); };
+/* clique na imagem = ganhar pontos
+   usar função getClickGain() para facilitar upgrades futuros */
+function getClickGain(){
+  // por enquanto é só 1; depois aplicamos o divisor dos upgrades de Dedo
+  return 1;
+}
+el('click').onclick=()=>{ pts+=getClickGain(); renderHUD(); save(); showFront(); };
 
 /* ações */
 el('deleteSave').onclick=deleteSave;
