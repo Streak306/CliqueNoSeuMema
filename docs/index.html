@@ -537,6 +537,7 @@ const UPGRADE_DATA = [
 ];
 
 const UPGRADE_MAP = UPGRADE_DATA.reduce((acc, up)=>{ acc[up.id] = up; return acc; }, {});
+const upgradeElements = new Map();
 
 function makeInitialShopState(){
   const s={};
@@ -691,11 +692,17 @@ function updateUpgradeElement(el, up){
 }
 
 function updateUpgradeAffordability(){
-  UPGRADE_DATA.forEach(up=>{
-    const el = document.querySelector(`[data-upgrade="${up.id}"]`);
-    if(!el) return;
-    updateUpgradeElement(el, up);
+  upgradeElements.forEach((el, id)=>{
+    const up = UPGRADE_MAP[id];
+    if(up) updateUpgradeElement(el, up);
   });
+}
+
+function getUpgradeElement(id){
+  if(upgradeElements.has(id)) return upgradeElements.get(id);
+  const el = document.querySelector(`[data-upgrade="${id}"]`);
+  if(el) upgradeElements.set(id, el);
+  return el;
 }
 
 function tryBuyUpgrade(id){
@@ -705,7 +712,7 @@ function tryBuyUpgrade(id){
   if(!canShowUpgrade(up)) return;
   const cost = up.cost ?? 0;
   if(pts < cost){
-    const el = document.querySelector(`[data-upgrade="${id}"]`);
+    const el = getUpgradeElement(id);
     if(el){
       el.classList.add('buzz');
       setTimeout(()=> el.classList.remove('buzz'), 320);
@@ -761,6 +768,9 @@ function renderUpgrades(){
   const grid = document.getElementById('upgradesGrid');
   if(!grid) return;
   grid.innerHTML = '';
+  upgradeElements.clear();
+
+  const fragment = document.createDocumentFragment();
 
   UPGRADE_DATA.forEach(up=>{
     const purchased = isUpgradePurchased(up.id);
@@ -784,13 +794,17 @@ function renderUpgrades(){
     check.textContent = '✔';
     item.appendChild(check);
 
+    updateUpgradeElement(item, up);
+
     if(!purchased){
       item.addEventListener('click', ()=> tryBuyUpgrade(up.id));
     }
 
-    grid.appendChild(item);
+    fragment.appendChild(item);
+    upgradeElements.set(up.id, item);
   });
 
+  grid.appendChild(fragment);
   updateUpgradeAffordability();
 }
 
