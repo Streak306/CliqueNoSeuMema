@@ -83,7 +83,11 @@
   .save-toast.show{ opacity:1; transform:translateY(0); }
 
   /* LOJA – tabela clicável */
-  .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px}
+  .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px; display:flex; align-items:center; justify-content:space-between}
+  .bulk-select{ display:flex; gap:8px; align-items:center; }
+  .bulk-select button{ background:transparent;border:1px solid var(--border); color:var(--fg); padding:6px 8px; border-radius:8px; cursor:pointer }
+  .bulk-select button.active{ background:var(--accent); color:#0b1220; border-color:var(--accent); font-weight:700 }
+
   table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-layout:fixed}
   .shop thead th{font-size:12px; text-align:left; opacity:.75; padding:0 10px}
   .shop tbody tr{
@@ -151,7 +155,7 @@
     <div class="stats">
       <span class="pill">Meminha: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
-      <span class="pill">Auto/s: <b id="cps">0</b></span>
+      <span class="pill">MPS: <b id="mps">0</b></span>
       <button class="btn" id="deleteSave" style="max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
     </div>
   </header>
@@ -168,12 +172,21 @@
     </section>
 
     <aside class="card shop-card">
-      <div class="shop-title">Loja</div>
+      <div class="shop-title">
+        <div>Loja</div>
+        <div class="bulk-select" id="bulkSelect">
+          <label style="opacity:.8;font-size:12px;margin-right:6px">Comprar:</label>
+          <button data-k="1" class="active">1</button>
+          <button data-k="10">10</button>
+          <button data-k="100">100</button>
+          <button data-k="max">Máx</button>
+        </div>
+      </div>
       <table class="shop">
         <thead>
           <tr>
             <th>Item</th>
-            <th>+Auto/s</th>
+            <th>+MPS</th>
             <th>Qtde</th>
           </tr>
         </thead>
@@ -188,7 +201,7 @@
 
 <script>
 /* ===== Estado do jogo ===== */
-let pts=0, clickPow=1, auto=0;
+let pts = 0, clickPow = 1, mps = 0;
 
 /* Imagens (efeito clique) */
 const IMG_BACK  = 'mema_back.png';
@@ -203,12 +216,12 @@ const fmt = (n)=> Math.floor(n); // evita exibir mais pontos do que você tem
 /* SAVE/LOAD */
 let shopState = null; // definido após catálogo
 function save(showToast=false){
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,auto, shopState}));
+  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState}));
   if(showToast) flashSave();
 }
 function load(){ try{
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
-  pts=d.pts??0; clickPow=d.clickPow??1; auto=d.auto??0;
+  pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
 } catch(e){} }
 
@@ -216,7 +229,7 @@ function load(){ try{
 function renderHUD(){
   el('pts').textContent = fmt(pts);
   el('pc').textContent = clickPow;
-  el('cps').textContent = auto.toFixed(2);
+  el('mps').textContent = mps.toFixed(2);
   // não re-renderiza a loja aqui
 }
 
@@ -230,7 +243,7 @@ function showFront(){
 
 /* reset */
 function resetState(){
-  pts=0; clickPow=1; auto=0;
+  pts=0; clickPow=1; mps=0;
   shopState = makeInitialShopState();
 }
 function deleteSave(){
@@ -240,12 +253,12 @@ function deleteSave(){
   resetState(); renderShop(); renderHUD();
 }
 
-/* loop de pontos automáticos */
+/* loop de meminhas automáticos (MPS) */
 function loop(){
   let last=performance.now();
   function tick(){
     const now=performance.now(), dt=(now-last)/1000; last=now;
-    pts += auto*dt;
+    pts += mps*dt;
     renderHUD();           // atualiza só o topo
     updateAffordability(); // pinta se dá pra comprar, sem recriar DOM
     requestAnimationFrame(tick);
@@ -272,28 +285,67 @@ function flashSave(){
 (new Image()).src = IMG_BACK;
 (new Image()).src = IMG_FRONT;
 
-/* ===== Loja ===== */
+/* ===== Loja =====
+   Agora usamos as fórmulas exponenciais:
+   precoProximo(base, escala, q) = ceil(base * escala^q)
+   custoLote(base, escala, q, k) = ceil(base * escala^q * (escala^k - 1)/(escala - 1))
+   payback = precoProximo / deltaMps
+*/
+
+/* Parâmetros sugeridos (base, escala, mps/base) */
 const SHOP = [
-  {id:'dedo',       name:'Dedo',       cps:0.10, base:15,    mul:1.15, limit:50},
-  {id:'roupa',      name:'Roupa',      cps:0.50, base:80,    mul:1.15, limit:20},
-  {id:'agua',       name:'Água',       cps:1.00, base:150,   mul:1.16, limit:20},
-  {id:'plantacao',  name:'Plantação',  cps:2.50, base:450,   mul:1.17, limit:12},
-  {id:'alojamento', name:'Alojamento', cps:5.00, base:900,   mul:1.18, limit:8},
-  {id:'casa',       name:'Casa',       cps:10.0, base:1800,  mul:1.19, limit:5},
-  {id:'xbox',       name:'Xbox',       cps:15.0, base:3200,  mul:1.20, limit:3},
-  {id:'computador', name:'Computador', cps:25.0, base:6000,  mul:1.21, limit:3},
-  {id:'microfone',  name:'Microfone',  cps:40.0, base:10000, mul:1.22, limit:2},
-  {id:'namorada',   name:'Namorada',   cps:100.0,base:50000, mul:1.30, limit:1}
+  {id:'dedo',       name:'Dedo',       base:15,          r:1.07, p:0.10, limit:50},
+  {id:'roupa',      name:'Roupa',      base:100,         r:1.10, p:1.00,  limit:20},
+  {id:'agua',       name:'Água',       base:1100,        r:1.12, p:8.00,  limit:20},
+  {id:'plantacao',  name:'Plantação',  base:12000,       r:1.13, p:47.0,  limit:12},
+  {id:'alojamento', name:'Alojamento', base:130000,      r:1.14, p:260.0, limit:8},
+  {id:'casa',       name:'Casa',       base:1400000,     r:1.15, p:1400.0,limit:5},
+  {id:'xbox',       name:'Xbox',       base:20000000,    r:1.16, p:7800.0, limit:3},
+  {id:'computador', name:'Computador', base:330000000,   r:1.17, p:44000.0,limit:3},
+  {id:'microfone',  name:'Microfone',  base:5100000000,  r:1.18, p:260000.0,limit:2},
+  {id:'namorada',   name:'Namorada',   base:75000000000, r:1.20, p:1600000.0,limit:1}
 ];
 
 function makeInitialShopState(){
   const s={};
-  SHOP.forEach(it=> s[it.id] = {owned:0, cost:it.base});
+  SHOP.forEach(it=> s[it.id] = {owned:0});
   return s;
 }
 if(!shopState) shopState = makeInitialShopState();
 
+/* Fórmulas utilitárias */
+function precoProximo(base, escala, qPossuidas){
+  return Math.ceil(base * Math.pow(escala, qPossuidas));
+}
+function custoLote(base, escala, qPossuidas, k){
+  if(k <= 0) return 0;
+  if(Math.abs(escala - 1) < 1e-12){
+    // caso degenerate
+    return Math.ceil(base * Math.pow(escala, qPossuidas) * k);
+  }
+  const sum = (Math.pow(escala, k) - 1) / (escala - 1);
+  return Math.ceil(base * Math.pow(escala, qPossuidas) * sum);
+}
+// calcula o máximo k tal que custoLote(...) <= budget, também respeita limiteRem
+function maxAffordable(base, escala, qPossuidas, budget, limitRem){
+  if(limitRem <= 0) return 0;
+  // resolver r^k <= 1 + budget*(r-1)/(base * r^q)
+  const denom = base * Math.pow(escala, qPossuidas);
+  if(budget < denom) return 0;
+  const rhs = 1 + budget * (escala - 1) / denom;
+  if(rhs <= 1) return 0;
+  const kFloat = Math.floor(Math.log(rhs) / Math.log(escala));
+  // kFloat pode ser 0 if budget < first price; cap entre 0..limitRem
+  return Math.max(0, Math.min(limitRem, kFloat));
+}
+function paybackForUnit(base, escala, qPossuidas, pPerUnit){
+  const price = precoProximo(base, escala, qPossuidas);
+  const deltaMps = pPerUnit;
+  return price / Math.max(deltaMps, 1e-9);
+}
+
 /* Render da loja — atualiza visibilidade e cores com base em pts e desbloqueio */
+let selectedBulk = 1;
 function renderShop(){
   const body = document.getElementById('shopBody');
   if(!body) return;
@@ -302,7 +354,6 @@ function renderShop(){
   SHOP.forEach((it, idx)=>{
     const st = shopState[it.id];
     const atLimit = st.owned >= it.limit;
-    const price = Math.ceil(st.cost);
 
     // desbloqueio: item só aparece quando o anterior tiver ao menos 1 comprado
     const locked = idx > 0 && (shopState[SHOP[idx-1].id].owned < 1);
@@ -316,39 +367,66 @@ function renderShop(){
       tr.className = atLimit ? 'max' : 'clickable';
     }
 
+    // determinar preço single e preço para o bulk selecionado
+    const priceSingle = precoProximo(it.base, it.r, st.owned);
+    let bulkK = selectedBulk === 'max' ? 0 : selectedBulk;
+    if(selectedBulk === 'max'){
+      // compute max affordable given pts and remaining limit
+      const remaining = it.limit - st.owned;
+      const k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
+      bulkK = k;
+    }
+    const bulkPrice = (bulkK > 0) ? custoLote(it.base, it.r, st.owned, bulkK) : null;
+
     // determinar se pode comprar agora (custo alcançável e não no limite)
-    const canAfford = (!atLimit) && (pts >= price);
+    const canAffordSingle = (!atLimit) && (pts >= priceSingle);
+    const canAffordBulk = (!atLimit) && bulkK > 0 && (pts >= bulkPrice);
 
     // Se o item estiver desbloqueado mas você ainda não possui NENHUM (owned === 0),
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
-    // Itens ainda bloqueados (locked === true) continuam invisíveis como antes.
     const displayName = (!locked && st.owned === 0) ? '?????' : it.name;
 
-    // build row WITHOUT a buy button and WITHOUT a separate "status" column.
-    // status messages (MAX / Faltam X) will be rendered inside the name cell.
+    // payback para a próxima unidade
+    const pay = paybackForUnit(it.base, it.r, st.owned, it.p);
+
     tr.innerHTML = `
       <td class="name">
-        <div>${displayName}</div>
-        <div class="cost ${canAfford ? 'can' : 'cant'}">${price}</div>
-        <div class="status">${atLimit ? 'MAX' : ''}</div>
+        <div>${displayName} <span style="font-weight:600;opacity:.75;font-size:.85rem;margin-left:8px">(${it.id})</span></div>
+        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Próx: ${priceSingle}${bulkPrice? (' — Bulk: '+bulkPrice) : ''}</div>
+        <div class="status">${atLimit ? 'MAX' : ('Payback: '+Math.round(pay))}</div>
       </td>
-      <td>+${it.cps.toFixed(2)}</td>
+      <td>+${it.p.toFixed(2)}</td>
       <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
     `;
 
-    // aplica a classe visual de "pode comprar" mesmo quando não for clicável
-    tr.classList.toggle('afford', canAfford);
+    // aplica a classe visual de "pode comprar" se qualquer opção for afford
+    tr.classList.toggle('afford', canAffordSingle || canAffordBulk);
 
-    if(!locked){
-      // clique na linha inteira
-      tr.addEventListener('click', ()=> tryBuy(it.id));
+    if(!locked && !atLimit){
+      // clique na linha inteira --> tenta comprar selected bulk
+      tr.addEventListener('click', ()=> {
+        if(selectedBulk === 'max') {
+          // recompute current max
+          const remaining = it.limit - st.owned;
+          const k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
+          tryBuy(it.id, k);
+        } else {
+          tryBuy(it.id, selectedBulk);
+        }
+      });
       // acessibilidade básica (Enter/Space)
-      tr.setAttribute('tabindex', atLimit ? '-1' : '0');
+      tr.setAttribute('tabindex', '0');
       tr.setAttribute('role','button');
       tr.addEventListener('keydown', (e)=>{
-        if(atLimit) return;
         if(e.key==='Enter' || e.key===' '){
-          e.preventDefault(); tryBuy(it.id);
+          e.preventDefault();
+          if(selectedBulk === 'max') {
+            const remaining = it.limit - st.owned;
+            const k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
+            tryBuy(it.id, k);
+          } else {
+            tryBuy(it.id, selectedBulk);
+          }
         }
       });
     }
@@ -364,7 +442,7 @@ function updateAffordability(){
     const row = document.querySelector(`tr[data-buy="${it.id}"]`);
     if(!row) return;
 
-    const price = Math.ceil(st.cost);
+    const price = precoProximo(it.base, it.r, st.owned);
     const can = (st.owned < it.limit) && (pts >= price);
 
     const costEl = row.querySelector('.cost');
@@ -376,72 +454,51 @@ function updateAffordability(){
   });
 }
 
-/* Tenta comprar item ao clicar na linha */
-function tryBuy(id){
+/* Tenta comprar item (k unidades) ao clicar na linha */
+function tryBuy(id, k = 1){
+  if(!k || k <= 0) return;
   const it = SHOP.find(x=>x.id===id); if(!it) return;
   const st = shopState[id];
-  const price = Math.ceil(st.cost);
+  const remainingLimit = it.limit - st.owned;
+  if(remainingLimit <= 0) return;
 
+  // cap k pelo limite restante
+  const toBuy = Math.min(k, remainingLimit);
+
+  const totalCost = custoLote(it.base, it.r, st.owned, toBuy);
   // encontrar a linha atual no DOM (pode ter sido re-renderizada)
   const row = document.querySelector(`tr[data-buy="${id}"]`);
 
-  if(st.owned >= it.limit){
-    if(row){
-      row.classList.remove('clickable'); row.classList.add('max');
-      const s = row.querySelector('.status');
-      if(s) s.textContent = 'MAX';
-    }
+  if(toBuy <= 0){
     return;
   }
 
-  if(pts < price){
+  if(pts < totalCost){
     if(row){
       // feedback: buzz + "faltam X pts"
       row.classList.add('buzz');
-      const miss = Math.ceil(price - pts);
+      const miss = Math.ceil(totalCost - pts);
       const s = row.querySelector('.status');
       if(s){
         s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
         setTimeout(()=>{ if(s.querySelector('.need')) s.textContent = ''; }, 900);
-        }
-        setTimeout(()=> row.classList.remove('buzz'), 320);
+      }
+      setTimeout(()=> row.classList.remove('buzz'), 320);
     }
     return;
   }
 
-  // compra
-  pts -= price;
-  st.owned += 1;
-  auto += it.cps;
+  // compra: subtrai custo e atualiza owned / mps
+  pts -= totalCost;
+  st.owned += toBuy;
+  mps += it.p * toBuy;
 
-  if(st.owned < it.limit){
-    st.cost = Math.ceil(st.cost * it.mul);
-  }else{
+  // If reached limit, visually mark
+  if(st.owned >= it.limit){
     if(row){
       row.classList.remove('clickable'); row.classList.add('max');
       const s = row.querySelector('.status'); if(s) s.textContent = 'MAX';
     }
-  }
-
-  // atualizar linha atual (se ainda estiver no DOM)
-  if(row){
-    const priceNow = Math.ceil(st.cost);
-    const costEl = row.querySelector('.cost');
-    if(costEl) {
-      costEl.textContent = priceNow;
-      const canAffordNow = pts >= priceNow && st.owned < it.limit;
-      costEl.classList.toggle('can', canAffordNow);
-      costEl.classList.toggle('cant', !canAffordNow);
-      row.classList.toggle('afford', canAffordNow);
-    }
-
-    const ownedEl = row.querySelector('.owned');
-    const limitEl = row.querySelector('.limit-num');
-    if(ownedEl) ownedEl.textContent = st.owned;
-    if(limitEl) limitEl.textContent = it.limit;
-
-    const statusEl = row.querySelector('.status');
-    if(statusEl) statusEl.textContent = st.owned >= it.limit ? 'MAX' : '';
   }
 
   // Ao comprar, possivelmente desbloqueia o próximo item — re-render da loja
@@ -456,6 +513,19 @@ function tryBuy(id){
     setTimeout(()=> newRow.classList.remove('flashG'), 450);
   }
 }
+
+/* Bulk selector handling */
+const bulkSelectEl = el('bulkSelect');
+bulkSelectEl.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-k]');
+  if(!btn) return;
+  const all = bulkSelectEl.querySelectorAll('button[data-k]');
+  all.forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const k = btn.dataset.k;
+  selectedBulk = (k === 'max') ? 'max' : parseInt(k,10) || 1;
+  renderShop();
+});
 
 /* init */
 load(); renderShop(); renderHUD(); loop(); startAutoSave();
