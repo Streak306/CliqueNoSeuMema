@@ -247,7 +247,7 @@
 <div class="wrap">
   <!-- TOPO -->
   <header>
-    <h1>Clique no seu Mema</h1>
+    <h1>Memarkez</h1>
     <div class="stats">
       <span class="pill">Meminha: <b id="pts">0</b></span>
       <span class="pill">Por clique: <b id="pc">1</b></span>
@@ -537,6 +537,7 @@ const UPGRADE_DATA = [
 ];
 
 const UPGRADE_MAP = UPGRADE_DATA.reduce((acc, up)=>{ acc[up.id] = up; return acc; }, {});
+const upgradeElements = new Map();
 
 function makeInitialShopState(){
   const s={};
@@ -665,24 +666,18 @@ function getUpgradeRequirementLines(up){
 
 function buildUpgradeTooltip(up, purchased, affordable){
   const cost = up.cost ?? 0;
-  const lines = [up.name, '', up.effect, `Custo: ${fmtShort(cost)}`];
-  const reqLines = getUpgradeRequirementLines(up);
-  if(reqLines.length){
-    lines.push('');
-    lines.push('Requisitos:');
-    reqLines.forEach(line=> lines.push('• ' + line));
+  const lines = [up.name, `Custo: ${fmtShort(cost)}`];
+  if(up.effect){
+    lines.push(`Efeito: ${up.effect}`);
   }
-  lines.push('');
   if(purchased){
-    lines.push('Status: comprado');
-  } else if(affordable){
-    lines.push('Clique para comprar');
+    lines.push('Já comprado');
   } else {
     const miss = Math.max(0, Math.ceil(cost - pts));
     if(miss > 0){
       lines.push(`Faltam ${fmtShort(miss)} pts`);
-    } else {
-      lines.push('Custo disponível');
+    } else if(affordable){
+      lines.push('Pronto para comprar');
     }
   }
   return lines.join('\n');
@@ -700,11 +695,17 @@ function updateUpgradeElement(el, up){
 }
 
 function updateUpgradeAffordability(){
-  UPGRADE_DATA.forEach(up=>{
-    const el = document.querySelector(`[data-upgrade="${up.id}"]`);
-    if(!el) return;
-    updateUpgradeElement(el, up);
+  upgradeElements.forEach((el, id)=>{
+    const up = UPGRADE_MAP[id];
+    if(up) updateUpgradeElement(el, up);
   });
+}
+
+function getUpgradeElement(id){
+  if(upgradeElements.has(id)) return upgradeElements.get(id);
+  const el = document.querySelector(`[data-upgrade="${id}"]`);
+  if(el) upgradeElements.set(id, el);
+  return el;
 }
 
 function tryBuyUpgrade(id){
@@ -714,7 +715,7 @@ function tryBuyUpgrade(id){
   if(!canShowUpgrade(up)) return;
   const cost = up.cost ?? 0;
   if(pts < cost){
-    const el = document.querySelector(`[data-upgrade="${id}"]`);
+    const el = getUpgradeElement(id);
     if(el){
       el.classList.add('buzz');
       setTimeout(()=> el.classList.remove('buzz'), 320);
@@ -770,6 +771,9 @@ function renderUpgrades(){
   const grid = document.getElementById('upgradesGrid');
   if(!grid) return;
   grid.innerHTML = '';
+  upgradeElements.clear();
+
+  const fragment = document.createDocumentFragment();
 
   UPGRADE_DATA.forEach(up=>{
     const purchased = isUpgradePurchased(up.id);
@@ -793,13 +797,17 @@ function renderUpgrades(){
     check.textContent = '✔';
     item.appendChild(check);
 
+    updateUpgradeElement(item, up);
+
     if(!purchased){
       item.addEventListener('click', ()=> tryBuyUpgrade(up.id));
     }
 
-    grid.appendChild(item);
+    fragment.appendChild(item);
+    upgradeElements.set(up.id, item);
   });
 
+  grid.appendChild(fragment);
   updateUpgradeAffordability();
 }
 
