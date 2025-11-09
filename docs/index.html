@@ -80,7 +80,7 @@
     border-radius:14px;
     background:var(--panel-bg);
     padding:0;
-    overflow:hidden;
+    overflow:visible;
     cursor:pointer;
     transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease, filter .15s ease;
     display:block;
@@ -92,6 +92,7 @@
     height:100%;
     object-fit:cover;
     display:block;
+    border-radius:inherit;
   }
   .upgrade-tile.available:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(59,130,246,.28); }
   .upgrade-tile.locked{ filter:saturate(.4) brightness(.85); }
@@ -214,7 +215,6 @@
   }
   .shop tr.afford:hover{
     filter:brightness(1.08);
-@@ -132,447 +148,583 @@
   /* owned/limit estilo grande (novo) */
   .owned-limit{ font-weight:800; font-size:1.05rem; letter-spacing:.6px; color:var(--fg); }
   .owned-limit .owned{ color:var(--fg); opacity:0.95; margin-right:6px; }
@@ -514,7 +514,7 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-dedo-t2',
-    name:'mão de Graphite',
+    name:'Mão de Graphite',
     effect:'Cada Dedo gera +1 clique extra (acumula)',
     cost:250000,
     img:'imagens/melhorias-futuras/up-dedo-t2.png',
@@ -525,7 +525,7 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-dedo-t3',
-    name:'mão de Slate',
+    name:'Mão de Slate',
     effect:'Cada Dedo gera +1 clique extra (acumula)',
     cost:10000000,
     img:'imagens/melhorias-futuras/up-dedo-t3.png',
