@@ -67,19 +67,96 @@
   .upgrades-card{ display:flex; flex-direction:column; gap:16px; min-height: min(76vh, 820px); }
   .upgrades-title{ margin:6px 0 0; font-size:1.35rem; letter-spacing:.4px; }
   .upgrades-sub{ margin:0; font-size:.92rem; }
-  .upgrade-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px; }
-  .upgrade{ border:1px solid var(--border); border-radius:18px; padding:16px; background:linear-gradient(160deg, rgba(30,41,59,.65) 0%, rgba(15,23,42,.85) 100%); box-shadow:0 10px 24px rgba(0,0,0,.28); transition:transform .12s ease, box-shadow .15s ease, filter .15s ease; display:flex; flex-direction:column; gap:12px; }
-  .upgrade.unlocked{ box-shadow:0 14px 30px rgba(59,130,246,.28); border-color:rgba(96,165,250,.55); }
-  .upgrade.unlocked:hover{ transform:translateY(-3px); box-shadow:0 18px 34px rgba(59,130,246,.34); }
-  .upgrade.locked{ filter:saturate(.35) brightness(.8); opacity:.55; }
-  .upgrade.locked .upgrade-badge{ color:#fca5a5; }
-  .upgrade-img-wrap{ position:relative; border-radius:14px; overflow:hidden; }
-  .upgrade-img{ display:block; width:100%; height:auto; aspect-ratio:1; object-fit:cover; }
-  .upgrade-badge{ position:absolute; left:10px; bottom:10px; background:rgba(15,23,42,.88); color:var(--accent); padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
-  .upgrade-name{ font-weight:700; font-size:1rem; letter-spacing:.3px; }
-  .upgrade-effect{ font-size:.88rem; color:var(--fg); opacity:.92; }
-  .upgrade-req{ font-size:.78rem; color:var(--muted); line-height:1.4; }
-  .upgrade-req span{ display:block; }
+  .upgrade-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(72px,1fr));
+    gap:12px;
+  }
+  .upgrade-tile{
+    position:relative;
+    width:100%;
+    aspect-ratio:1;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--panel-bg);
+    padding:0;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease, filter .15s ease;
+    display:block;
+    font:inherit;
+    color:inherit;
+  }
+  .upgrade-tile img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .upgrade-tile.available:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(59,130,246,.28); }
+  .upgrade-tile.locked{ filter:saturate(.4) brightness(.85); }
+  .upgrade-tile.purchased{
+    cursor:default;
+    border-color:rgba(96,165,250,.55);
+    box-shadow:0 12px 28px rgba(96,165,250,.24);
+    filter:saturate(1.08) brightness(1.05);
+  }
+  .upgrade-tile:disabled{ cursor:default; }
+  .upgrade-tile:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+  .upgrade-check{
+    position:absolute;
+    right:6px;
+    top:6px;
+    background:rgba(15,23,42,.85);
+    color:var(--accent);
+    border-radius:999px;
+    padding:2px 6px;
+    font-size:12px;
+    font-weight:700;
+    display:none;
+    align-items:center;
+    justify-content:center;
+  }
+  .upgrade-tile.purchased .upgrade-check{ display:flex; }
+  .upgrade-tile::after{
+    content:attr(data-tooltip);
+    position:absolute;
+    left:50%;
+    bottom:calc(100% + 12px);
+    transform:translate(-50%, 10px);
+    background:rgba(13,17,23,.95);
+    color:var(--fg);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px 12px;
+    box-shadow:0 12px 26px rgba(0,0,0,.45);
+    white-space:pre-line;
+    font-size:.82rem;
+    min-width:180px;
+    max-width:240px;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .15s ease, transform .15s ease;
+    z-index:20;
+  }
+  .upgrade-tile::before{
+    content:'';
+    position:absolute;
+    left:50%;
+    bottom:calc(100% + 6px);
+    transform:translate(-50%, 6px);
+    border:6px solid transparent;
+    border-top-color:rgba(13,17,23,.95);
+    opacity:0;
+    transition:opacity .15s ease, transform .15s ease;
+    z-index:21;
+    pointer-events:none;
+  }
+  .upgrade-tile:hover::after,
+  .upgrade-tile:focus-visible::after{ opacity:1; transform:translate(-50%, 0); }
+  .upgrade-tile:hover::before,
+  .upgrade-tile:focus-visible::before{ opacity:1; transform:translate(-50%, 0); }
+  .upgrade-tile.buzz{ animation:buzz .15s linear 2; }
 
   /* make the shop card match stage height so items don't look "outside" */
   .shop-card{ min-height: min(76vh, 820px); display:flex; flex-direction:column; }
@@ -214,6 +291,7 @@
 /* ===== Estado do jogo ===== */
 let pts = 0, clickPow = 1, mps = 0;
 let upgradesState = null;
+let migratedLegacyUpgrades = false;
 
 /* Imagens (efeito clique) */
 const IMG_BACK  = 'imagens/variacoes-mema/mema_back.png';
@@ -242,6 +320,7 @@ function save(showToast=false){
   if(showToast) flashSave();
 }
 function load(){ try{
+  migratedLegacyUpgrades = false;
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
@@ -249,7 +328,13 @@ function load(){ try{
     const base = makeInitialUpgradeState();
     upgradesState = {...base};
     Object.keys(d.upgradesState).forEach(id=>{
-      if(base[id]) upgradesState[id] = {...base[id], ...d.upgradesState[id]};
+      if(!base[id]) return;
+      const prev = d.upgradesState[id] || {};
+      const purchased = !!(prev.purchased ?? prev.unlocked);
+      upgradesState[id] = {...base[id], purchased, unlocked:purchased};
+      if(prev.unlocked !== undefined && prev.purchased === undefined){
+        migratedLegacyUpgrades = true;
+      }
     });
   }
 } catch(e){} }
@@ -339,8 +424,9 @@ const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{ acc[item.id] = item; return acc; 
 const UPGRADE_DATA = [
   {
     id:'up-roupa-t1',
-    name:'Roupa Premium',
+    name:'Tênis Impressionante',
     effect:'+10% MPS gerado por Roupa',
+    cost:1000,
     img:'imagens/melhorias-futuras/up-roupa-t1.png',
     requirement:{type:'building', building:'roupa', count:1},
     requirementText:'Compre 1 Roupa',
@@ -348,8 +434,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-agua-t1',
-    name:'Purificador de Água',
+    name:'Água Salgada',
     effect:'+10% MPS gerado por Água',
+    cost:12000,
     img:'imagens/melhorias-futuras/up-agua-t1.png',
     requirement:{type:'building', building:'agua', count:1},
     requirementText:'Compre 1 Água',
@@ -357,8 +444,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-plantacao-t1',
-    name:'Adubo Especial',
+    name:'Fertilizante',
     effect:'+12% MPS gerado por Plantação',
+    cost:180000,
     img:'imagens/melhorias-futuras/up-plantacao-t1.png',
     requirement:{type:'building', building:'plantacao', count:1},
     requirementText:'Compre 1 Plantação',
@@ -366,8 +454,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-alojamento-t1',
-    name:'Suíte Completa',
+    name:'Cerca',
     effect:'+12% MPS gerado por Alojamento',
+    cost:2000000,
     img:'imagens/melhorias-futuras/up-alojamento-t1.png',
     requirement:{type:'building', building:'alojamento', count:1},
     requirementText:'Compre 1 Alojamento',
@@ -375,8 +464,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-casa-t1',
-    name:'Projeto Moderno',
+    name:'Porta',
     effect:'+15% MPS gerado por Casa',
+    cost:30000000,
     img:'imagens/melhorias-futuras/up-casa-t1.png',
     requirement:{type:'building', building:'casa', count:1},
     requirementText:'Compre 1 Casa',
@@ -384,8 +474,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-xbox-t1',
-    name:'Game Pass Vitalício',
+    name:'Controle360',
     effect:'+15% MPS gerado por Xbox',
+    cost:450000000,
     img:'imagens/melhorias-futuras/up-xbox-t1.png',
     requirement:{type:'building', building:'xbox', count:1},
     requirementText:'Compre 1 Xbox',
@@ -393,8 +484,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-computador-t1',
-    name:'Cluster Otimizado',
+    name:'Ryzen',
     effect:'+18% MPS gerado por Computador',
+    cost:6000000000,
     img:'imagens/melhorias-futuras/up-computador-t1.png',
     requirement:{type:'building', building:'computador', count:1},
     requirementText:'Compre 1 Computador',
@@ -402,8 +494,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-microfone-t1',
-    name:'Microfone Profissa',
+    name:'Rap de Anime',
     effect:'+20% MPS gerado por Microfone',
+    cost:90000000000,
     img:'imagens/melhorias-futuras/up-microfone-t1.png',
     requirement:{type:'building', building:'microfone', count:1},
     requirementText:'Compre 1 Microfone',
@@ -411,8 +504,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-dedo-t1',
-    name:'Dedo Ritmado',
+    name:'Mão aprimorada',
     effect:'Cada Dedo gera +1 clique extra',
+    cost:5000,
     img:'imagens/melhorias-futuras/up-dedo-t1.png',
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Tenha 10 Dedos',
@@ -420,8 +514,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-dedo-t2',
-    name:'Dedo Virtuose',
+    name:'mão de Graphite',
     effect:'Cada Dedo gera +1 clique extra (acumula)',
+    cost:250000,
     img:'imagens/melhorias-futuras/up-dedo-t2.png',
     requirement:{type:'building', building:'dedo', count:25},
     requirementText:'Tenha 25 Dedos e o upgrade anterior',
@@ -430,8 +525,9 @@ const UPGRADE_DATA = [
   },
   {
     id:'up-dedo-t3',
-    name:'Dedo Supremo',
+    name:'mão de Slate',
     effect:'Cada Dedo gera +1 clique extra (acumula)',
+    cost:10000000,
     img:'imagens/melhorias-futuras/up-dedo-t3.png',
     requirement:{type:'building', building:'dedo', count:40},
     requirementText:'Tenha 40 Dedos e o upgrade anterior',
@@ -451,7 +547,7 @@ if(!shopState) shopState = makeInitialShopState();
 
 function makeInitialUpgradeState(){
   const s={};
-  UPGRADE_DATA.forEach(up=> s[up.id] = {unlocked:false});
+  UPGRADE_DATA.forEach(up=> s[up.id] = {purchased:false, unlocked:false});
   return s;
 }
 if(!upgradesState) upgradesState = makeInitialUpgradeState();
@@ -525,11 +621,22 @@ function renderShop(){
   });
 }
 
-function canUnlockUpgrade(up){
-  if(!upgradesState || !shopState) return false;
-  if(up.requires && up.requires.some(reqId=> !upgradesState[reqId] || !upgradesState[reqId].unlocked)){
-    return false;
-  }
+function isUpgradePurchased(id){
+  const st = upgradesState?.[id];
+  if(!st) return false;
+  if(typeof st.purchased === 'boolean') return st.purchased;
+  return !!st.unlocked;
+}
+
+function setUpgradePurchased(id, value=true){
+  if(!upgradesState[id]) upgradesState[id] = {purchased:false, unlocked:false};
+  upgradesState[id].purchased = value;
+  upgradesState[id].unlocked = value;
+}
+
+function canShowUpgrade(up){
+  if(isUpgradePurchased(up.id)) return true;
+  if(up.requires && up.requires.some(reqId=> !isUpgradePurchased(reqId))) return false;
   const req = up.requirement;
   if(req?.type === 'building'){
     const owned = shopState[req.building]?.owned ?? 0;
@@ -538,23 +645,94 @@ function canUnlockUpgrade(up){
   return true;
 }
 
-function checkUpgrades(){
-  let unlockedAny=false;
-  UPGRADE_DATA.forEach(up=>{
-    const st = upgradesState[up.id];
-    if(!st || st.unlocked) return;
-    if(canUnlockUpgrade(up)){
-      st.unlocked = true;
-      unlockedAny = true;
+function getUpgradeRequirementLines(up){
+  const lines = [];
+  if(up.requirementText) lines.push(up.requirementText);
+  if(up.requirement?.type === 'building'){
+    const owned = shopState[up.requirement.building]?.owned ?? 0;
+    const name = SHOP_LOOKUP[up.requirement.building]?.name ?? up.requirement.building;
+    lines.push(`${name}: ${Math.min(owned, up.requirement.count)}/${up.requirement.count}`);
+  }
+  if(up.requires && up.requires.length){
+    up.requires.forEach(reqId=>{
+      const name = UPGRADE_MAP[reqId]?.name ?? reqId;
+      lines.push(`${name}: ${isUpgradePurchased(reqId) ? 'comprado' : 'pendente'}`);
+    });
+  }
+  return lines;
+}
+
+function buildUpgradeTooltip(up, purchased, affordable){
+  const cost = up.cost ?? 0;
+  const lines = [up.name, '', up.effect, `Custo: ${fmtShort(cost)}`];
+  const reqLines = getUpgradeRequirementLines(up);
+  if(reqLines.length){
+    lines.push('');
+    lines.push('Requisitos:');
+    reqLines.forEach(line=> lines.push('• ' + line));
+  }
+  lines.push('');
+  if(purchased){
+    lines.push('Status: comprado');
+  } else if(affordable){
+    lines.push('Clique para comprar');
+  } else {
+    const miss = Math.max(0, Math.ceil(cost - pts));
+    if(miss > 0){
+      lines.push(`Faltam ${fmtShort(miss)} pts`);
+    } else {
+      lines.push('Custo disponível');
     }
+  }
+  return lines.join('\n');
+}
+
+function updateUpgradeElement(el, up){
+  const cost = up.cost ?? 0;
+  const purchased = isUpgradePurchased(up.id);
+  const affordable = pts >= cost;
+  el.classList.toggle('purchased', purchased);
+  el.classList.toggle('available', !purchased && affordable);
+  el.classList.toggle('locked', !purchased && !affordable);
+  el.disabled = purchased;
+  el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable);
+}
+
+function updateUpgradeAffordability(){
+  UPGRADE_DATA.forEach(up=>{
+    const el = document.querySelector(`[data-upgrade="${up.id}"]`);
+    if(!el) return;
+    updateUpgradeElement(el, up);
   });
-  return unlockedAny;
+}
+
+function tryBuyUpgrade(id){
+  const up = UPGRADE_MAP[id];
+  if(!up) return;
+  if(isUpgradePurchased(id)) return;
+  if(!canShowUpgrade(up)) return;
+  const cost = up.cost ?? 0;
+  if(pts < cost){
+    const el = document.querySelector(`[data-upgrade="${id}"]`);
+    if(el){
+      el.classList.add('buzz');
+      setTimeout(()=> el.classList.remove('buzz'), 320);
+    }
+    return;
+  }
+
+  pts -= cost;
+  setUpgradePurchased(id, true);
+  recalculateProduction();
+  renderUpgrades();
+  renderHUD();
+  save(true);
 }
 
 function getBuildingMultiplier(buildingId){
   let bonus = 0;
   UPGRADE_DATA.forEach(up=>{
-    if(!upgradesState[up.id]?.unlocked) return;
+    if(!isUpgradePurchased(up.id)) return;
     if(up.bonus?.type === 'building' && up.bonus.target === buildingId){
       bonus += up.bonus.amount;
     }
@@ -565,7 +743,7 @@ function getBuildingMultiplier(buildingId){
 function getFingerExtraPerDedo(){
   let extra = 0;
   UPGRADE_DATA.forEach(up=>{
-    if(!upgradesState[up.id]?.unlocked) return;
+    if(!isUpgradePurchased(up.id)) return;
     if(up.bonus?.type === 'finger'){
       extra += up.bonus.perDedo ?? 0;
     }
@@ -593,38 +771,35 @@ function renderUpgrades(){
   grid.innerHTML = '';
 
   UPGRADE_DATA.forEach(up=>{
-    const st = upgradesState[up.id];
-    const unlocked = !!(st && st.unlocked);
-    const reqLines = [];
-    if(unlocked){
-      reqLines.push('Status: concluído');
-    } else {
-      if(up.requirementText) reqLines.push(up.requirementText);
-      if(up.requirement?.type === 'building'){
-        const owned = shopState[up.requirement.building]?.owned ?? 0;
-        reqLines.push(`${SHOP_LOOKUP[up.requirement.building].name}: ${Math.min(owned, up.requirement.count)}/${up.requirement.count}`);
-      }
-      if(up.requires && up.requires.length){
-        const pending = up.requires.filter(reqId=> !upgradesState[reqId]?.unlocked);
-        if(pending.length){
-          reqLines.push('Requer: ' + pending.map(id=>UPGRADE_MAP[id].name).join(', '));
-        }
-      }
+    const purchased = isUpgradePurchased(up.id);
+    const visible = purchased || canShowUpgrade(up);
+    if(!visible) return;
+
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'upgrade-tile';
+    item.dataset.upgrade = up.id;
+    item.setAttribute('aria-label', up.name);
+
+    const img = document.createElement('img');
+    img.className = 'upgrade-img';
+    img.src = up.img;
+    img.alt = up.name;
+    item.appendChild(img);
+
+    const check = document.createElement('span');
+    check.className = 'upgrade-check';
+    check.textContent = '✔';
+    item.appendChild(check);
+
+    if(!purchased){
+      item.addEventListener('click', ()=> tryBuyUpgrade(up.id));
     }
 
-    const item = document.createElement('div');
-    item.className = 'upgrade ' + (unlocked ? 'unlocked' : 'locked');
-    item.innerHTML = `
-      <div class="upgrade-img-wrap">
-        <img class="upgrade-img" src="${up.img}" alt="${up.name}">
-        <span class="upgrade-badge">${unlocked ? 'Ativo' : 'Bloqueado'}</span>
-      </div>
-      <div class="upgrade-name">${up.name}</div>
-      <div class="upgrade-effect">${up.effect}</div>
-      <div class="upgrade-req">${reqLines.map(line=>`<span>${line}</span>`).join('')}</div>
-    `;
     grid.appendChild(item);
   });
+
+  updateUpgradeAffordability();
 }
 
 /* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas */
@@ -644,6 +819,8 @@ function updateAffordability(){
     }
     row.classList.toggle('afford', can);
   });
+
+  updateUpgradeAffordability();
 }
 
 /* Tenta comprar item ao clicar na linha */
@@ -676,7 +853,6 @@ function tryBuy(id){
   pts -= priceSingle;
   st.owned += 1;
 
-  checkUpgrades();
   recalculateProduction();
 
   // If reached limit, visually mark
@@ -703,12 +879,11 @@ function tryBuy(id){
 
 /* init */
 load();
-const unlockedAtLoad = checkUpgrades();
 recalculateProduction();
 renderShop();
 renderUpgrades();
 renderHUD();
-if(unlockedAtLoad) save();
+if(migratedLegacyUpgrades) save();
 loop();
 startAutoSave();
 
