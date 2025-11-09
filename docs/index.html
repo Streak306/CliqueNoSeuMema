@@ -570,14 +570,15 @@ function renderShop(){
     // desbloqueio: item só aparece quando o anterior tiver ao menos 1 comprado
     const locked = idx > 0 && (shopState[SHOP[idx-1].id].owned < 1);
 
+    if(locked){
+      // mantém a progressão da loja escondendo completamente itens futuros
+      return;
+    }
+
     const tr = document.createElement('tr');
     tr.dataset.buy = it.id;
 
-    if(locked){
-      tr.className = 'locked';
-    } else {
-      tr.className = atLimit ? 'max' : 'clickable';
-    }
+    tr.className = atLimit ? 'max' : 'clickable';
 
     // determinar preço da próxima unidade
     const priceSingle = precoProximo(it.base, it.r, st.owned);
