@@ -97,10 +97,19 @@
 
   /* linha clicável */
   .shop tr.clickable{ cursor:pointer; }
-  .shop tr.clickable:hover{ filter:brightness(1.06); box-shadow:0 6px 18px rgba(0,0,0,.25); }
-  .shop tr.clickable:active{ transform:scale(.995); }
+  .shop tr.clickable:hover{ filter:brightness(1.08); box-shadow:0 8px 22px rgba(0,0,0,.28); }
+  .shop tr.clickable:active{ transform:scale(.992); }
   /* limite atingido */
   .shop tr.max{ opacity:.6; cursor:not-allowed; }
+
+  /* linha com grana suficiente */
+  .shop tr.afford{
+    box-shadow:0 0 0 1px rgba(16,185,129,.30), 0 6px 18px rgba(0,0,0,.25);
+  }
+  .shop tr.afford:hover{
+    filter:brightness(1.08);
+    box-shadow:0 0 0 1px rgba(16,185,129,.45), 0 8px 22px rgba(0,0,0,.30);
+  }
 
   /* custo por baixo do nome (sem rótulo) */
   .cost{ display:block; margin-top:6px; font-size:12px; opacity:.95; font-weight:700 }
@@ -119,6 +128,12 @@
   .need{ font-size:12px; color:#93c5fd; opacity:.95; margin-top:4px }
   @keyframes buzz{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-2px)} 40%{transform:translateX(2px)} 60%{transform:translateX(-1px)} 80%{transform:translateX(1px)} }
   .buzz{ animation:buzz .15s linear 2 }
+
+  @keyframes flashG{ from{box-shadow:0 0 0 2px rgba(16,185,129,.55)} to{box-shadow:0 0 0 10px rgba(16,185,129,0)} }
+  .flashG{ animation:flashG .42s ease-out 1; }
+
+  /* evita highlight azul no mobile e seleção de texto */
+  .shop tbody tr{ -webkit-tap-highlight-color:transparent; user-select:none; }
 
   /* Responsivo */
   @media (max-width: 980px){
@@ -321,6 +336,9 @@ function renderShop(){
       <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
     `;
 
+    // aplica a classe visual de "pode comprar" mesmo quando não for clicável
+    tr.classList.toggle('afford', canAfford);
+
     if(!locked){
       // clique na linha inteira
       tr.addEventListener('click', ()=> tryBuy(it.id));
@@ -354,6 +372,7 @@ function updateAffordability(){
       costEl.classList.toggle('can',  can);
       costEl.classList.toggle('cant', !can);
     }
+    row.classList.toggle('afford', can);
   });
 }
 
@@ -413,6 +432,7 @@ function tryBuy(id){
       const canAffordNow = pts >= priceNow && st.owned < it.limit;
       costEl.classList.toggle('can', canAffordNow);
       costEl.classList.toggle('cant', !canAffordNow);
+      row.classList.toggle('afford', canAffordNow);
     }
 
     const ownedEl = row.querySelector('.owned');
@@ -428,6 +448,13 @@ function tryBuy(id){
   renderShop();
   renderHUD();
   save(true);
+
+  // aplica flash na nova linha renderizada
+  const newRow = document.querySelector(`tr[data-buy="${id}"]`);
+  if(newRow) {
+    newRow.classList.add('flashG');
+    setTimeout(()=> newRow.classList.remove('flashG'), 450);
+  }
 }
 
 /* init */
