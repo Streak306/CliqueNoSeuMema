@@ -92,10 +92,7 @@
   .save-toast.show{ opacity:1; transform:translateY(0); }
 
   /* LOJA – tabela clicável */
-  .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px; display:flex; align-items:center; justify-content:space-between}
-  .bulk-select{ display:flex; gap:8px; align-items:center; }
-  .bulk-select button{ background:transparent;border:1px solid var(--border); color:var(--fg); padding:6px 8px; border-radius:8px; cursor:pointer }
-  .bulk-select button.active{ background:var(--accent); color:#0b1220; border-color:var(--accent); font-weight:700 }
+  .shop-title{margin:10px 0 12px;font-weight:800; letter-spacing:.2px;}
 
   table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-layout:fixed}
   .shop thead th{font-size:12px; text-align:left; opacity:.75; padding:0 10px}
@@ -181,16 +178,7 @@
     </section>
 
     <aside class="card shop-card">
-      <div class="shop-title">
-        <div>Loja</div>
-        <div class="bulk-select" id="bulkSelect">
-          <label style="opacity:.8;font-size:12px;margin-right:6px">Comprar:</label>
-          <button data-k="1" class="active">1</button>
-          <button data-k="10">10</button>
-          <button data-k="100">100</button>
-          <button data-k="max">Máx</button>
-        </div>
-      </div>
+      <div class="shop-title">Loja</div>
       <table class="shop">
         <thead>
           <tr>
@@ -234,16 +222,14 @@ function fmtShort(n){
 
 /* SAVE/LOAD */
 let shopState = null; // definido após catálogo
-let selectedBulk = 1; // persistido
 function save(showToast=false){
-  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState, bulkSel: selectedBulk}));
+  localStorage.setItem('mcw', JSON.stringify({pts,clickPow,mps, shopState}));
   if(showToast) flashSave();
 }
 function load(){ try{
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
   pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
-  if(d.bulkSel !== undefined) selectedBulk = d.bulkSel;
 } catch(e){} }
 
 /* HUD (topo) */
@@ -309,7 +295,6 @@ function flashSave(){
 /* ===== Loja =====
    Agora usamos as fórmulas exponenciais:
    precoProximo(base, escala, q) = ceil(base * escala^q)
-   custoLote(base, escala, q, k) = ceil(base * escala^q * (escala^k - 1)/(escala - 1))
    payback = precoProximo / deltaMps
 */
 
@@ -337,27 +322,6 @@ if(!shopState) shopState = makeInitialShopState();
 /* Fórmulas utilitárias */
 function precoProximo(base, escala, qPossuidas){
   return Math.ceil(base * Math.pow(escala, qPossuidas));
-}
-function custoLote(base, escala, qPossuidas, k){
-  if(k <= 0) return 0;
-  if(Math.abs(escala - 1) < 1e-12){
-    // caso degenerate
-    return Math.ceil(base * Math.pow(escala, qPossuidas) * k);
-  }
-  const sum = (Math.pow(escala, k) - 1) / (escala - 1);
-  return Math.ceil(base * Math.pow(escala, qPossuidas) * sum);
-}
-// calcula o máximo k tal que custoLote(...) <= budget, também respeita limiteRem
-function maxAffordable(base, escala, qPossuidas, budget, limitRem){
-  if(limitRem <= 0) return 0;
-  // resolver r^k <= 1 + budget*(r-1)/(base * r^q)
-  const denom = base * Math.pow(escala, qPossuidas);
-  if(budget < denom) return 0;
-  const rhs = 1 + budget * (escala - 1) / denom;
-  if(rhs <= 1) return 0;
-  const kFloat = Math.floor(Math.log(rhs) / Math.log(escala));
-  // kFloat pode ser 0 if budget < first price; cap entre 0..limitRem
-  return Math.max(0, Math.min(limitRem, kFloat));
 }
 function paybackForUnit(base, escala, qPossuidas, pPerUnit){
   const price = precoProximo(base, escala, qPossuidas);
@@ -387,20 +351,11 @@ function renderShop(){
       tr.className = atLimit ? 'max' : 'clickable';
     }
 
-    // determinar preço single e preço para o bulk selecionado
+    // determinar preço da próxima unidade
     const priceSingle = precoProximo(it.base, it.r, st.owned);
-    let bulkK = selectedBulk === 'max' ? 0 : selectedBulk;
-    if(selectedBulk === 'max'){
-      // compute max affordable given pts and remaining limit
-      const remaining = it.limit - st.owned;
-      const k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
-      bulkK = k;
-    }
-    const bulkPrice = (bulkK > 0) ? custoLote(it.base, it.r, st.owned, bulkK) : null;
 
     // determinar se pode comprar agora (custo alcançável e não no limite)
     const canAffordSingle = (!atLimit) && (pts >= priceSingle);
-    const canAffordBulk = (!atLimit) && bulkK > 0 && (pts >= bulkPrice);
 
     // Se o item estiver desbloqueado mas você ainda não possui NENHUM (owned === 0),
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
@@ -412,27 +367,20 @@ function renderShop(){
     tr.innerHTML = `
       <td class="name">
         <div>${displayName}</div>
-        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Próx: ${fmtShort(priceSingle)}${bulkPrice? (' — Bulk: '+fmtShort(bulkPrice)) : ''}</div>
+        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${fmtShort(priceSingle)}</div>
         <div class="status">${atLimit ? 'MAX' : ('Payback: '+Math.round(pay))}</div>
       </td>
       <td>+${it.p.toFixed(2)}</td>
       <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
     `;
 
-    // aplica a classe visual de "pode comprar" se qualquer opção for afford
-    tr.classList.toggle('afford', canAffordSingle || canAffordBulk);
+    // aplica a classe visual de "pode comprar" se o preço couber
+    tr.classList.toggle('afford', canAffordSingle);
 
     if(!locked && !atLimit){
-      // clique na linha inteira --> tenta comprar selected bulk
+      // clique na linha inteira --> tenta comprar 1 unidade
       tr.addEventListener('click', ()=> {
-        if(selectedBulk === 'max') {
-          // recompute current max
-          const remaining = it.limit - st.owned;
-          const k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
-          tryBuy(it.id, k);
-        } else {
-          tryBuy(it.id, selectedBulk);
-        }
+        tryBuy(it.id);
       });
       // acessibilidade básica (Enter/Space)
       tr.setAttribute('tabindex', '0');
@@ -440,13 +388,7 @@ function renderShop(){
       tr.addEventListener('keydown', (e)=>{
         if(e.key==='Enter' || e.key===' '){
           e.preventDefault();
-          if(selectedBulk === 'max') {
-            const remaining = it.limit - st.owned;
-            const k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
-            tryBuy(it.id, k);
-          } else {
-            tryBuy(it.id, selectedBulk);
-          }
+          tryBuy(it.id);
         }
       });
     }
@@ -455,8 +397,7 @@ function renderShop(){
   });
 }
 
-/* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas
-   Agora considera o bulk selecionado (inclusive "Máx") ao marcar afford */
+/* Atualiza apenas as classes de acessibilidade (can/cant) sem re-renderizar linhas */
 function updateAffordability(){
   SHOP.forEach(it=>{
     const st   = shopState[it.id];
@@ -464,20 +405,7 @@ function updateAffordability(){
     if(!row) return;
 
     const priceSingle = precoProximo(it.base, it.r, st.owned);
-    let can = (st.owned < it.limit) && (pts >= priceSingle);
-
-    // considerar o bulk selecionado
-    let k = 0;
-    if(selectedBulk === 'max'){
-      const remaining = it.limit - st.owned;
-      k = maxAffordable(it.base, it.r, st.owned, Math.floor(pts), remaining);
-    } else {
-      k = Math.min(st.owned < it.limit ? selectedBulk : 0, it.limit - st.owned);
-    }
-    if(k > 0){
-      const bulkPrice = custoLote(it.base, it.r, st.owned, k);
-      can = can || (pts >= bulkPrice);
-    }
+    const can = (st.owned < it.limit) && (pts >= priceSingle);
 
     const costEl = row.querySelector('.cost');
     if(costEl){
@@ -488,30 +416,22 @@ function updateAffordability(){
   });
 }
 
-/* Tenta comprar item (k unidades) ao clicar na linha */
-function tryBuy(id, k = 1){
-  if(!k || k <= 0) return;
+/* Tenta comprar item ao clicar na linha */
+function tryBuy(id){
   const it = SHOP.find(x=>x.id===id); if(!it) return;
   const st = shopState[id];
   const remainingLimit = it.limit - st.owned;
   if(remainingLimit <= 0) return;
 
-  // cap k pelo limite restante
-  const toBuy = Math.min(k, remainingLimit);
-
-  const totalCost = custoLote(it.base, it.r, st.owned, toBuy);
+  const priceSingle = precoProximo(it.base, it.r, st.owned);
   // encontrar a linha atual no DOM (pode ter sido re-renderizada)
   const row = document.querySelector(`tr[data-buy="${id}"]`);
 
-  if(toBuy <= 0){
-    return;
-  }
-
-  if(pts < totalCost){
+  if(pts < priceSingle){
     if(row){
       // feedback: buzz + "faltam X pts"
       row.classList.add('buzz');
-      const miss = Math.ceil(totalCost - pts);
+      const miss = Math.ceil(priceSingle - pts);
       const s = row.querySelector('.status');
       if(s){
         s.innerHTML = `<span class="need">Faltam ${miss} pts</span>`;
@@ -523,9 +443,9 @@ function tryBuy(id, k = 1){
   }
 
   // compra: subtrai custo e atualiza owned / mps
-  pts -= totalCost;
-  st.owned += toBuy;
-  mps += it.p * toBuy;
+  pts -= priceSingle;
+  st.owned += 1;
+  mps += it.p;
 
   // If reached limit, visually mark
   if(st.owned >= it.limit){
@@ -547,20 +467,6 @@ function tryBuy(id, k = 1){
     setTimeout(()=> newRow.classList.remove('flashG'), 450);
   }
 }
-
-/* Bulk selector handling */
-const bulkSelectEl = el('bulkSelect');
-bulkSelectEl.addEventListener('click', (e)=>{
-  const btn = e.target.closest('button[data-k]');
-  if(!btn) return;
-  const all = bulkSelectEl.querySelectorAll('button[data-k]');
-  all.forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const k = btn.dataset.k;
-  selectedBulk = (k === 'max') ? 'max' : parseInt(k,10) || 1;
-  renderShop();
-  save(); // persist selection for UX
-});
 
 /* init */
 load(); renderShop(); renderHUD(); loop(); startAutoSave();
