@@ -198,10 +198,8 @@
     z-index:21;
     pointer-events:none;
   }
-  .tooltip-host:hover::after,
-  .tooltip-host:focus-visible::after{ opacity:1; transform:translate(-50%, 0); }
-  .tooltip-host:hover::before,
-  .tooltip-host:focus-visible::before{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-host:hover::after{ opacity:1; transform:translate(-50%, 0); }
+  .tooltip-host:hover::before{ opacity:1; transform:translate(-50%, 0); }
   .upgrade-tile.buzz{ animation:buzz .15s linear 2; }
 
   /* make the shop card match stage height so items don't look "outside" */
@@ -663,11 +661,12 @@ function renderOwnedUpgradesCollection(){
   UPGRADE_DATA.forEach(up=>{
     const owned = isUpgradePurchased(up.id);
     const slot = document.createElement('div');
-    slot.className = 'collection-slot tooltip-host';
+    slot.className = 'collection-slot';
     if(owned) slot.classList.add('owned');
     slot.dataset.upgrade = up.id;
 
     if(owned){
+      slot.classList.add('tooltip-host');
       const img = document.createElement('img');
       img.src = up.img;
       img.alt = up.name;
@@ -998,6 +997,38 @@ const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{ acc[item.id] = item; return acc; 
 
 const UPGRADE_DATA = [
   {
+    id:'up-dedo-t1',
+    name:'Mão aprimorada',
+    effect:'Cada Dedo gera +1 clique extra',
+    cost:5000,
+    img:'imagens/melhorias-futuras/up-dedo-t1.png',
+    requirement:{type:'building', building:'dedo', count:10},
+    requirementText:'Tenha 10 Dedos',
+    bonus:{type:'finger', perDedo:1}
+  },
+  {
+    id:'up-dedo-t2',
+    name:'Mão de Graphite',
+    effect:'Cada Dedo gera +1 clique extra (acumula)',
+    cost:250000,
+    img:'imagens/melhorias-futuras/up-dedo-t2.png',
+    requirement:{type:'building', building:'dedo', count:25},
+    requirementText:'Tenha 25 Dedos e o upgrade anterior',
+    requires:['up-dedo-t1'],
+    bonus:{type:'finger', perDedo:1}
+  },
+  {
+    id:'up-dedo-t3',
+    name:'Mão de Slate',
+    effect:'Cada Dedo gera +1 clique extra (acumula)',
+    cost:10000000,
+    img:'imagens/melhorias-futuras/up-dedo-t3.png',
+    requirement:{type:'building', building:'dedo', count:40},
+    requirementText:'Tenha 40 Dedos e o upgrade anterior',
+    requires:['up-dedo-t2'],
+    bonus:{type:'finger', perDedo:1}
+  },
+  {
     id:'up-roupa-t1',
     name:'Tênis Impressionante',
     effect:'+10% MPS gerado por Roupa',
@@ -1076,38 +1107,6 @@ const UPGRADE_DATA = [
     requirement:{type:'building', building:'microfone', count:1},
     requirementText:'Compre 1 Microfone',
     bonus:{type:'building', target:'microfone', amount:0.20}
-  },
-  {
-    id:'up-dedo-t1',
-    name:'Mão aprimorada',
-    effect:'Cada Dedo gera +1 clique extra',
-    cost:5000,
-    img:'imagens/melhorias-futuras/up-dedo-t1.png',
-    requirement:{type:'building', building:'dedo', count:10},
-    requirementText:'Tenha 10 Dedos',
-    bonus:{type:'finger', perDedo:1}
-  },
-  {
-    id:'up-dedo-t2',
-    name:'Mão de Graphite',
-    effect:'Cada Dedo gera +1 clique extra (acumula)',
-    cost:250000,
-    img:'imagens/melhorias-futuras/up-dedo-t2.png',
-    requirement:{type:'building', building:'dedo', count:25},
-    requirementText:'Tenha 25 Dedos e o upgrade anterior',
-    requires:['up-dedo-t1'],
-    bonus:{type:'finger', perDedo:1}
-  },
-  {
-    id:'up-dedo-t3',
-    name:'Mão de Slate',
-    effect:'Cada Dedo gera +1 clique extra (acumula)',
-    cost:10000000,
-    img:'imagens/melhorias-futuras/up-dedo-t3.png',
-    requirement:{type:'building', building:'dedo', count:40},
-    requirementText:'Tenha 40 Dedos e o upgrade anterior',
-    requires:['up-dedo-t2'],
-    bonus:{type:'finger', perDedo:1}
   }
 ];
 
@@ -1247,18 +1246,15 @@ function canShowUpgrade(up){
 function getUpgradeRequirementLines(up){
   const lines = [];
   if(up.requirementText) lines.push(up.requirementText);
-  if(up.requirement?.type === 'building'){
-    const owned = shopState[up.requirement.building]?.owned ?? 0;
+  if(up.requirement?.type === 'building' && !up.requirementText){
     const name = SHOP_LOOKUP[up.requirement.building]?.name ?? up.requirement.building;
-    const progressOwned = Math.min(owned, up.requirement.count);
-    const missing = Math.max(0, up.requirement.count - owned);
-    const status = missing === 0 ? 'ok' : `faltam ${missing}`;
-    lines.push(`${name}: ${progressOwned}/${up.requirement.count} (${status})`);
+    const count = up.requirement.count ?? 0;
+    lines.push(`Compre ${count} ${name}`);
   }
   if(up.requires && up.requires.length){
     up.requires.forEach(reqId=>{
       const name = UPGRADE_MAP[reqId]?.name ?? reqId;
-      lines.push(`${name}: ${isUpgradePurchased(reqId) ? 'comprado' : 'pendente'}`);
+      lines.push(name);
     });
   }
   return lines;
@@ -1284,40 +1280,28 @@ function getUpgradeImprovementLines(up){
 }
 
 function buildUpgradeTooltip(up, purchased, affordable, context='grid'){
-  const lines = [up.name];
-  const benefits = getUpgradeBenefitLines(up);
-  if(benefits.length){
-    lines.push('');
-    lines.push('Efeitos:');
-    benefits.forEach(line=> lines.push(`- ${line}`));
+  const effect = up.effect || getUpgradeBenefitLines(up)[0] || '';
+
+  if(context === 'grid'){
+    const lines = [up.name];
+    lines.push(`Custo: ${fmtShort(up.cost ?? 0)}`);
+    if(effect) lines.push(effect);
+    return lines.join('\n');
   }
 
-  if(context === 'grid' || context === 'collection'){
-    const cost = up.cost ?? 0;
-    lines.push('');
-    lines.push(`Custo: ${fmtShort(cost)}`);
-    if(context === 'grid'){
-      if(purchased){
-        lines.push('Já comprado');
-      } else if(affordable){
-        lines.push('Você pode comprar agora');
-      } else {
-        const miss = Math.max(0, Math.ceil(cost - pts));
-        lines.push(`Faltam ${fmtShort(miss)} pts`);
-      }
-    } else if(context === 'collection'){
-      lines.push(purchased ? 'Já comprado' : 'Não adquirido');
+  if(context === 'collection'){
+    const lines = [up.name];
+    if(effect) lines.push(effect);
+    const reqLines = getUpgradeRequirementLines(up);
+    if(reqLines.length){
+      lines.push('');
+      lines.push('Requisitos:');
+      reqLines.forEach(line=> lines.push(`- ${line}`));
     }
+    return lines.join('\n');
   }
 
-  const reqLines = getUpgradeRequirementLines(up);
-  if(reqLines.length){
-    lines.push('');
-    lines.push('Requisitos:');
-    reqLines.forEach(line=> lines.push(`- ${line}`));
-  }
-
-  return lines.join('\n');
+  return up.name;
 }
 
 function updateUpgradeElement(el, up){
