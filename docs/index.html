@@ -133,6 +133,37 @@
     justify-content:center;
   }
   .upgrade-tile.purchased .upgrade-check{ display:flex; }
+  .upgrade-info{
+    position:absolute;
+    left:8px;
+    right:8px;
+    bottom:8px;
+    background:rgba(13,17,23,.88);
+    border:1px solid rgba(42,48,60,.9);
+    border-radius:12px;
+    padding:8px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    pointer-events:none;
+    box-shadow:0 10px 20px rgba(0,0,0,.45);
+  }
+  .upgrade-info strong{
+    font-size:.82rem;
+    line-height:1.2;
+  }
+  .upgrade-info .upgrade-effect{
+    font-size:.72rem;
+    color:var(--muted);
+  }
+  .upgrade-info .upgrade-meta{
+    font-size:.7rem;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .upgrade-info .upgrade-meta span{ white-space:nowrap; }
   .tooltip-host::after{
     content:attr(data-tooltip);
     position:absolute;
@@ -1086,7 +1117,7 @@ const upgradeElements = new Map();
 const ACHIEVEMENT_DATA = [
   { id:'ach-polidactilia', name:'Polidactilia', description:'Tenha 50 Dedos', requirement:{ type:'building', building:'dedo', count:50 } },
   { id:'ach-calcinha', name:'Calcinha', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
-  { id:'ach-h20', name:'H20', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
+  { id:'ach-h20', name:'H20', description:'Tenha 20 Águas', requirement:{ type:'building', building:'agua', count:20 } },
   { id:'ach-stardew', name:'Stardew Valley', description:'Tenha 12 Plantações', requirement:{ type:'building', building:'plantacao', count:12 } },
   { id:'ach-estabulo', name:'Estábulo', description:'Tenha 8 Plantações', requirement:{ type:'building', building:'plantacao', count:8 } },
   { id:'ach-aluguel', name:'Aluguel', description:'Tenha 5 Casas', requirement:{ type:'building', building:'casa', count:5 } },
@@ -1219,7 +1250,10 @@ function getUpgradeRequirementLines(up){
   if(up.requirement?.type === 'building'){
     const owned = shopState[up.requirement.building]?.owned ?? 0;
     const name = SHOP_LOOKUP[up.requirement.building]?.name ?? up.requirement.building;
-    lines.push(`${name}: ${Math.min(owned, up.requirement.count)}/${up.requirement.count}`);
+    const progressOwned = Math.min(owned, up.requirement.count);
+    const missing = Math.max(0, up.requirement.count - owned);
+    const status = missing === 0 ? 'ok' : `faltam ${missing}`;
+    lines.push(`${name}: ${progressOwned}/${up.requirement.count} (${status})`);
   }
   if(up.requires && up.requires.length){
     up.requires.forEach(reqId=>{
@@ -1258,17 +1292,21 @@ function buildUpgradeTooltip(up, purchased, affordable, context='grid'){
     benefits.forEach(line=> lines.push(`- ${line}`));
   }
 
-  if(context === 'grid'){
+  if(context === 'grid' || context === 'collection'){
     const cost = up.cost ?? 0;
     lines.push('');
     lines.push(`Custo: ${fmtShort(cost)}`);
-    if(purchased){
-      lines.push('Já comprado');
-    } else if(affordable){
-      lines.push('Você pode comprar agora');
-    } else {
-      const miss = Math.max(0, Math.ceil(cost - pts));
-      lines.push(`Faltam ${fmtShort(miss)} pts`);
+    if(context === 'grid'){
+      if(purchased){
+        lines.push('Já comprado');
+      } else if(affordable){
+        lines.push('Você pode comprar agora');
+      } else {
+        const miss = Math.max(0, Math.ceil(cost - pts));
+        lines.push(`Faltam ${fmtShort(miss)} pts`);
+      }
+    } else if(context === 'collection'){
+      lines.push(purchased ? 'Já comprado' : 'Não adquirido');
     }
   }
 
@@ -1290,6 +1328,28 @@ function updateUpgradeElement(el, up){
   el.classList.toggle('available', !purchased && affordable);
   el.classList.toggle('locked', !purchased && !affordable);
   el.disabled = purchased;
+  const nameEl = el.querySelector('.upgrade-name');
+  if(nameEl) nameEl.textContent = up.name;
+  const effectEl = el.querySelector('.upgrade-effect');
+  if(effectEl){
+    const benefits = getUpgradeBenefitLines(up);
+    effectEl.textContent = benefits.length ? benefits.join(' • ') : 'Melhoria misteriosa';
+  }
+  const costEl = el.querySelector('.upgrade-cost');
+  if(costEl) costEl.textContent = `Custo: ${fmtShort(cost)}`;
+  const statusEl = el.querySelector('.upgrade-status');
+  if(statusEl){
+    let statusText = '';
+    if(purchased){
+      statusText = 'Comprado';
+    } else if(affordable){
+      statusText = 'Pronto para comprar';
+    } else {
+      const miss = Math.max(0, Math.ceil(cost - pts));
+      statusText = `Faltam ${fmtShort(miss)} pts`;
+    }
+    statusEl.textContent = statusText;
+  }
   el.dataset.tooltip = buildUpgradeTooltip(up, purchased, affordable, 'grid');
 }
 
@@ -1392,6 +1452,18 @@ function renderUpgrades(){
     img.src = up.img;
     img.alt = up.name;
     item.appendChild(img);
+
+    const info = document.createElement('div');
+    info.className = 'upgrade-info';
+    info.innerHTML = `
+      <strong class="upgrade-name"></strong>
+      <div class="upgrade-effect"></div>
+      <div class="upgrade-meta">
+        <span class="upgrade-cost"></span>
+        <span class="upgrade-status"></span>
+      </div>
+    `;
+    item.appendChild(info);
 
     const check = document.createElement('span');
     check.className = 'upgrade-check';
