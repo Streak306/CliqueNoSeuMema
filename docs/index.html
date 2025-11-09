@@ -182,14 +182,18 @@
     border-radius:12px;
     padding:10px 12px;
     box-shadow:0 12px 26px rgba(0,0,0,.45);
-    white-space:pre-line;
-    font-size:.82rem;
-    min-width:180px;
-    max-width:240px;
+
+    /* mudanças */
+    white-space: normal;          /* antes: pre-line */
+    overflow-wrap: anywhere;      /* evita palavras estourando */
+    width: max-content;           /* cresce conforme o texto */
+    min-width: 320px;             /* antes: 180px */
+    max-width: min(560px, 92vw);  /* antes: 240px */
+
     pointer-events:none;
     opacity:0;
     transition:opacity .15s ease, transform .15s ease;
-    z-index:20;
+    z-index: 9999;                /* antes: 20 (garante sobreposição) */
   }
   .tooltip-host::before{
     content:'';
