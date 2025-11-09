@@ -147,6 +147,14 @@
     gap:4px;
     pointer-events:none;
     box-shadow:0 10px 20px rgba(0,0,0,.45);
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .upgrade-tile:hover .upgrade-info,
+  .upgrade-tile:focus-visible .upgrade-info{
+    opacity:1;
+    transform:translateY(0);
   }
   .upgrade-info strong{
     font-size:.82rem;
@@ -1183,6 +1191,8 @@ function renderShop(){
     // determinar se pode comprar agora (custo alcançável e não no limite)
     const canAffordSingle = (!atLimit) && (pts >= priceSingle);
 
+    const perUnit = it.p * getBuildingMultiplier(it.id);
+
     // Se o item estiver desbloqueado mas você ainda não possui NENHUM (owned === 0),
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
     const displayName = (!locked && st.owned === 0) ? '?????' : it.name;
@@ -1193,7 +1203,7 @@ function renderShop(){
         <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${fmtShort(priceSingle)}</div>
         <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
-      <td>+${it.p.toFixed(2)}</td>
+      <td>+${perUnit.toFixed(2)}</td>
       <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
     `;
 
@@ -1369,6 +1379,7 @@ function tryBuyUpgrade(id){
   pts -= cost;
   setUpgradePurchased(id, true);
   recalculateProduction();
+  renderShop();
   renderUpgrades();
   evaluateAchievements();
   renderHUD();
