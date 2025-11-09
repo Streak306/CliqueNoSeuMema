@@ -97,8 +97,19 @@
     display:block;
     border-radius:inherit;
   }
-  .upgrade-tile.available:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(59,130,246,.28); }
-  .upgrade-tile.locked{ filter:saturate(.4) brightness(.85); }
+  .upgrade-tile.available{
+    border-color:rgba(96,165,250,.65);
+    box-shadow:0 10px 26px rgba(96,165,250,.26);
+    background:linear-gradient(180deg, rgba(96,165,250,.22) 0%, rgba(23,27,34,1) 60%);
+    filter:saturate(1.05) brightness(1.02);
+  }
+  .upgrade-tile.available:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(59,130,246,.32); }
+  .upgrade-tile.locked{
+    filter:grayscale(.85) brightness(.72);
+    border-color:rgba(32,38,48,.9);
+    background:#12161d;
+    opacity:.8;
+  }
   .upgrade-tile.purchased{
     cursor:default;
     border-color:rgba(96,165,250,.55);
@@ -300,13 +311,77 @@
     color:var(--fg);
   }
 
-  .achievements-placeholder{
-    border:1px dashed var(--border);
-    border-radius:16px;
-    padding:24px;
-    text-align:center;
-    color:var(--muted);
+  .achievements-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .achievements-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
+    gap:14px;
+  }
+  .achievement-card{
     background:var(--panel-bg);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px 16px;
+    min-height:96px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:6px;
+    position:relative;
+  }
+  .achievement-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    transition:opacity .2s ease;
+    opacity:0;
+    box-shadow:0 12px 28px rgba(96,165,250,.18);
+  }
+  .achievement-card.unlocked::before{ opacity:1; }
+  .achievement-card.locked{
+    opacity:.68;
+    filter:grayscale(.78);
+  }
+  .achievement-name{
+    margin:0;
+    font-weight:700;
+    font-size:1rem;
+  }
+  .achievement-desc{
+    margin:0;
+    color:var(--muted);
+    font-size:.9rem;
+  }
+
+  .achievement-toast{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translate(-50%, 22px);
+    background:rgba(15,23,42,.92);
+    color:var(--fg);
+    border:1px solid rgba(96,165,250,.55);
+    border-radius:999px;
+    padding:10px 20px;
+    font-weight:700;
+    font-size:.95rem;
+    box-shadow:0 18px 38px rgba(15,23,42,.45);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .4s ease, transform .4s ease;
+    z-index:35;
+    text-align:center;
+  }
+  .achievement-toast.show{
+    opacity:1;
+    transform:translate(-50%, 0);
   }
 
   /* Palco */
@@ -470,13 +545,18 @@
         <div class="collection-grid" id="ownedUpgradesGrid"></div>
       </div>
       <div class="modal-panel" data-panel="achievements" role="tabpanel" aria-hidden="true">
-        <div class="achievements-placeholder">As conquistas aparecerão aqui em breve.</div>
+        <div class="achievements-header">
+          <h3 style="margin:0">Conquistas</h3>
+          <span class="collection-count" id="achievementsCount">Você desbloqueou 0/0 conquistas</span>
+        </div>
+        <div class="achievements-grid" id="achievementsGrid"></div>
       </div>
     </div>
   </div>
 </div>
 
 <div id="saveToast" class="save-toast">salvo</div>
+<div id="achievementToast" class="achievement-toast" aria-live="polite"></div>
 
 <script>
 /* ===== Estado do jogo ===== */
@@ -484,6 +564,7 @@ let pts = 0, clickPow = 1, mps = 0;
 let playTimeSeconds = 0;
 let totalClicks = 0;
 let upgradesState = null;
+let achievementsState = null;
 let migratedLegacyUpgrades = false;
 
 /* Imagens (efeito clique) */
@@ -539,6 +620,8 @@ function renderStatsPanel(){
   if(cliquesEl) cliquesEl.textContent = totalClicks;
   const countEl = el('collectionCount');
   if(countEl && typeof UPGRADE_DATA !== 'undefined') countEl.textContent = `Você tem ${getPurchasedUpgradeCount()}/${UPGRADE_DATA.length} melhorias`;
+  const achCountEl = el('achievementsCount');
+  if(achCountEl && typeof ACHIEVEMENT_DATA !== 'undefined') achCountEl.textContent = `Você desbloqueou ${getUnlockedAchievementCount()}/${ACHIEVEMENT_DATA.length} conquistas`;
 }
 
 function renderOwnedUpgradesCollection(){
@@ -558,7 +641,7 @@ function renderOwnedUpgradesCollection(){
       img.src = up.img;
       img.alt = up.name;
       slot.appendChild(img);
-      slot.dataset.tooltip = buildUpgradeTooltip(up, false, false, 'collection');
+      slot.dataset.tooltip = buildUpgradeTooltip(up, true, true, 'collection');
     } else {
       const placeholder = document.createElement('div');
       placeholder.className = 'slot-placeholder';
@@ -570,6 +653,115 @@ function renderOwnedUpgradesCollection(){
   });
   grid.appendChild(fragment);
   renderStatsPanel();
+}
+
+function isAchievementUnlocked(id){
+  const st = achievementsState?.[id];
+  return !!(st && st.unlocked);
+}
+
+function setAchievementUnlocked(id, value=true){
+  if(!achievementsState[id]) achievementsState[id] = {unlocked:false, unlockedAt:null};
+  achievementsState[id].unlocked = value;
+  achievementsState[id].unlockedAt = value ? Date.now() : null;
+}
+
+function getUnlockedAchievementCount(){
+  if(typeof ACHIEVEMENT_DATA === 'undefined') return 0;
+  return ACHIEVEMENT_DATA.reduce((sum, ach)=> sum + (isAchievementUnlocked(ach.id) ? 1 : 0), 0);
+}
+
+function isAchievementRequirementMet(ach){
+  if(!ach?.requirement) return false;
+  const req = ach.requirement;
+  switch(req.type){
+    case 'building':
+      return (shopState?.[req.building]?.owned ?? 0) >= (req.count ?? 0);
+    case 'upgrade-count':
+      return getPurchasedUpgradeCount() >= (req.count ?? 0);
+    case 'clicks':
+      return totalClicks >= (req.count ?? 0);
+    default:
+      return false;
+  }
+}
+
+function renderAchievementsPanel(){
+  const grid = el('achievementsGrid');
+  if(!grid || typeof ACHIEVEMENT_DATA === 'undefined') return;
+  grid.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+  ACHIEVEMENT_DATA.forEach(ach=>{
+    const unlocked = isAchievementUnlocked(ach.id);
+    const card = document.createElement('div');
+    card.className = 'achievement-card';
+    card.classList.add(unlocked ? 'unlocked' : 'locked');
+
+    const title = document.createElement('h4');
+    title.className = 'achievement-name';
+    title.textContent = unlocked ? ach.name : '?????';
+    card.appendChild(title);
+
+    const desc = document.createElement('p');
+    desc.className = 'achievement-desc';
+    desc.textContent = unlocked ? ach.description : '???';
+    card.appendChild(desc);
+
+    fragment.appendChild(card);
+  });
+  grid.appendChild(fragment);
+
+  const countEl = el('achievementsCount');
+  if(countEl && typeof ACHIEVEMENT_DATA !== 'undefined'){
+    countEl.textContent = `Você desbloqueou ${getUnlockedAchievementCount()}/${ACHIEVEMENT_DATA.length} conquistas`;
+  }
+}
+
+const achievementToastQueue = [];
+let achievementToastShowing = false;
+let achievementToastTimer = null;
+let achievementToastHideTimer = null;
+
+function dequeueAchievementToast(){
+  if(achievementToastShowing) return;
+  if(!achievementToastQueue.length) return;
+  const toast = el('achievementToast');
+  if(!toast) return;
+  const message = achievementToastQueue.shift();
+  toast.textContent = `Conquista desbloqueada: ${message}`;
+  toast.classList.add('show');
+  achievementToastShowing = true;
+  if(achievementToastTimer) clearTimeout(achievementToastTimer);
+  achievementToastTimer = setTimeout(()=>{
+    toast.classList.remove('show');
+    if(achievementToastHideTimer) clearTimeout(achievementToastHideTimer);
+    achievementToastHideTimer = setTimeout(()=>{
+      achievementToastShowing = false;
+      dequeueAchievementToast();
+    }, 420);
+  }, 2600);
+}
+
+function showAchievementToast(name){
+  achievementToastQueue.push(name);
+  dequeueAchievementToast();
+}
+
+function evaluateAchievements(silent=false){
+  if(typeof ACHIEVEMENT_DATA === 'undefined') return;
+  let unlockedAny = false;
+  ACHIEVEMENT_DATA.forEach(ach=>{
+    if(isAchievementUnlocked(ach.id)) return;
+    if(isAchievementRequirementMet(ach)){
+      setAchievementUnlocked(ach.id, true);
+      unlockedAny = true;
+      if(!silent) showAchievementToast(ach.name);
+    }
+  });
+  if(unlockedAny){
+    renderAchievementsPanel();
+    save();
+  }
 }
 
 function setupSettingsModal(){
@@ -594,6 +786,8 @@ function setupSettingsModal(){
     });
     if(tabId === 'upgrades'){
       renderOwnedUpgradesCollection();
+    } else if(tabId === 'achievements'){
+      renderAchievementsPanel();
     } else {
       renderStatsPanel();
     }
@@ -636,7 +830,8 @@ function save(showToast=false){
     playTimeSeconds,
     totalClicks,
     shopState,
-    upgradesState
+    upgradesState,
+    achievementsState
   }));
   if(showToast) flashSave();
 }
@@ -658,6 +853,19 @@ function load(){ try{
       if(prev.unlocked !== undefined && prev.purchased === undefined){
         migratedLegacyUpgrades = true;
       }
+    });
+  }
+  if(d.achievementsState){
+    const base = makeInitialAchievementState();
+    achievementsState = {...base};
+    Object.keys(d.achievementsState).forEach(id=>{
+      if(!base[id]) return;
+      const prev = d.achievementsState[id] || {};
+      achievementsState[id] = {
+        ...base[id],
+        unlocked: !!prev.unlocked,
+        unlockedAt: prev.unlockedAt ?? null
+      };
     });
   }
 } catch(e){} }
@@ -686,12 +894,21 @@ function resetState(){
   totalClicks = 0;
   shopState = makeInitialShopState();
   upgradesState = makeInitialUpgradeState();
+  achievementsState = makeInitialAchievementState();
+  achievementToastQueue.length = 0;
+  if(achievementToastTimer) clearTimeout(achievementToastTimer);
+  if(achievementToastHideTimer) clearTimeout(achievementToastHideTimer);
+  achievementToastTimer = null;
+  achievementToastHideTimer = null;
+  achievementToastShowing = false;
+  const toast = el('achievementToast');
+  if(toast) toast.classList.remove('show');
 }
 function deleteSave(){
   const ok = confirm('Apagar seu save? Esta ação não pode ser desfeita.');
   if(!ok) return;
   localStorage.removeItem('mcw');
-  resetState(); renderShop(); renderUpgrades(); recalculateProduction(); renderHUD();
+  resetState(); renderShop(); renderUpgrades(); recalculateProduction(); evaluateAchievements(true); renderAchievementsPanel(); renderHUD();
 }
 
 /* loop de meminhas automáticos (MPS) */
@@ -866,6 +1083,22 @@ const UPGRADE_DATA = [
 const UPGRADE_MAP = UPGRADE_DATA.reduce((acc, up)=>{ acc[up.id] = up; return acc; }, {});
 const upgradeElements = new Map();
 
+const ACHIEVEMENT_DATA = [
+  { id:'ach-polidactilia', name:'Polidactilia', description:'Tenha 50 Dedos', requirement:{ type:'building', building:'dedo', count:50 } },
+  { id:'ach-calcinha', name:'Calcinha', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
+  { id:'ach-h20', name:'H20', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
+  { id:'ach-stardew', name:'Stardew Valley', description:'Tenha 12 Plantações', requirement:{ type:'building', building:'plantacao', count:12 } },
+  { id:'ach-estabulo', name:'Estábulo', description:'Tenha 8 Plantações', requirement:{ type:'building', building:'plantacao', count:8 } },
+  { id:'ach-aluguel', name:'Aluguel', description:'Tenha 5 Casas', requirement:{ type:'building', building:'casa', count:5 } },
+  { id:'ach-xbox', name:'Xbox One', description:'Tenha 3 Xbox', requirement:{ type:'building', building:'xbox', count:3 } },
+  { id:'ach-garoto-programas', name:'Garoto dos programas', description:'Tenha 3 Computadores', requirement:{ type:'building', building:'computador', count:3 } },
+  { id:'ach-cantor', name:'Cantor', description:'Tenha 2 Microfones', requirement:{ type:'building', building:'microfone', count:2 } },
+  { id:'ach-me-perdoe', name:'Me perdoe pelos meus atos.', description:'Tenha 1 Namorada', requirement:{ type:'building', building:'namorada', count:1 } },
+  { id:'ach-pegador', name:'Pegador', description:'Adquira 5 upgrades', requirement:{ type:'upgrade-count', count:5 } },
+  { id:'ach-eu-sou', name:'eu sou melhor que todos vocês', description:'Adquira 10 upgrades', requirement:{ type:'upgrade-count', count:10 } },
+  { id:'ach-exame', name:'exame de próstata', description:'Clique 100 vezes no Mema', requirement:{ type:'clicks', count:100 } }
+];
+
 function makeInitialShopState(){
   const s={};
   SHOP.forEach(it=> s[it.id] = {owned:0});
@@ -879,6 +1112,13 @@ function makeInitialUpgradeState(){
   return s;
 }
 if(!upgradesState) upgradesState = makeInitialUpgradeState();
+
+function makeInitialAchievementState(){
+  const s={};
+  ACHIEVEMENT_DATA.forEach(ach=> s[ach.id] = {unlocked:false, unlockedAt:null});
+  return s;
+}
+if(!achievementsState) achievementsState = makeInitialAchievementState();
 
 /* Fórmulas utilitárias */
 function precoProximo(base, escala, qPossuidas){
@@ -1010,29 +1250,35 @@ function getUpgradeImprovementLines(up){
 }
 
 function buildUpgradeTooltip(up, purchased, affordable, context='grid'){
-  if(context === 'collection'){
-    const lines = [up.name];
-    const benefits = getUpgradeBenefitLines(up);
-    if(benefits.length){
-      lines.push('');
-      lines.push('Benefícios:');
-      benefits.forEach(line=> lines.push(`- ${line}`));
-    }
-    const reqLines = getUpgradeRequirementLines(up);
-    if(reqLines.length){
-      lines.push('');
-      lines.push('Requisitos:');
-      reqLines.forEach(line=> lines.push(`- ${line}`));
-    }
-    return lines.join('\n');
+  const lines = [up.name];
+  const benefits = getUpgradeBenefitLines(up);
+  if(benefits.length){
+    lines.push('');
+    lines.push('Efeitos:');
+    benefits.forEach(line=> lines.push(`- ${line}`));
   }
 
-  const benefitLine = getUpgradeBenefitLines(up)[0] ?? '';
-  const cost = up.cost ?? 0;
-  const miss = Math.max(0, Math.ceil(cost - pts));
-  const lines = [up.name];
-  if(benefitLine) lines.push(benefitLine);
-  lines.push(`Faltam ${fmtShort(miss)} pts`);
+  if(context === 'grid'){
+    const cost = up.cost ?? 0;
+    lines.push('');
+    lines.push(`Custo: ${fmtShort(cost)}`);
+    if(purchased){
+      lines.push('Já comprado');
+    } else if(affordable){
+      lines.push('Você pode comprar agora');
+    } else {
+      const miss = Math.max(0, Math.ceil(cost - pts));
+      lines.push(`Faltam ${fmtShort(miss)} pts`);
+    }
+  }
+
+  const reqLines = getUpgradeRequirementLines(up);
+  if(reqLines.length){
+    lines.push('');
+    lines.push('Requisitos:');
+    reqLines.forEach(line=> lines.push(`- ${line}`));
+  }
+
   return lines.join('\n');
 }
 
@@ -1080,6 +1326,7 @@ function tryBuyUpgrade(id){
   setUpgradePurchased(id, true);
   recalculateProduction();
   renderUpgrades();
+  evaluateAchievements();
   renderHUD();
   save(true);
 }
@@ -1230,6 +1477,7 @@ function tryBuy(id){
   // Ao comprar, possivelmente desbloqueia o próximo item — re-render da loja
   renderShop();
   renderUpgrades();
+  evaluateAchievements();
   renderHUD();
   save(true);
 
@@ -1247,6 +1495,8 @@ load();
 recalculateProduction();
 renderShop();
 renderUpgrades();
+evaluateAchievements(true);
+renderAchievementsPanel();
 renderHUD();
 if(migratedLegacyUpgrades) save();
 loop();
@@ -1259,6 +1509,7 @@ function getClickGain(){
 el('click').onclick=()=>{
   pts+=getClickGain();
   totalClicks += 1;
+  evaluateAchievements();
   renderHUD();
   save();
   showFront();
