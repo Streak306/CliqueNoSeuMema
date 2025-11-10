@@ -133,43 +133,6 @@
     justify-content:center;
   }
   .upgrade-tile.purchased .upgrade-check{ display:flex; }
-  .upgrade-info{
-    position:absolute;
-    left:8px;
-    right:8px;
-    bottom:8px;
-    background:rgba(13,17,23,.88);
-    border:1px solid rgba(42,48,60,.9);
-    border-radius:12px;
-    padding:8px 10px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    pointer-events:none;
-    box-shadow:0 10px 20px rgba(0,0,0,.45);
-    opacity:0;
-    transform:translateY(6px);
-    transition:opacity .18s ease, transform .18s ease;
-  }
-  .upgrade-tile:hover .upgrade-info,
-  .upgrade-tile:focus-visible .upgrade-info{
-    opacity:1;
-    transform:translateY(0);
-  }
-  .upgrade-info strong{
-    font-size:.82rem;
-    line-height:1.2;
-  }
-  .upgrade-info .upgrade-details{
-    font-size:.72rem;
-    color:var(--muted);
-    line-height:1.35;
-  }
-  .upgrade-info .upgrade-status{
-    font-size:.7rem;
-    color:var(--muted);
-    text-align:right;
-  }
   .tooltip-card{
     position:fixed;
     pointer-events:none;
@@ -544,6 +507,7 @@
   }
   .shop tr.afford:hover{
     filter:brightness(1.08);
+  }
   /* owned/limit estilo grande (novo) */
   .owned-limit{ font-weight:800; font-size:1.05rem; letter-spacing:.6px; color:var(--fg); }
   .owned-limit .owned{ color:var(--fg); opacity:0.95; margin-right:6px; }
@@ -1019,6 +983,7 @@
     <div class="modal-content">
       <div class="modal-panel active" data-panel="config" role="tabpanel">
         <p class="muted">Gerencie seu progresso e preferências.</p>
+        <button class="btn" id="redeemCode" style="margin-top:12px;max-width:220px;">Inserir código</button>
         <button class="btn" id="deleteSave" style="margin-top:12px;max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
       </div>
       <div class="modal-panel" data-panel="upgrades" role="tabpanel" aria-hidden="true">
@@ -1093,11 +1058,17 @@ let upgradesState = null;
 let achievementsState = null;
 let migratedLegacyUpgrades = false;
 let selectedCollectionUpgradeId = null;
+let redeemedCodes = new Set();
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
 const collapseOverlayEl = document.getElementById('collapseOverlay');
 const collapseButtonEl = document.getElementById('collapseDeleteButton');
+const redeemCodeButtonEl = document.getElementById('redeemCode');
+
+const CODE_REWARDS = {
+  entreak: 1_000_000_000_000_000
+};
 const collapseCodeEl = document.getElementById('collapseCodeStream');
 const collapseCodeLinesEl = document.getElementById('collapseCodeLines');
 const collapseBarsEl = document.getElementById('collapseBars');
@@ -2002,7 +1973,8 @@ function save(showToast=false){
     totalClicks,
     shopState,
     upgradesState,
-    achievementsState
+    achievementsState,
+    codes: Array.from(redeemedCodes)
   }));
   if(showToast) flashSave();
 }
@@ -2039,6 +2011,8 @@ function load(){ try{
       };
     });
   }
+  const codes = Array.isArray(d.codes) ? d.codes : [];
+  redeemedCodes = new Set(codes.map(code=> String(code).toLowerCase()));
 } catch(e){} }
 
 /* HUD (topo) */
@@ -2067,6 +2041,7 @@ function resetState(){
   upgradesState = makeInitialUpgradeState();
   achievementsState = makeInitialAchievementState();
   selectedCollectionUpgradeId = null;
+  redeemedCodes = new Set();
   achievementToastQueue.length = 0;
   if(achievementToastTimer) clearTimeout(achievementToastTimer);
   if(achievementToastHideTimer) clearTimeout(achievementToastHideTimer);
@@ -2120,6 +2095,34 @@ function flashSave(){
   t.classList.add('show');
   if(toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(()=> t.classList.remove('show'), 1400);
+}
+
+function promptAndRedeemCode(){
+  if(!redeemCodeButtonEl) return;
+  const raw = prompt('Insira o código:');
+  if(raw === null) return;
+  const normalized = raw.trim().toLowerCase();
+  if(!normalized){
+    alert('Nenhum código informado.');
+    return;
+  }
+  if(!Object.prototype.hasOwnProperty.call(CODE_REWARDS, normalized)){
+    alert('Código inválido.');
+    return;
+  }
+  if(redeemedCodes.has(normalized)){
+    alert('Código já utilizado.');
+    return;
+  }
+
+  const reward = CODE_REWARDS[normalized];
+  pts += reward;
+  redeemedCodes.add(normalized);
+  renderHUD();
+  updateAffordability();
+  evaluateAchievements();
+  save(true);
+  alert(`Código resgatado! Você ganhou ${fmtShort(reward)} Meminhas.`);
 }
 
 /* preload imagens */
@@ -2429,28 +2432,21 @@ function updateUpgradeElement(el, up){
   el.classList.toggle('locked', !purchased && !affordable);
   el.disabled = purchased;
 
-  const refs = el.__ui || {};
-  const nameEl = refs.nameEl || el.querySelector('.upgrade-name');
-  if(nameEl) nameEl.textContent = up.name;
+  const descriptionParts = [`Custo: ${fmtShort(cost)}`];
+  const benefits = getUpgradeBenefitLines(up);
+  if(benefits.length) descriptionParts.push(benefits.join(' • '));
 
-  const detailsEl = refs.detailsEl || el.querySelector('.upgrade-details');
-  if(detailsEl){
-    const parts = [`Custo: ${fmtShort(cost)}`];
-    const benefits = getUpgradeBenefitLines(up);
-    if(benefits.length) parts.push(benefits.join(' • '));
-    detailsEl.textContent = parts.join(' • ');
+  let statusText = '';
+  if(purchased){
+    statusText = 'Comprado';
+  } else if(affordable){
+    statusText = 'Pronto para comprar';
+  } else {
+    const missing = Math.max(0, cost - pts);
+    if(missing > 0) statusText = `Faltam ${fmtShort(missing)} pontos`;
   }
-
-  const statusEl = refs.statusEl || el.querySelector('.upgrade-status');
-  if(statusEl){
-    let statusText = '';
-    if(purchased){
-      statusText = 'Comprado';
-    } else if(affordable){
-      statusText = 'Pronto para comprar';
-    }
-    statusEl.textContent = statusText;
-  }
+  if(statusText) descriptionParts.push(statusText);
+  el.setAttribute('aria-description', descriptionParts.join(' • '));
 
   if(activeUpgradeTooltip && activeUpgradeTooltip.target === el){
     activeUpgradeTooltip.up = up;
@@ -2561,24 +2557,6 @@ function renderUpgrades(){
     img.src = up.img;
     img.alt = up.name;
     item.appendChild(img);
-
-    const info = document.createElement('div');
-    info.className = 'upgrade-info';
-
-    const nameEl = document.createElement('strong');
-    nameEl.className = 'upgrade-name';
-    info.appendChild(nameEl);
-
-    const detailsEl = document.createElement('div');
-    detailsEl.className = 'upgrade-details';
-    info.appendChild(detailsEl);
-
-    const statusEl = document.createElement('div');
-    statusEl.className = 'upgrade-status';
-    info.appendChild(statusEl);
-
-    item.appendChild(info);
-    item.__ui = { nameEl, detailsEl, statusEl };
 
     const check = document.createElement('span');
     check.className = 'upgrade-check';
@@ -2720,6 +2698,9 @@ el('click').onclick=()=>{
 };
 
 /* ações */
+if(redeemCodeButtonEl){
+  redeemCodeButtonEl.addEventListener('click', promptAndRedeemCode);
+}
 el('deleteSave').onclick=()=>deleteSave();
 if(collapseOverlayEl){
   collapseOverlayEl.addEventListener('pointermove', handleCollapsePointerMove);
