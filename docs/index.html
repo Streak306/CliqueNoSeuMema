@@ -571,6 +571,391 @@
     .shop-card{ min-height: auto; }
     .upgrades-card{ min-height: auto; }
   }
+
+  /* ===== Colapso da Namorada ===== */
+  body.collapse-active{ overflow:hidden; }
+  .collapse-overlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    padding:32px clamp(18px, 4vw, 48px) 38px;
+    gap:24px;
+    background:rgba(6,10,18,0.92);
+    color:#f8fafc;
+    z-index:120;
+    font-family:'Fira Code', 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+    letter-spacing:.02em;
+    text-shadow:0 0 18px rgba(96,165,250,.35);
+    backdrop-filter:blur(9px) saturate(220%);
+    pointer-events:auto;
+  }
+  .collapse-overlay.active{ display:flex; }
+  .collapse-top{
+    font-size:clamp(1.1rem, 1.3rem + .6vw, 1.9rem);
+    text-transform:uppercase;
+    align-self:center;
+    letter-spacing:.32em;
+    position:relative;
+    padding:8px 18px;
+    border:1px solid rgba(148,163,184,.35);
+    border-radius:999px;
+    overflow:hidden;
+    mix-blend-mode:screen;
+    animation:collapseTopJitter .45s steps(4) infinite;
+  }
+  .collapse-top::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(120deg, rgba(96,165,250,.35) 0%, rgba(15,23,42,.0) 40%, rgba(96,165,250,.35) 100%);
+    mix-blend-mode:color-dodge;
+    opacity:.32;
+    animation:collapseScan 1.6s linear infinite;
+  }
+  .collapse-center{ display:flex; align-items:center; justify-content:center; position:relative; }
+  .collapse-button{
+    position:relative;
+    padding:28px clamp(40px, 12vw, 160px);
+    border-radius:999px;
+    border:3px solid rgba(248,113,113,.8);
+    background:radial-gradient(circle at center, rgba(248,113,113,.95) 0%, rgba(127,29,29,.92) 60%, rgba(15,23,42,.92) 100%);
+    color:#fff1f2;
+    font-size:clamp(1.35rem, 1.2rem + 1vw, 2.2rem);
+    letter-spacing:.6em;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:0 0 60px rgba(244,63,94,.55), 0 0 0 3px rgba(244,63,94,.35);
+    filter:saturate(1.3);
+    transition:filter .12s ease, transform .08s ease;
+    animation:collapseButtonPulse 1.2s ease-in-out infinite alternate;
+    overflow:hidden;
+    user-select:none;
+  }
+  .collapse-button::after{
+    content:'';
+    position:absolute;
+    inset:-60%;
+    background:radial-gradient(circle, rgba(255,228,230,.22) 0%, rgba(255,255,255,0) 70%);
+    opacity:.65;
+    animation:collapseButtonGlow 1.8s ease-in-out infinite;
+    pointer-events:none;
+  }
+  .collapse-button::before{
+    content:'';
+    position:absolute;
+    inset:-8px;
+    border-radius:inherit;
+    border:1px solid rgba(255,255,255,.25);
+    opacity:.3;
+    filter:blur(0);
+    transition:opacity .1s ease;
+    pointer-events:none;
+  }
+  .collapse-button:hover{ filter:brightness(1.08) contrast(1.08); }
+  .collapse-button.hover-stutter{ animation:collapseButtonStutter .18s steps(4) 1, collapseButtonPulse 1.2s ease-in-out infinite alternate; }
+  .collapse-button.burst::after{
+    animation:collapseButtonBurst .32s ease-out 1;
+  }
+  .collapse-button.burst::before{
+    opacity:.8;
+    animation:collapseButtonRing .28s ease-out 1;
+  }
+  .collapse-center::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:24px;
+    box-shadow:0 0 0 2px rgba(248,113,113,.25), 0 0 120px rgba(248,113,113,.25);
+    opacity:.6;
+    filter:blur(1px);
+    pointer-events:none;
+  }
+  .collapse-overlay .collapse-button{ transform:translate(var(--collapse-offset-x, 0px), var(--collapse-offset-y, 0px)); }
+
+  .collapse-code{
+    flex:1;
+    min-height:180px;
+    position:relative;
+    padding:24px clamp(14px, 6vw, 28px);
+    background:linear-gradient(180deg, rgba(15,23,42,.65) 0%, rgba(8,12,20,.92) 100%);
+    border:1px solid rgba(96,165,250,.26);
+    border-radius:20px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-size:.82rem;
+    line-height:1.3;
+  }
+  .collapse-code-lines{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    z-index:1;
+    min-height:100%;
+  }
+  .collapse-code::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(59,130,246,.22) 0%, rgba(15,23,42,0) 40%, rgba(148,163,184,.18) 70%, rgba(15,23,42,0) 100%);
+    mix-blend-mode:screen;
+    opacity:.55;
+    animation:collapseCodeSweep 3.6s linear infinite;
+    pointer-events:none;
+  }
+  .collapse-code::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(0deg, rgba(15,23,42,0) 0%, rgba(15,23,42,.86) 85%);
+    pointer-events:none;
+  }
+  .collapse-code-line{
+    position:relative;
+    color:rgba(165,180,252,.92);
+    text-shadow:0 0 10px rgba(129,140,248,.35);
+    white-space:pre;
+    mix-blend-mode:screen;
+  }
+  .collapse-code-line.fade{
+    opacity:.45;
+    color:rgba(148,163,184,.6);
+  }
+  .collapse-bars{
+    position:absolute;
+    inset:12px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .18s ease;
+  }
+  .collapse-bars.active{ opacity:.92; }
+  .collapse-bar{
+    height:10px;
+    border-radius:999px;
+    background:rgba(30,41,59,.65);
+    overflow:hidden;
+    border:1px solid rgba(148,163,184,.28);
+  }
+  .collapse-bar span{
+    display:block;
+    height:100%;
+    background:linear-gradient(90deg, rgba(59,130,246,.6), rgba(14,165,233,.85));
+    box-shadow:0 0 16px rgba(14,165,233,.35);
+    transform-origin:left;
+    animation:collapseBarLoop 2.4s cubic-bezier(.4,0,.2,1) infinite;
+  }
+
+  .collapse-overlay .glyph-swap::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    mix-blend-mode:difference;
+    pointer-events:none;
+  }
+
+  .collapse-overlay.co-negative{ animation:collapseNegative 0.62s steps(2) infinite; }
+  .collapse-overlay.co-aberration::before,
+  .collapse-overlay.co-aberration::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    mix-blend-mode:screen;
+  }
+  .collapse-overlay.co-aberration::before{
+    background:rgba(59,130,246,.35);
+    transform:translateX(-4px);
+  }
+  .collapse-overlay.co-aberration::after{
+    background:rgba(244,114,182,.35);
+    transform:translateX(4px);
+  }
+  .collapse-overlay.co-solar{ filter:contrast(1.2) brightness(1.35) saturate(1.4); }
+  .collapse-overlay.co-pixel{ image-rendering:pixelated; }
+  .collapse-overlay.co-dither{ background-image:repeating-linear-gradient(135deg, rgba(15,23,42,.9) 0 6px, rgba(241,245,249,.12) 6px 12px); }
+  .collapse-overlay.co-kaleido{
+    mask-image:radial-gradient(circle at center, rgba(255,255,255,.4) 0%, rgba(255,255,255,0) 60%);
+    animation:collapseKaleido 0.18s steps(2) 1;
+  }
+  .collapse-overlay.co-stutter{ animation:collapseStutter 0.52s steps(2) 1; }
+  .collapse-overlay.co-repeat{ animation:collapseRepeat 0.74s steps(3) 1; }
+  .collapse-overlay.co-gravity::before{
+    animation:collapseGravity 0.6s ease-in-out infinite;
+  }
+  .collapse-overlay.co-freeze::before{
+    animation:none;
+    filter:brightness(1.4);
+  }
+  .collapse-overlay.co-trail::before{
+    animation:collapseTrail 1s linear infinite;
+  }
+  .collapse-overlay.co-code-invert{ filter:invert(1) hue-rotate(180deg); }
+
+  .wrap.collapse-roll{ animation:collapseRoll 0.32s ease-in-out 1; }
+  .wrap.collapse-fov{ animation:collapseFov 0.9s ease-in-out 1; }
+  .wrap.collapse-zoom{ animation:collapseZoom 0.42s cubic-bezier(.77,-0.2,.34,1.4) 1; }
+  .wrap.collapse-zflicker{ animation:collapseZFlicker 0.8s steps(2) infinite; }
+
+  .stage.collapse-rubber{ animation:collapseRubber 0.8s ease-in-out 1; }
+  .stage.collapse-uv{ animation:collapseUV 1.1s ease-in-out 1; }
+  .stage.collapse-normals{ animation:collapseNormals 0.12s steps(2) 1; }
+
+  body.collapse-active .pill,
+  body.collapse-active #pts,
+  body.collapse-active #pc,
+  body.collapse-active #mps,
+  body.collapse-active #statBanco,
+  body.collapse-active #statTempo,
+  body.collapse-active #statConstr,
+  body.collapse-active #statMps,
+  body.collapse-active #statClique,
+  body.collapse-active #statCliques{ transition:all .2s ease; }
+  body.collapse-active.co-ui-numbers .pill b,
+  body.collapse-active.co-ui-numbers #pts,
+  body.collapse-active.co-ui-numbers #pc,
+  body.collapse-active.co-ui-numbers #mps,
+  body.collapse-active.co-ui-numbers #statBanco,
+  body.collapse-active.co-ui-numbers #statTempo,
+  body.collapse-active.co-ui-numbers #statConstr,
+  body.collapse-active.co-ui-numbers #statMps,
+  body.collapse-active.co-ui-numbers #statClique,
+  body.collapse-active.co-ui-numbers #statCliques{
+    font-feature-settings:'tnum' 1, 'zero' 1;
+    text-shadow:0 0 14px rgba(147,197,253,.6);
+  }
+  body.collapse-active.co-ui-font{ font-family:'Fira Code', 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace; }
+  .collapse-overlay.co-ui-keys{ border-image:linear-gradient(45deg, rgba(244,114,182,.35), rgba(56,189,248,.35)) 1; }
+
+  .collapse-code.co-code-hex{ color:#99f6e4; }
+  .collapse-code.co-code-stack{ color:#fbcfe8; }
+  .collapse-code.co-code-console{ color:#bae6fd; }
+
+  .collapse-overlay.co-ui-cursor .collapse-button::before{ opacity:.65; }
+
+  .collapse-overlay.collapse-flash{
+    animation:collapseFlash 0.12s steps(2) 1;
+  }
+
+  @keyframes collapseTopJitter{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(2px); }
+    50%{ transform:translateX(-2px); }
+    75%{ transform:translateX(1px); }
+  }
+  @keyframes collapseScan{
+    0%{ transform:translateX(-60%); }
+    100%{ transform:translateX(60%); }
+  }
+  @keyframes collapseButtonPulse{
+    from{ filter:brightness(1.05) drop-shadow(0 0 18px rgba(248,113,113,.45)); }
+    to{ filter:brightness(1.18) drop-shadow(0 0 28px rgba(248,113,113,.72)); }
+  }
+  @keyframes collapseButtonGlow{
+    0%,100%{ transform:scale(1); opacity:.6; }
+    50%{ transform:scale(1.15); opacity:.85; }
+  }
+  @keyframes collapseButtonStutter{
+    0%{ transform:translate(0,0); }
+    50%{ transform:translate(-2px,1px); }
+    100%{ transform:translate(2px,-1px); }
+  }
+  @keyframes collapseButtonBurst{
+    0%{ transform:scale(1); opacity:.8; }
+    50%{ transform:scale(1.25); opacity:.35; }
+    100%{ transform:scale(1.5); opacity:0; }
+  }
+  @keyframes collapseButtonRing{
+    0%{ transform:scale(1); opacity:.6; }
+    100%{ transform:scale(1.35); opacity:0; }
+  }
+  @keyframes collapseCodeSweep{
+    0%{ transform:translateY(-100%); }
+    100%{ transform:translateY(100%); }
+  }
+  @keyframes collapseBarLoop{
+    0%{ transform:scaleX(0); }
+    40%{ transform:scaleX(.6); }
+    70%{ transform:scaleX(1); }
+    100%{ transform:scaleX(0); }
+  }
+  @keyframes collapseNegative{
+    0%,100%{ filter:invert(0); }
+    30%{ filter:invert(1) saturate(1.4); }
+    60%{ filter:invert(.4) contrast(1.4); }
+  }
+  @keyframes collapseKaleido{
+    0%{ transform:scale(1) rotate(0deg); }
+    50%{ transform:scale(1.1) rotate(8deg); }
+    100%{ transform:scale(.94) rotate(-6deg); }
+  }
+  @keyframes collapseStutter{
+    0%,50%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-4px); }
+    70%{ transform:translateX(6px); }
+  }
+  @keyframes collapseRepeat{
+    0%,100%{ filter:contrast(1); }
+    30%{ filter:contrast(1.6); }
+    60%{ filter:contrast(.7); }
+  }
+  @keyframes collapseGravity{
+    0%{ transform:translateY(0); }
+    100%{ transform:translateY(-10px); }
+  }
+  @keyframes collapseTrail{
+    0%{ transform:skewX(0); }
+    100%{ transform:skewX(-12deg); }
+  }
+  @keyframes collapseFlash{
+    0%{ filter:invert(1) brightness(1.6); }
+    100%{ filter:none; }
+  }
+  @keyframes collapseRoll{
+    0%{ transform:rotate(0deg); }
+    50%{ transform:rotate(2deg); }
+    100%{ transform:rotate(-2deg); }
+  }
+  @keyframes collapseFov{
+    0%{ transform:perspective(800px) scale(1); }
+    50%{ transform:perspective(500px) scale(1.12); }
+    100%{ transform:perspective(800px) scale(1); }
+  }
+  @keyframes collapseZoom{
+    0%{ transform:scale(1); }
+    60%{ transform:scale(1.18); }
+    100%{ transform:scale(1); }
+  }
+  @keyframes collapseZFlicker{
+    0%,100%{ filter:none; }
+    40%{ filter:brightness(1.4) contrast(1.5); }
+    70%{ filter:brightness(.7) contrast(.8); }
+  }
+  @keyframes collapseRubber{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.05, .94); }
+    70%{ transform:scale(.96, 1.06); }
+    100%{ transform:scale(1); }
+  }
+  @keyframes collapseUV{
+    0%{ transform:skewX(0deg); }
+    50%{ transform:skewX(12deg); }
+    100%{ transform:skewX(-8deg); }
+  }
+  @keyframes collapseNormals{
+    0%,100%{ filter:none; }
+    50%{ filter:invert(1); }
+  }
+
+  @media (max-width:720px){
+    .collapse-button{ letter-spacing:.3em; padding:24px 36px; }
+    .collapse-top{ letter-spacing:.18em; }
+  }
 </style>
 
 <div class="wrap">
@@ -679,6 +1064,17 @@
   </div>
 </div>
 
+<div id="collapseOverlay" class="collapse-overlay" aria-hidden="true">
+  <div class="collapse-top">A realidade não permite isso...</div>
+  <div class="collapse-center">
+    <button id="collapseDeleteButton" class="collapse-button" type="button">APAGAR SAVE</button>
+  </div>
+  <div class="collapse-code" id="collapseCodeStream" aria-hidden="true">
+    <div class="collapse-bars" id="collapseBars"></div>
+    <div class="collapse-code-lines" id="collapseCodeLines"></div>
+  </div>
+</div>
+
 <div id="saveToast" class="save-toast">salvo</div>
 <div id="achievementToast" class="achievement-toast" aria-live="polite"></div>
 
@@ -697,6 +1093,28 @@ let upgradesState = null;
 let achievementsState = null;
 let migratedLegacyUpgrades = false;
 let selectedCollectionUpgradeId = null;
+
+const wrapEl = document.querySelector('.wrap');
+const stageEl = document.querySelector('.stage');
+const collapseOverlayEl = document.getElementById('collapseOverlay');
+const collapseButtonEl = document.getElementById('collapseDeleteButton');
+const collapseCodeEl = document.getElementById('collapseCodeStream');
+const collapseCodeLinesEl = document.getElementById('collapseCodeLines');
+const collapseBarsEl = document.getElementById('collapseBars');
+
+const collapseState = {
+  active:false,
+  startTime:0,
+  loopTimer:null,
+  codeTimer:null,
+  eventTimers:new Map(),
+  lastRun:new Map(),
+  codeModes:new Set(),
+  magnetStrength:6,
+  magnetActive:false,
+  magnetPolarity:-1,
+  consoleListener:null
+};
 
 /* Imagens (efeito clique) */
 const IMG_BACK  = 'imagens/variacoes-mema/mema_back.png';
@@ -725,6 +1143,27 @@ function fmtTime(seconds){
   return hours > 0 ? `${hours}:${minutes.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}` : base;
 }
 
+function randRange(min, max){
+  return Math.random() * (max - min) + min;
+}
+
+function randInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sample(arr){
+  if(!arr || !arr.length) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffleInPlace(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function getTotalBuildingsOwned(){
   if(typeof SHOP === 'undefined') return 0;
   return SHOP.reduce((sum, it)=> sum + (shopState?.[it.id]?.owned ?? 0), 0);
@@ -740,6 +1179,404 @@ const tooltipNameEl = tooltipCardEl?.querySelector('.tooltip-name') ?? null;
 const tooltipEffectEl = tooltipCardEl?.querySelector('.tooltip-effect') ?? null;
 const tooltipCostEl = tooltipCardEl?.querySelector('.tooltip-cost') ?? null;
 let activeUpgradeTooltip = null;
+
+const COLLAPSE_STACK_FRAMES = [
+  'core::love::panic',
+  'engine::soul::commit',
+  'memory::erase::save',
+  'hearts::runtime::alloc',
+  'render::affection::kaleido',
+  'destiny::branch::fork',
+  'timeline::rollback::force'
+];
+
+const COLLAPSE_CONSOLE_RESPONSES = [
+  'permit:false',
+  'rollback() -> denied',
+  'throw ForbiddenRomance',
+  'save.locked // true',
+  'trace destiny::loop',
+  'echo NULL_HEART',
+  'panic! core dumped'
+];
+
+const COLLAPSE_STATUS_CODES = [
+  '0xDEAD BEEF',
+  '0xFEED FACE',
+  '0xBADC0DE',
+  '0xBAADF00D',
+  '0xCAFEBABE',
+  '0xF0 0D AD',
+  'SIGABRT',
+  'NULL',
+  'NaN',
+  '∞'
+];
+
+function randomHexChunk(){
+  return Math.floor(Math.random() * 256).toString(16).padStart(2,'0').toUpperCase();
+}
+
+function randomAddress(){
+  return Math.floor(Math.random() * 0xffff).toString(16).padStart(4,'0').toUpperCase();
+}
+
+function randomHexLine(){
+  const count = randInt(4, 10);
+  const bytes = Array.from({length:count}, randomHexChunk).join(' ');
+  return `${randomAddress()}: ${bytes}`;
+}
+
+function randomStackLine(){
+  const fn = sample(COLLAPSE_STACK_FRAMES) ?? 'core::unknown::??';
+  const file = sample(['reality.rs','timeline.cpp','affection.lua','destiny.kt','rollback.ts']) ?? 'memory.js';
+  const line = randInt(12, 420);
+  return `at ${fn} (${file}:${line})`;
+}
+
+function randomConsoleLine(){
+  return `console> ${sample(COLLAPSE_CONSOLE_RESPONSES) ?? 'permit:false'}`;
+}
+
+function randomStatusLine(){
+  const code = sample(COLLAPSE_STATUS_CODES) ?? '0x0000';
+  const addr = randomAddress();
+  const seed = Math.floor(randRange(1000,9999));
+  const verbs = sample(['destiny','collapse','rollback','sync','erase']) ?? 'collapse';
+  return `${verbs} :: ${code} // seed:${seed} @${addr}`;
+}
+
+function nextCollapseLine(){
+  const modes = collapseState.codeModes.size ? Array.from(collapseState.codeModes) : [];
+  if(!modes.includes('hex')) modes.push('hex');
+  const mode = sample(modes) ?? 'hex';
+  switch(mode){
+    case 'stack':
+      return randomStackLine();
+    case 'console':
+      return randomConsoleLine();
+    case 'hex':
+    default:
+      return Math.random() < 0.4 ? randomStatusLine() : randomHexLine();
+  }
+}
+
+function appendCollapseLine(text){
+  if(!collapseCodeLinesEl) return;
+  const line = document.createElement('div');
+  line.className = 'collapse-code-line';
+  line.textContent = text;
+  collapseCodeLinesEl.appendChild(line);
+  const limit = 60;
+  while(collapseCodeLinesEl.children.length > limit){
+    collapseCodeLinesEl.removeChild(collapseCodeLinesEl.firstChild);
+  }
+  const lines = collapseCodeLinesEl.querySelectorAll('.collapse-code-line');
+  lines.forEach((el, idx)=>{
+    if(!(el instanceof HTMLElement)) return;
+    el.classList.toggle('fade', idx < lines.length - 12);
+  });
+  if(collapseCodeEl) collapseCodeEl.scrollTop = collapseCodeEl.scrollHeight;
+}
+
+function clearCollapseLines(){
+  if(collapseCodeLinesEl) collapseCodeLinesEl.innerHTML = '';
+}
+
+function activateCollapseBars(){
+  if(!collapseBarsEl) return;
+  collapseBarsEl.innerHTML = '';
+  const count = randInt(3, 6);
+  for(let i=0;i<count;i++){
+    const bar = document.createElement('div');
+    bar.className = 'collapse-bar';
+    const span = document.createElement('span');
+    span.style.animationDuration = `${randRange(1.6,2.8).toFixed(2)}s`;
+    span.style.animationDelay = `${-randRange(0,2).toFixed(2)}s`;
+    const hue = randInt(180, 360);
+    span.style.background = `linear-gradient(90deg, hsla(${hue},80%,64%,.8), hsla(${(hue+60)%360},90%,72%,.95))`;
+    bar.appendChild(span);
+    collapseBarsEl.appendChild(bar);
+  }
+  collapseBarsEl.classList.add('active');
+}
+
+function deactivateCollapseBars(){
+  if(!collapseBarsEl) return;
+  collapseBarsEl.classList.remove('active');
+  collapseBarsEl.innerHTML = '';
+}
+
+function setCollapseMode(mode, enable){
+  if(enable){
+    collapseState.codeModes.add(mode);
+  } else {
+    collapseState.codeModes.delete(mode);
+  }
+}
+
+function getCollapseTarget(id){
+  switch(id){
+    case 'overlay': return collapseOverlayEl;
+    case 'stage': return stageEl;
+    case 'wrap': return wrapEl;
+    case 'body': return document.body;
+    case 'code': return collapseCodeEl;
+    case 'bars': return collapseBarsEl;
+    default: return null;
+  }
+}
+
+const COLLAPSE_EVENTS = [
+  { id:'screen-negative', target:'overlay', className:'co-negative', minDuration:400, maxDuration:1200, cooldown:2200 },
+  { id:'screen-aberration', target:'overlay', className:'co-aberration', minDuration:600, maxDuration:1400, cooldown:2400 },
+  { id:'screen-solar', target:'overlay', className:'co-solar', minDuration:800, maxDuration:1200, cooldown:2600 },
+  { id:'screen-pixel', target:'overlay', className:'co-pixel', minDuration:700, maxDuration:900, cooldown:2600 },
+  { id:'screen-dither', target:'overlay', className:'co-dither', minDuration:1000, maxDuration:1400, cooldown:2800 },
+  { id:'geo-rubber', target:'stage', className:'collapse-rubber', minDuration:800, maxDuration:1200, cooldown:2600 },
+  { id:'geo-normals', target:'stage', className:'collapse-normals', minDuration:90, maxDuration:150, cooldown:2800 },
+  { id:'geo-zflicker', target:'wrap', className:'collapse-zflicker', minDuration:800, maxDuration:1100, cooldown:2600 },
+  { id:'geo-uv', target:'stage', className:'collapse-uv', minDuration:1000, maxDuration:1600, cooldown:2600 },
+  { id:'geo-kaleido', target:'overlay', className:'co-kaleido', minDuration:60, maxDuration:140, cooldown:2400 },
+  { id:'cam-roll', target:'wrap', className:'collapse-roll', minDuration:320, maxDuration:420, cooldown:1500 },
+  { id:'cam-fov', target:'wrap', className:'collapse-fov', minDuration:900, maxDuration:1100, cooldown:2000 },
+  { id:'cam-repeat', target:'overlay', className:'co-repeat', minDuration:700, maxDuration:900, cooldown:2600 },
+  { id:'cam-stutter', target:'overlay', className:'co-stutter', minDuration:520, maxDuration:650, cooldown:2400 },
+  { id:'cam-zoom', target:'wrap', className:'collapse-zoom', minDuration:420, maxDuration:520, cooldown:2000 },
+  { id:'particles-gravity', target:'overlay', className:'co-gravity', minDuration:600, maxDuration:900, cooldown:2600 },
+  { id:'particles-freeze', target:'overlay', className:'co-freeze', minDuration:600, maxDuration:900, cooldown:2600 },
+  { id:'particles-trail', target:'overlay', className:'co-trail', minDuration:1000, maxDuration:1300, cooldown:2600 },
+  { id:'hud-numbers', target:'body', className:'co-ui-numbers', minDuration:1600, maxDuration:2400, cooldown:4200 },
+  { id:'hud-font', target:'body', className:'co-ui-font', minDuration:1600, maxDuration:2600, cooldown:4400 },
+  {
+    id:'hud-bars', target:'bars', className:'active', minDuration:1600, maxDuration:2400, cooldown:3800,
+    onStart:activateCollapseBars,
+    onEnd:deactivateCollapseBars
+  },
+  {
+    id:'hud-cursor', target:'overlay', className:'co-ui-cursor', minDuration:1600, maxDuration:2200, cooldown:3600,
+    onStart:()=>{
+      collapseState.magnetActive = true;
+      collapseState.magnetStrength = randRange(8,14);
+      collapseState.magnetPolarity = Math.random() < 0.5 ? -1 : 1;
+    },
+    onEnd:()=>{
+      collapseState.magnetActive = false;
+      collapseState.magnetStrength = 6;
+      collapseState.magnetPolarity = -1;
+      resetCollapseButtonOffset();
+    }
+  },
+  { id:'hud-keys', target:'overlay', className:'co-ui-keys', minDuration:1400, maxDuration:2000, cooldown:3600 },
+  {
+    id:'code-hex', target:'code', className:'co-code-hex', minDuration:1400, maxDuration:2000, cooldown:3400,
+    onStart:()=>setCollapseMode('hex', true),
+    onEnd:()=>setCollapseMode('hex', false)
+  },
+  {
+    id:'code-stack', target:'code', className:'co-code-stack', minDuration:1400, maxDuration:2200, cooldown:3600,
+    onStart:()=>setCollapseMode('stack', true),
+    onEnd:()=>setCollapseMode('stack', false)
+  },
+  {
+    id:'code-console', target:'code', className:'co-code-console', minDuration:1600, maxDuration:2600, cooldown:3800,
+    onStart:()=>setCollapseMode('console', true),
+    onEnd:()=>setCollapseMode('console', false)
+  },
+  { id:'code-invert', target:'overlay', className:'co-code-invert', minDuration:1000, maxDuration:1600, cooldown:3600 }
+];
+
+function activateCollapseEvent(evt){
+  const target = getCollapseTarget(evt.target);
+  if(!target) return;
+  target.classList.add(evt.className);
+  if(typeof evt.onStart === 'function') evt.onStart();
+  const duration = randRange(evt.minDuration, evt.maxDuration);
+  const timer = setTimeout(()=>{
+    target.classList.remove(evt.className);
+    collapseState.eventTimers.delete(evt.id);
+    collapseState.lastRun.set(evt.id, performance.now());
+    if(typeof evt.onEnd === 'function') evt.onEnd();
+  }, duration);
+  collapseState.eventTimers.set(evt.id, timer);
+}
+
+function runCollapseEventTick(){
+  if(!collapseState.active) return;
+  const now = performance.now();
+  const available = COLLAPSE_EVENTS.filter(evt=>{
+    if(collapseState.eventTimers.has(evt.id)) return false;
+    const last = collapseState.lastRun.get(evt.id) ?? 0;
+    return (now - last) >= evt.cooldown;
+  });
+  if(!available.length) return;
+  const spawn = randInt(1, Math.min(3, available.length));
+  shuffleInPlace(available);
+  for(let i=0;i<spawn;i++) activateCollapseEvent(available[i]);
+}
+
+function startCollapseLoop(){
+  if(collapseState.loopTimer) clearInterval(collapseState.loopTimer);
+  collapseState.loopTimer = setInterval(runCollapseEventTick, 900);
+}
+
+function stopCollapseLoop(){
+  if(collapseState.loopTimer){
+    clearInterval(collapseState.loopTimer);
+    collapseState.loopTimer = null;
+  }
+}
+
+function pumpCollapseStream(){
+  if(!collapseState.active) return;
+  const elapsed = (performance.now() - collapseState.startTime) / 1000;
+  let count = 1;
+  if(elapsed > 10){
+    count = randInt(2, 4);
+  } else if(elapsed > 3){
+    count = randInt(1, 3);
+  }
+  for(let i=0;i<count;i++) appendCollapseLine(nextCollapseLine());
+}
+
+function startCollapseStream(){
+  pumpCollapseStream();
+  if(collapseState.codeTimer) clearInterval(collapseState.codeTimer);
+  collapseState.codeTimer = setInterval(pumpCollapseStream, 260);
+}
+
+function stopCollapseStream(){
+  if(collapseState.codeTimer){
+    clearInterval(collapseState.codeTimer);
+    collapseState.codeTimer = null;
+  }
+}
+
+function resetCollapseButtonOffset(){
+  if(!collapseButtonEl) return;
+  collapseButtonEl.style.removeProperty('--collapse-offset-x');
+  collapseButtonEl.style.removeProperty('--collapse-offset-y');
+}
+
+function handleCollapsePointerMove(ev){
+  if(!collapseState.active || !collapseButtonEl) return;
+  const rect = collapseButtonEl.getBoundingClientRect();
+  const centerX = rect.left + rect.width/2;
+  const centerY = rect.top + rect.height/2;
+  const dx = centerX - ev.clientX;
+  const dy = centerY - ev.clientY;
+  const dist = Math.hypot(dx, dy) || 1;
+  const threshold = 180;
+  if(dist > threshold){
+    resetCollapseButtonOffset();
+    return;
+  }
+  const ratio = (threshold - dist) / threshold;
+  const strength = collapseState.magnetActive ? collapseState.magnetStrength : 6;
+  const polarity = collapseState.magnetPolarity ?? -1;
+  const base = ratio * strength;
+  const offsetX = (dx / dist) * base * (polarity === 1 ? -1 : 1);
+  const offsetY = (dy / dist) * base * (polarity === 1 ? -1 : 1);
+  collapseButtonEl.style.setProperty('--collapse-offset-x', `${offsetX.toFixed(1)}px`);
+  collapseButtonEl.style.setProperty('--collapse-offset-y', `${offsetY.toFixed(1)}px`);
+}
+
+function handleCollapseButtonHover(){
+  if(!collapseButtonEl) return;
+  collapseButtonEl.classList.add('hover-stutter');
+  setTimeout(()=> collapseButtonEl.classList.remove('hover-stutter'), 220);
+}
+
+function handleCollapseButtonLeave(){
+  resetCollapseButtonOffset();
+}
+
+function handleCollapseButtonClick(){
+  if(!collapseState.active) return;
+  if(collapseOverlayEl){
+    collapseOverlayEl.classList.add('collapse-flash');
+    setTimeout(()=> collapseOverlayEl?.classList.remove('collapse-flash'), 140);
+  }
+  if(collapseButtonEl){
+    collapseButtonEl.classList.add('burst');
+    setTimeout(()=> collapseButtonEl?.classList.remove('burst'), 320);
+  }
+  appendCollapseLine('!! purge.save -> TRUE');
+  appendCollapseLine(randomStatusLine());
+  setTimeout(()=>{
+    deleteSave(true);
+    stopCollapseSequence();
+  }, 200);
+}
+
+function formatCollapseKey(key){
+  if(key.length === 1) return key;
+  if(key === ' ') return 'SPACE';
+  return key.toUpperCase();
+}
+
+function handleCollapseKey(ev){
+  if(!collapseState.active) return;
+  const key = formatCollapseKey(ev.key);
+  appendCollapseLine(`console> permit:false // ${key}`);
+  ev.preventDefault();
+}
+
+function triggerCollapseSequence(fromLoad=false){
+  if(collapseState.active) return;
+  collapseState.active = true;
+  collapseState.startTime = performance.now();
+  document.body.classList.add('collapse-active');
+  if(collapseOverlayEl){
+    collapseOverlayEl.classList.add('active');
+    collapseOverlayEl.setAttribute('aria-hidden','false');
+  }
+  clearCollapseLines();
+  appendCollapseLine(fromLoad ? '!! destino reabre ferida antiga' : '!! reality.reject("namorada")');
+  appendCollapseLine(randomStatusLine());
+  collapseState.magnetStrength = 6;
+  collapseState.magnetPolarity = -1;
+  collapseState.magnetActive = false;
+  collapseState.eventTimers.forEach(timer=> clearTimeout(timer));
+  collapseState.eventTimers.clear();
+  collapseState.lastRun.clear();
+  collapseState.codeModes.clear();
+  deactivateCollapseBars();
+  stopCollapseLoop();
+  stopCollapseStream();
+  startCollapseLoop();
+  startCollapseStream();
+  resetCollapseButtonOffset();
+  if(!collapseState.consoleListener){
+    collapseState.consoleListener = handleCollapseKey;
+    document.addEventListener('keydown', collapseState.consoleListener, true);
+  }
+}
+
+function stopCollapseSequence(){
+  if(!collapseState.active) return;
+  collapseState.active = false;
+  stopCollapseLoop();
+  stopCollapseStream();
+  collapseState.eventTimers.forEach(timer=> clearTimeout(timer));
+  collapseState.eventTimers.clear();
+  collapseState.lastRun.clear();
+  collapseState.codeModes.clear();
+  if(collapseOverlayEl){
+    collapseOverlayEl.classList.remove('active','co-negative','co-aberration','co-solar','co-pixel','co-dither','co-kaleido','co-repeat','co-stutter','co-gravity','co-freeze','co-trail','co-code-invert','co-ui-keys','co-ui-cursor');
+    collapseOverlayEl.setAttribute('aria-hidden','true');
+  }
+  if(collapseCodeEl) collapseCodeEl.classList.remove('co-code-hex','co-code-stack','co-code-console');
+  if(stageEl) stageEl.classList.remove('collapse-rubber','collapse-uv','collapse-normals');
+  if(wrapEl) wrapEl.classList.remove('collapse-roll','collapse-fov','collapse-zoom','collapse-zflicker');
+  document.body.classList.remove('collapse-active','co-ui-numbers','co-ui-font');
+  deactivateCollapseBars();
+  resetCollapseButtonOffset();
+  if(collapseState.consoleListener){
+    document.removeEventListener('keydown', collapseState.consoleListener, true);
+    collapseState.consoleListener = null;
+  }
+}
 
 function refreshUpgradeTooltip(up){
   if(!tooltipCardEl || !tooltipNameEl || !tooltipEffectEl || !tooltipCostEl) return;
@@ -1239,11 +2076,21 @@ function resetState(){
   const toast = el('achievementToast');
   if(toast) toast.classList.remove('show');
 }
-function deleteSave(){
-  const ok = confirm('Apagar seu save? Esta ação não pode ser desfeita.');
-  if(!ok) return;
+function deleteSave(force=false){
+  if(!force){
+    const ok = confirm('Apagar seu save? Esta ação não pode ser desfeita.');
+    if(!ok) return false;
+  }
   localStorage.removeItem('mcw');
-  resetState(); renderShop(); renderUpgrades(); recalculateProduction(); evaluateAchievements(true); renderAchievementsPanel(); renderHUD();
+  resetState();
+  renderShop();
+  renderUpgrades();
+  recalculateProduction();
+  evaluateAchievements(true);
+  renderAchievementsPanel();
+  renderHUD();
+  stopCollapseSequence();
+  return true;
 }
 
 /* loop de meminhas automáticos (MPS) */
@@ -1570,19 +2417,6 @@ function getUpgradeRequirementLines(up){
 function getUpgradeBenefitLines(up){
   const lines = [];
   if(up.effect) lines.push(up.effect);
-  getUpgradeImprovementLines(up).forEach(line=> lines.push(line));
-  return lines;
-}
-
-function getUpgradeImprovementLines(up){
-  const lines = [];
-  if(up.bonus?.type === 'building'){
-    const name = SHOP_LOOKUP[up.bonus.target]?.name ?? up.bonus.target;
-    lines.push(`Melhora: ${name}`);
-  }
-  if(up.bonus?.type === 'finger'){
-    lines.push('Melhora: Cliques no Meminha');
-  }
   return lines;
 }
 
@@ -1827,6 +2661,10 @@ function tryBuy(id){
   pts -= priceSingle;
   st.owned += 1;
 
+  if(id === 'namorada' && st.owned === 1){
+    triggerCollapseSequence();
+  }
+
   recalculateProduction();
 
   // If reached limit, visually mark
@@ -1861,6 +2699,9 @@ renderUpgrades();
 evaluateAchievements(true);
 renderAchievementsPanel();
 renderHUD();
+if(shopState?.namorada?.owned > 0){
+  triggerCollapseSequence(true);
+}
 if(migratedLegacyUpgrades) save();
 loop();
 startAutoSave();
@@ -1879,5 +2720,14 @@ el('click').onclick=()=>{
 };
 
 /* ações */
-el('deleteSave').onclick=deleteSave;
+el('deleteSave').onclick=()=>deleteSave();
+if(collapseOverlayEl){
+  collapseOverlayEl.addEventListener('pointermove', handleCollapsePointerMove);
+  collapseOverlayEl.addEventListener('pointerleave', handleCollapseButtonLeave);
+}
+if(collapseButtonEl){
+  collapseButtonEl.addEventListener('mouseenter', handleCollapseButtonHover);
+  collapseButtonEl.addEventListener('mouseleave', handleCollapseButtonLeave);
+  collapseButtonEl.addEventListener('click', handleCollapseButtonClick);
+}
 </script>
