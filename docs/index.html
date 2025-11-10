@@ -33,7 +33,7 @@
       radial-gradient(900px 500px at 110% -10%, var(--bg-grad-2) 0%, transparent 35%),
       linear-gradient(180deg, #13171c 0%, var(--bg) 100%);
   }
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px;position:relative;}
 
   /* Topo */
   header{ text-align:center; position:sticky; top:0; z-index:10; padding-bottom:10px; backdrop-filter:saturate(140%) blur(4px) }
@@ -454,6 +454,38 @@
     transform:translate(-50%, 0);
   }
 
+  #purchaseToast{
+    position:fixed;
+    top:18px;
+    left:50%;
+    transform:translate(-50%, -16px);
+    background:rgba(10,14,22,.94);
+    color:#e2e8f0;
+    border:1px solid rgba(148,163,184,.45);
+    border-radius:10px;
+    padding:10px 22px;
+    font-family:'Fira Code', 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+    font-size:.85rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    text-shadow:0 0 6px rgba(148,163,184,.25);
+    box-shadow:0 18px 40px rgba(2,6,14,.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+    z-index:48;
+    animation:purchaseToastGlitch 1.1s steps(3) infinite;
+  }
+  #purchaseToast.show{
+    opacity:1;
+    transform:translate(-50%, 0);
+  }
+  @keyframes purchaseToastGlitch{
+    0%,100%{ text-shadow:0 0 6px rgba(148,163,184,.24); opacity:1; }
+    40%{ text-shadow:-1px 0 rgba(96,165,250,.28), 1px 0 rgba(14,165,233,.16); }
+    70%{ text-shadow:1px 0 rgba(94,234,212,.22), -1px 0 rgba(79,70,229,.18); }
+  }
+
   /* Palco */
   .stage{
     display:grid; place-items:center; min-height: min(76vh, 820px);
@@ -467,6 +499,22 @@
   }
   .click-img:hover{ filter:brightness(1.06); }
   .click-img:active{ transform:translateY(1px) scale(.98); }
+
+  .glitch-jitter{
+    filter:contrast(.98) saturate(.94) blur(.3px);
+  }
+  .glitch-shift{
+    filter:contrast(.94) saturate(.9);
+  }
+  .wrap.glitch-scanlines::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(0deg, rgba(148,163,184,.05) 0 2px, rgba(8,10,18,0) 2px 6px);
+    mix-blend-mode:screen;
+    opacity:.05;
+    pointer-events:none;
+  }
 
   /* Indicador de save */
   .save-toast{
@@ -545,16 +593,22 @@
     flex-direction:column;
     padding:32px clamp(18px, 4vw, 48px) 38px;
     gap:24px;
-    background:rgba(6,10,18,0.92);
-    color:#f8fafc;
+    background:rgba(8,12,18,0.94);
+    color:#e2e8f0;
     z-index:120;
     font-family:'Fira Code', 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
     letter-spacing:.02em;
-    text-shadow:0 0 18px rgba(96,165,250,.35);
-    backdrop-filter:blur(9px) saturate(220%);
+    text-shadow:0 0 8px rgba(148,163,184,.25);
+    backdrop-filter:blur(9px) saturate(120%) brightness(.92);
     pointer-events:auto;
   }
   .collapse-overlay.active{ display:flex; }
+  .collapse-overlay.co-scanlines-soft{
+    background:
+      repeating-linear-gradient(0deg, rgba(148,163,184,.05) 0 2px, rgba(8,12,18,0) 2px 6px),
+      rgba(8,12,18,0.94);
+    background-blend-mode:soft-light;
+  }
   .collapse-top{
     font-size:clamp(1.1rem, 1.3rem + .6vw, 1.9rem);
     text-transform:uppercase;
@@ -565,7 +619,7 @@
     border:1px solid rgba(148,163,184,.35);
     border-radius:999px;
     overflow:hidden;
-    mix-blend-mode:screen;
+    mix-blend-mode:soft-light;
     animation:collapseTopJitter .45s steps(4) infinite;
   }
   .collapse-top::after{
@@ -573,8 +627,8 @@
     position:absolute;
     inset:0;
     background:linear-gradient(120deg, rgba(96,165,250,.35) 0%, rgba(15,23,42,.0) 40%, rgba(96,165,250,.35) 100%);
-    mix-blend-mode:color-dodge;
-    opacity:.32;
+    mix-blend-mode:screen;
+    opacity:.18;
     animation:collapseScan 1.6s linear infinite;
   }
   .collapse-center{ display:flex; align-items:center; justify-content:center; position:relative; }
@@ -582,15 +636,15 @@
     position:relative;
     padding:28px clamp(40px, 12vw, 160px);
     border-radius:999px;
-    border:3px solid rgba(248,113,113,.8);
-    background:radial-gradient(circle at center, rgba(248,113,113,.95) 0%, rgba(127,29,29,.92) 60%, rgba(15,23,42,.92) 100%);
-    color:#fff1f2;
+    border:3px solid rgba(248,113,113,.65);
+    background:radial-gradient(circle at center, rgba(248,113,113,.78) 0%, rgba(107,33,33,.88) 58%, rgba(12,16,24,.96) 100%);
+    color:#fee2e2;
     font-size:clamp(1.35rem, 1.2rem + 1vw, 2.2rem);
     letter-spacing:.6em;
     text-transform:uppercase;
     cursor:pointer;
-    box-shadow:0 0 60px rgba(244,63,94,.55), 0 0 0 3px rgba(244,63,94,.35);
-    filter:saturate(1.3);
+    box-shadow:0 0 40px rgba(244,63,94,.32), 0 0 0 2px rgba(244,63,94,.25);
+    filter:saturate(1.05) brightness(.95);
     transition:filter .12s ease, transform .08s ease;
     animation:collapseButtonPulse 1.2s ease-in-out infinite alternate;
     overflow:hidden;
@@ -601,7 +655,7 @@
     position:absolute;
     inset:-60%;
     background:radial-gradient(circle, rgba(255,228,230,.22) 0%, rgba(255,255,255,0) 70%);
-    opacity:.65;
+    opacity:.4;
     animation:collapseButtonGlow 1.8s ease-in-out infinite;
     pointer-events:none;
   }
@@ -616,7 +670,7 @@
     transition:opacity .1s ease;
     pointer-events:none;
   }
-  .collapse-button:hover{ filter:brightness(1.08) contrast(1.08); }
+  .collapse-button:hover{ filter:brightness(1.02) contrast(1.04); }
   .collapse-button.hover-stutter{ animation:collapseButtonStutter .18s steps(4) 1, collapseButtonPulse 1.2s ease-in-out infinite alternate; }
   .collapse-button.burst::after{
     animation:collapseButtonBurst .32s ease-out 1;
@@ -1040,6 +1094,7 @@
   </div>
 </div>
 
+<div id="purchaseToast" aria-live="polite"></div>
 <div id="saveToast" class="save-toast">salvo</div>
 <div id="achievementToast" class="achievement-toast" aria-live="polite"></div>
 
@@ -1134,6 +1189,241 @@ function shuffleInPlace(arr){
   }
   return arr;
 }
+
+const glitchPrelude = {
+  active:false,
+  durationMs:0,
+  timers:new Set(),
+  tracked:new Set(),
+  collapseTimer:null
+};
+
+function queueGlitchTimeout(fn, delay){
+  const handle = setTimeout(()=>{
+    glitchPrelude.timers.delete(handle);
+    fn();
+  }, delay);
+  glitchPrelude.timers.add(handle);
+  return handle;
+}
+
+function clearGlitchTimers(){
+  glitchPrelude.timers.forEach(handle=> clearTimeout(handle));
+  glitchPrelude.timers.clear();
+}
+
+function glitchScrambleDigits(text){
+  const chars = Array.from(text);
+  for(let i=0;i<chars.length-1;i++){
+    if(/\d/.test(chars[i]) && /\d/.test(chars[i+1]) && Math.random() < 0.6){
+      const tmp = chars[i];
+      chars[i] = chars[i+1];
+      chars[i+1] = tmp;
+      i++;
+    }
+  }
+  return chars.join('');
+}
+
+function applyGlitchJitter(){
+  if(!glitchPrelude.active) return;
+  const stats = Array.from(document.querySelectorAll('.stats .pill'));
+  const affordRows = Array.from(document.querySelectorAll('.shop tr.afford'));
+  const targets = stats.concat(affordRows);
+  const clickImg = el('click');
+  if(clickImg) targets.push(clickImg);
+  if(!targets.length) return;
+  shuffleInPlace(targets);
+  const take = Math.max(1, Math.ceil(targets.length * 0.5));
+  for(let i=0;i<take;i++){
+    const node = targets[i];
+    if(!(node instanceof HTMLElement)) continue;
+    if(node.dataset.glitchBusy === '1') continue;
+    node.dataset.glitchBusy = '1';
+    if(!('glitchOriginalTransform' in node.dataset)){
+      node.dataset.glitchOriginalTransform = node.style.transform || '';
+    }
+    const magnitude = Number(randRange(0.5, 1).toFixed(2));
+    const dx = (Math.random() < 0.5 ? -1 : 1) * magnitude;
+    const dy = (Math.random() < 0.5 ? -1 : 1) * magnitude;
+    node.style.transform = `translate(${dx}px, ${dy}px)`;
+    node.classList.add('glitch-jitter');
+    glitchPrelude.tracked.add(node);
+    queueGlitchTimeout(()=>{
+      if(node.dataset.glitchOriginalTransform !== undefined){
+        node.style.transform = node.dataset.glitchOriginalTransform;
+      } else {
+        node.style.removeProperty('transform');
+      }
+      node.classList.remove('glitch-jitter');
+      delete node.dataset.glitchBusy;
+    }, randInt(90, 150));
+  }
+}
+
+function scheduleGlitchJitter(){
+  if(!glitchPrelude.active) return;
+  queueGlitchTimeout(()=>{
+    applyGlitchJitter();
+    scheduleGlitchJitter();
+  }, randInt(240, 520));
+}
+
+function pulseGlitchScanlines(){
+  if(!glitchPrelude.active) return;
+  if(wrapEl){
+    wrapEl.classList.add('glitch-scanlines');
+    queueGlitchTimeout(()=> wrapEl?.classList.remove('glitch-scanlines'), randInt(120, 280));
+  }
+  queueGlitchTimeout(pulseGlitchScanlines, randInt(800, 1300));
+}
+
+const GLITCH_DIGIT_TARGETS = ['pts','pc','mps','statBanco','statTempo','statConstr','statMps','statClique','statCliques'];
+
+function distortStatDigits(){
+  if(!glitchPrelude.active) return;
+  const elements = GLITCH_DIGIT_TARGETS.map(id=> el(id)).filter(Boolean);
+  if(!elements.length) return;
+  const target = sample(elements);
+  if(!(target instanceof HTMLElement)) return;
+  if(target.dataset.glitchDigitActive === '1') return;
+  const original = target.textContent ?? '';
+  if(!original) return;
+  target.dataset.glitchDigitActive = '1';
+  target.dataset.glitchDigitOriginal = original;
+  target.textContent = glitchScrambleDigits(original);
+  glitchPrelude.tracked.add(target);
+  queueGlitchTimeout(()=>{
+    const base = target.dataset.glitchDigitOriginal ?? original;
+    target.textContent = base;
+    delete target.dataset.glitchDigitActive;
+    delete target.dataset.glitchDigitOriginal;
+  }, 90);
+}
+
+function scheduleDigitDistortion(){
+  if(!glitchPrelude.active) return;
+  queueGlitchTimeout(()=>{
+    distortStatDigits();
+    scheduleDigitDistortion();
+  }, randInt(360, 760));
+}
+
+function applyShiftToElement(el, opacity='0.78', duration=200){
+  if(!(el instanceof HTMLElement)) return;
+  if(el.dataset.glitchShift === '1') return;
+  if(!('glitchOriginalTransform' in el.dataset)){
+    el.dataset.glitchOriginalTransform = el.style.transform || '';
+  }
+  if(!('glitchOriginalOpacity' in el.dataset)){
+    el.dataset.glitchOriginalOpacity = el.style.opacity || '';
+  }
+  el.dataset.glitchShift = '1';
+  const dx = Math.random() < 0.5 ? 1 : -1;
+  const dy = Math.random() < 0.5 ? 1 : -1;
+  el.style.transform = `translate(${dx}px, ${dy}px)`;
+  el.style.opacity = opacity;
+  el.classList.add('glitch-shift');
+  glitchPrelude.tracked.add(el);
+  queueGlitchTimeout(()=>{
+    if(el.dataset.glitchOriginalTransform !== undefined){
+      el.style.transform = el.dataset.glitchOriginalTransform;
+    } else {
+      el.style.removeProperty('transform');
+    }
+    if(el.dataset.glitchOriginalOpacity !== undefined){
+      el.style.opacity = el.dataset.glitchOriginalOpacity;
+    } else {
+      el.style.removeProperty('opacity');
+    }
+    el.classList.remove('glitch-shift');
+    delete el.dataset.glitchShift;
+  }, duration);
+}
+
+function applyGlitchShift(){
+  if(!glitchPrelude.active) return;
+  const rows = Array.from(document.querySelectorAll('.shop tr.afford'));
+  const tooltip = document.querySelector('.tooltip-card.visible');
+  const row = rows.length ? sample(rows) : null;
+  if(row instanceof HTMLElement){
+    applyShiftToElement(row, '0.82');
+    const cost = row.querySelector('.cost');
+    if(cost instanceof HTMLElement){
+      applyShiftToElement(cost, '0.68');
+    }
+  }
+  if(tooltip instanceof HTMLElement){
+    applyShiftToElement(tooltip, '0.74');
+  }
+}
+
+function scheduleGlitchShift(){
+  if(!glitchPrelude.active) return;
+  queueGlitchTimeout(()=>{
+    applyGlitchShift();
+    scheduleGlitchShift();
+  }, randInt(2000, 3000));
+}
+
+function startGlitchPrelude(durationMs = randInt(6000, 12000)){
+  stopGlitchPrelude();
+  glitchPrelude.active = true;
+  glitchPrelude.durationMs = durationMs;
+  if(glitchPrelude.collapseTimer){
+    clearTimeout(glitchPrelude.collapseTimer);
+    glitchPrelude.collapseTimer = null;
+  }
+  applyGlitchJitter();
+  scheduleGlitchJitter();
+  pulseGlitchScanlines();
+  scheduleDigitDistortion();
+  scheduleGlitchShift();
+  return durationMs;
+}
+
+function stopGlitchPrelude(){
+  if(!glitchPrelude.active && glitchPrelude.timers.size === 0){
+    glitchPrelude.durationMs = 0;
+  }
+  clearGlitchTimers();
+  glitchPrelude.active = false;
+  glitchPrelude.durationMs = 0;
+  if(wrapEl){
+    wrapEl.classList.remove('glitch-scanlines');
+  }
+  if(glitchPrelude.collapseTimer){
+    clearTimeout(glitchPrelude.collapseTimer);
+    glitchPrelude.collapseTimer = null;
+  }
+  glitchPrelude.tracked.forEach(node=>{
+    if(!(node instanceof HTMLElement)) return;
+    node.classList.remove('glitch-jitter','glitch-shift');
+    if(node.dataset.glitchOriginalTransform !== undefined){
+      node.style.transform = node.dataset.glitchOriginalTransform;
+    } else {
+      node.style.removeProperty('transform');
+    }
+    delete node.dataset.glitchOriginalTransform;
+    if(node.dataset.glitchOriginalOpacity !== undefined){
+      node.style.opacity = node.dataset.glitchOriginalOpacity;
+    } else {
+      node.style.removeProperty('opacity');
+    }
+    delete node.dataset.glitchOriginalOpacity;
+    if(node.dataset.glitchDigitOriginal){
+      node.textContent = node.dataset.glitchDigitOriginal;
+      delete node.dataset.glitchDigitOriginal;
+    }
+    delete node.dataset.glitchDigitActive;
+    delete node.dataset.glitchShift;
+    delete node.dataset.glitchBusy;
+  });
+  glitchPrelude.tracked.clear();
+}
+
+window.addEventListener('pagehide', stopGlitchPrelude);
+window.addEventListener('beforeunload', stopGlitchPrelude);
 
 function getTotalBuildingsOwned(){
   if(typeof SHOP === 'undefined') return 0;
@@ -1494,13 +1784,20 @@ function handleCollapseKey(ev){
 }
 
 function triggerCollapseSequence(fromLoad=false){
+  stopGlitchPrelude();
   if(collapseState.active) return;
   collapseState.active = true;
   collapseState.startTime = performance.now();
   document.body.classList.add('collapse-active');
   if(collapseOverlayEl){
-    collapseOverlayEl.classList.add('active');
+    collapseOverlayEl.classList.add('active','co-scanlines-soft');
     collapseOverlayEl.setAttribute('aria-hidden','false');
+    const softId = 'overlay-soft-scanlines';
+    const timer = setTimeout(()=>{
+      collapseOverlayEl?.classList.remove('co-scanlines-soft');
+      collapseState.eventTimers.delete(softId);
+    }, 2000);
+    collapseState.eventTimers.set(softId, timer);
   }
   clearCollapseLines();
   appendCollapseLine(fromLoad ? '!! destino reabre ferida antiga' : '!! reality.reject("namorada")');
@@ -1534,7 +1831,7 @@ function stopCollapseSequence(){
   collapseState.lastRun.clear();
   collapseState.codeModes.clear();
   if(collapseOverlayEl){
-    collapseOverlayEl.classList.remove('active','co-negative','co-aberration','co-solar','co-pixel','co-dither','co-kaleido','co-repeat','co-stutter','co-gravity','co-freeze','co-trail','co-code-invert','co-ui-keys','co-ui-cursor');
+    collapseOverlayEl.classList.remove('active','co-negative','co-aberration','co-solar','co-pixel','co-dither','co-kaleido','co-repeat','co-stutter','co-gravity','co-freeze','co-trail','co-code-invert','co-ui-keys','co-ui-cursor','co-scanlines-soft');
     collapseOverlayEl.setAttribute('aria-hidden','true');
   }
   if(collapseCodeEl) collapseCodeEl.classList.remove('co-code-hex','co-code-stack','co-code-console');
@@ -2097,6 +2394,22 @@ function flashSave(){
   toastTimer = setTimeout(()=> t.classList.remove('show'), 1400);
 }
 
+let purchaseToastTimer = null;
+function announcePurchase(name, rowEl){
+  const toast = el('purchaseToast');
+  if(toast){
+    const label = typeof name === 'string' && name.trim() ? name.trim().toUpperCase() : 'NAMORADA';
+    toast.textContent = `VOCÊ COMPROU: ${label}`;
+    toast.classList.add('show');
+    if(purchaseToastTimer) clearTimeout(purchaseToastTimer);
+    purchaseToastTimer = setTimeout(()=> toast.classList.remove('show'), 1200);
+  }
+  if(rowEl instanceof HTMLElement){
+    rowEl.classList.add('glitch-shift');
+    setTimeout(()=> rowEl.classList.remove('glitch-shift'), 280);
+  }
+}
+
 function promptAndRedeemCode(){
   if(!redeemCodeButtonEl) return;
   const raw = prompt('Insira o código:');
@@ -2639,7 +2952,18 @@ function tryBuy(id){
   st.owned += 1;
 
   if(id === 'namorada' && st.owned === 1){
-    triggerCollapseSequence();
+    announcePurchase('Namorada', row);
+    const duration = startGlitchPrelude();
+    const delay = Number.isFinite(duration) && duration > 0 ? duration : randInt(6000, 12000);
+    if(glitchPrelude.collapseTimer){
+      clearTimeout(glitchPrelude.collapseTimer);
+      glitchPrelude.collapseTimer = null;
+    }
+    glitchPrelude.collapseTimer = setTimeout(()=>{
+      glitchPrelude.collapseTimer = null;
+      stopGlitchPrelude();
+      triggerCollapseSequence();
+    }, delay);
   }
 
   recalculateProduction();
