@@ -1856,16 +1856,16 @@ function makeInitialDoomState(){
 
 /* Parâmetros sugeridos (base, escala, mps/base) */
 const SHOP = [
-  {id:'dedo',       name:'Dedo',       base:15,          r:1.07, p:0.10, limit:50},
-  {id:'roupa',      name:'Roupa',      base:100,         r:1.10, p:1.00,  limit:20},
-  {id:'agua',       name:'Água',       base:1100,        r:1.12, p:8.00,  limit:20},
-  {id:'plantacao',  name:'Plantação',  base:12000,       r:1.13, p:47.0,  limit:12},
-  {id:'alojamento', name:'Alojamento', base:130000,      r:1.14, p:260.0, limit:8},
-  {id:'casa',       name:'Casa',       base:1400000,     r:1.15, p:1400.0,limit:5},
-  {id:'xbox',       name:'Xbox',       base:20000000,    r:1.16, p:7800.0, limit:3},
-  {id:'computador', name:'Computador', base:330000000,   r:1.17, p:44000.0,limit:3},
-  {id:'microfone',  name:'Microfone',  base:5100000000,  r:1.18, p:260000.0,limit:2},
-  {id:'namorada',   name:'Namorada',   base:75000000000, r:1.20, p:1600000.0,limit:1}
+  {id:'dedo', base:15,          r:1.15, p:0.10,     limit:50},
+  {id:'roupa', base:100,         r:1.15, p:1.00,     limit:20},
+  {id:'agua',  base:1100,        r:1.15, p:8.00,     limit:20},
+  {id:'plantacao',  base:12000,  r:1.15, p:47.0,     limit:12},
+  {id:'alojamento', base:130000, r:1.15, p:260.0,    limit:8},
+  {id:'casa',       base:1400000,r:1.15, p:1400.0,   limit:5},
+  {id:'xbox',       base:20000000,r:1.15,p:7800.0,   limit:3},
+  {id:'computador', base:330000000,r:1.15,p:44000.0, limit:3},
+  {id:'microfone',  base:5100000000,r:1.15,p:260000.0,limit:2},
+  {id:'namorada',   base:75000000000,r:1.15,p:1600000.0,limit:1}
 ];
 
 const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{ acc[item.id] = item; return acc; }, {});
