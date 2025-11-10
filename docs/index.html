@@ -746,6 +746,7 @@
           <div class="stat-card"><span>Meminhas por segundo</span><strong id="statMps">0</strong></div>
           <div class="stat-card"><span>Meminhas por clique</span><strong id="statClique">0</strong></div>
           <div class="stat-card"><span>Cliques no Meminha</span><strong id="statCliques">0</strong></div>
+          <div class="stat-card"><span>Meminhas feitos com click</span><strong id="statHandmade">0</strong></div>
         </div>
         <div class="collection-header">
           <h3 style="margin:0">Coleção de melhorias</h3>
@@ -803,6 +804,7 @@
 let pts = 0, clickPow = 1, mps = 0;
 let playTimeSeconds = 0;
 let totalClicks = 0;
+let handmadeMemes = 0;
 let upgradesState = null;
 let achievementsState = null;
 let migratedLegacyUpgrades = false;
@@ -1306,6 +1308,8 @@ function renderStatsPanel(){
   if(cliqueEl) cliqueEl.textContent = Math.max(1, Math.floor(clickPow));
   const cliquesEl = el('statCliques');
   if(cliquesEl) cliquesEl.textContent = totalClicks;
+  const handmadeEl = el('statHandmade');
+  if(handmadeEl) handmadeEl.textContent = Math.max(0, Math.floor(handmadeMemes)).toLocaleString('pt-BR');
   const countEl = el('collectionCount');
   if(countEl && typeof UPGRADE_DATA !== 'undefined') countEl.textContent = `Você tem ${getPurchasedUpgradeCount()}/${UPGRADE_DATA.length} melhorias`;
   const achCountEl = el('achievementsCount');
@@ -1628,6 +1632,7 @@ function save(showToast=false){
     mps,
     playTimeSeconds,
     totalClicks,
+    handmadeMemes,
     shopState,
     upgradesState,
     achievementsState,
@@ -1642,6 +1647,7 @@ function load(){ try{
   pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
   playTimeSeconds = d.playTimeSeconds ?? d.playTime ?? 0;
   totalClicks = d.totalClicks ?? 0;
+  handmadeMemes = d.handmadeMemes ?? 0;
   if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
   if(d.upgradesState){
     const base = makeInitialUpgradeState();
@@ -1730,6 +1736,7 @@ function resetState(){
   pts=0; clickPow=1; mps=0;
   playTimeSeconds = 0;
   totalClicks = 0;
+  handmadeMemes = 0;
   shopState = makeInitialShopState();
   upgradesState = makeInitialUpgradeState();
   achievementsState = makeInitialAchievementState();
@@ -1874,123 +1881,177 @@ const UPGRADE_DATA = [
   {
     id:'up-dedo-t1',
     name:'Mão aprimorada',
-    effect:'Cliques ×2 e +1% do MPS; Dedo ×2.',
-    cost:5000,
+    effect:'O click e os dedos são duas vezes tão eficientes.',
+    cost:100,
     img:'imagens/melhorias-futuras/up-dedo-t1.png',
-    requirement:{type:'building', building:'dedo', count:10},
-    requirementText:'Tenha 10 Dedos',
+    requirement:{type:'building', building:'dedo', count:1},
+    requirementText:'Possuir 1 Dedo',
     bonus:[
-      {type:'click', mult:2, pctOfMps:0.01},
+      {type:'click', mult:2},
       {type:'building', target:'dedo', amount:1.0}
     ]
   },
   {
     id:'up-dedo-t2',
     name:'Mão de Graphite',
-    effect:'Cliques ×2 (acumula) e +1% do MPS; Dedo ×2.',
-    cost:250000,
+    effect:'O click e os dedos são duas vezes tão eficientes.',
+    cost:500,
     img:'imagens/melhorias-futuras/up-dedo-t2.png',
-    requirement:{type:'building', building:'dedo', count:25},
-    requirementText:'Tenha 25 Dedos e o upgrade anterior',
+    requirement:{type:'building', building:'dedo', count:1},
+    requirementText:'Possuir 1 Dedo',
     requires:['up-dedo-t1'],
     bonus:[
-      {type:'click', mult:2, pctOfMps:0.01},
+      {type:'click', mult:2},
       {type:'building', target:'dedo', amount:1.0}
     ]
   },
   {
     id:'up-dedo-t3',
     name:'Mão de Slate',
-    effect:'Cliques ×2 (acumula) e +1% do MPS; Dedo ×2.',
-    cost:10000000,
+    effect:'O click e os dedos são duas vezes tão eficientes.',
+    cost:10000,
     img:'imagens/melhorias-futuras/up-dedo-t3.png',
-    requirement:{type:'building', building:'dedo', count:40},
-    requirementText:'Tenha 40 Dedos e o upgrade anterior',
+    requirement:{type:'building', building:'dedo', count:10},
+    requirementText:'Possuir 10 Dedos',
     requires:['up-dedo-t2'],
     bonus:[
-      {type:'click', mult:2, pctOfMps:0.01},
+      {type:'click', mult:2},
       {type:'building', target:'dedo', amount:1.0}
     ]
   },
   {
     id:'up-roupa-t1',
     name:'Tênis Impressionante',
-    effect:'+10% MPS gerado por Roupa',
+    effect:'As roupas são duas vezes tão eficientes.',
     cost:1000,
     img:'imagens/melhorias-futuras/up-roupa-t1.png',
     requirement:{type:'building', building:'roupa', count:1},
-    requirementText:'Compre 1 Roupa',
-    bonus:{type:'building', target:'roupa', amount:0.10}
+    requirementText:'Possuir 1 Roupa',
+    bonus:{type:'building', target:'roupa', amount:1.0}
   },
   {
     id:'up-agua-t1',
     name:'Água Salgada',
-    effect:'+10% MPS gerado por Água',
-    cost:12000,
+    effect:'As águas são duas vezes tão eficientes.',
+    cost:11000,
     img:'imagens/melhorias-futuras/up-agua-t1.png',
     requirement:{type:'building', building:'agua', count:1},
-    requirementText:'Compre 1 Água',
-    bonus:{type:'building', target:'agua', amount:0.10}
+    requirementText:'Possuir 1 Água',
+    bonus:{type:'building', target:'agua', amount:1.0}
   },
   {
     id:'up-plantacao-t1',
     name:'Fertilizante',
-    effect:'+12% MPS gerado por Plantação',
-    cost:180000,
+    effect:'As plantações são duas vezes tão eficientes.',
+    cost:120000,
     img:'imagens/melhorias-futuras/up-plantacao-t1.png',
     requirement:{type:'building', building:'plantacao', count:1},
-    requirementText:'Compre 1 Plantação',
-    bonus:{type:'building', target:'plantacao', amount:0.12}
+    requirementText:'Possuir 1 Plantação',
+    bonus:{type:'building', target:'plantacao', amount:1.0}
   },
   {
     id:'up-alojamento-t1',
     name:'Cerca',
-    effect:'+12% MPS gerado por Alojamento',
-    cost:2000000,
+    effect:'Os alojamentos são duas vezes tão eficientes.',
+    cost:1300000,
     img:'imagens/melhorias-futuras/up-alojamento-t1.png',
     requirement:{type:'building', building:'alojamento', count:1},
-    requirementText:'Compre 1 Alojamento',
-    bonus:{type:'building', target:'alojamento', amount:0.12}
+    requirementText:'Possuir 1 Alojamento',
+    bonus:{type:'building', target:'alojamento', amount:1.0}
   },
   {
     id:'up-casa-t1',
     name:'Porta',
-    effect:'+15% MPS gerado por Casa',
-    cost:30000000,
+    effect:'As casas são duas vezes tão eficientes.',
+    cost:14000000,
     img:'imagens/melhorias-futuras/up-casa-t1.png',
     requirement:{type:'building', building:'casa', count:1},
-    requirementText:'Compre 1 Casa',
-    bonus:{type:'building', target:'casa', amount:0.15}
+    requirementText:'Possuir 1 Casa',
+    bonus:{type:'building', target:'casa', amount:1.0}
   },
   {
     id:'up-xbox-t1',
     name:'Controle360',
-    effect:'+15% MPS gerado por Xbox',
-    cost:450000000,
+    effect:'Os xbox são duas vezes tão eficientes.',
+    cost:200000000,
     img:'imagens/melhorias-futuras/up-xbox-t1.png',
     requirement:{type:'building', building:'xbox', count:1},
-    requirementText:'Compre 1 Xbox',
-    bonus:{type:'building', target:'xbox', amount:0.15}
+    requirementText:'Possuir 1 Xbox',
+    bonus:{type:'building', target:'xbox', amount:1.0}
   },
   {
     id:'up-computador-t1',
     name:'Ryzen',
-    effect:'+18% MPS gerado por Computador',
-    cost:6000000000,
+    effect:'Os computadores são duas vezes tão eficientes.',
+    cost:3300000000,
     img:'imagens/melhorias-futuras/up-computador-t1.png',
     requirement:{type:'building', building:'computador', count:1},
-    requirementText:'Compre 1 Computador',
-    bonus:{type:'building', target:'computador', amount:0.18}
+    requirementText:'Possuir 1 Computador',
+    bonus:{type:'building', target:'computador', amount:1.0}
   },
   {
     id:'up-microfone-t1',
     name:'Rap de Anime',
-    effect:'+20% MPS gerado por Microfone',
-    cost:90000000000,
+    effect:'Os microfones são duas vezes tão eficientes.',
+    cost:51000000000,
     img:'imagens/melhorias-futuras/up-microfone-t1.png',
     requirement:{type:'building', building:'microfone', count:1},
-    requirementText:'Compre 1 Microfone',
-    bonus:{type:'building', target:'microfone', amount:0.20}
+    requirementText:'Possuir 1 Microfone',
+    bonus:{type:'building', target:'microfone', amount:1.0}
+  },
+  {
+    id:'up-cursor-t1',
+    name:'Click',
+    effect:'+1% do seu MpS somado ao clique.',
+    cost:50000,
+    img:'imagens/melhorias-futuras/up-cursor-t1.png',
+    requirement:{type:'handmade', amount:1000},
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t2',
+    name:'Click de Graphite',
+    effect:'+1% do seu MpS somado ao clique.',
+    cost:5000000,
+    img:'imagens/melhorias-futuras/up-cursor-t2.png',
+    requirement:{type:'handmade', amount:100000},
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t3',
+    name:'Click de Ardósia',
+    effect:'+1% do seu MpS somado ao clique.',
+    cost:500000000,
+    img:'imagens/melhorias-futuras/up-cursor-t3.png',
+    requirement:{type:'handmade', amount:10000000},
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t4',
+    name:'Click de Ferro',
+    effect:'+1% do seu MpS somado ao clique.',
+    cost:50000000000,
+    img:'imagens/melhorias-futuras/up-cursor-t4.png',
+    requirement:{type:'handmade', amount:1000000000},
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t5',
+    name:'Click de Metal',
+    effect:'+1% do seu MpS somado ao clique.',
+    cost:5000000000000,
+    img:'imagens/melhorias-futuras/up-cursor-t5.png',
+    requirement:{type:'handmade', amount:100000000000},
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t6',
+    name:'Click de Bronze',
+    effect:'+1% do seu MpS somado ao clique.',
+    cost:500000000000000,
+    img:'imagens/melhorias-futuras/up-cursor-t6.png',
+    requirement:{type:'handmade', amount:10000000000000},
+    bonus:{type:'click', pctOfMps:0.01}
   }
 ];
 
@@ -2125,6 +2186,9 @@ function canShowUpgrade(up){
   if(req?.type === 'building'){
     const owned = shopState[req.building]?.owned ?? 0;
     if(owned < req.count) return false;
+  } else if(req?.type === 'handmade'){
+    const required = req.amount ?? 0;
+    if(handmadeMemes < required) return false;
   }
   return true;
 }
@@ -2136,6 +2200,11 @@ function getUpgradeRequirementLines(up){
     const name = SHOP_LOOKUP[up.requirement.building]?.name ?? up.requirement.building;
     const count = up.requirement.count ?? 0;
     lines.push(`Compre ${count} ${name}`);
+  }
+  if(up.requirement?.type === 'handmade' && !up.requirementText){
+    const amount = Math.max(0, Math.floor(up.requirement.amount ?? 0));
+    const formatted = amount.toLocaleString('pt-BR');
+    lines.push(`${formatted} Meminhas feitos com click`);
   }
   if(up.requires && up.requires.length){
     up.requires.forEach(reqId=>{
@@ -2427,8 +2496,10 @@ function getClickGain(){
   return Math.max(1, Math.floor(clickPow));
 }
 el('click').onclick=()=>{
-  pts+=getClickGain();
+  const gain = getClickGain();
+  pts += gain;
   totalClicks += 1;
+  handmadeMemes += gain;
   evaluateAchievements();
   renderHUD();
   save();
