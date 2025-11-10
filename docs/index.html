@@ -480,10 +480,98 @@
     opacity:1;
     transform:translate(-50%, 0);
   }
+  #purchaseToast.toast-final{
+    background:linear-gradient(135deg, rgba(220,38,38,.92), rgba(249,115,22,.88));
+    border-color:rgba(248,250,252,.4);
+    color:#fef2f2;
+    box-shadow:0 24px 48px rgba(220,38,38,.45);
+  }
   @keyframes purchaseToastGlitch{
     0%,100%{ text-shadow:0 0 6px rgba(148,163,184,.24); opacity:1; }
     40%{ text-shadow:-1px 0 rgba(96,165,250,.28), 1px 0 rgba(14,165,233,.16); }
     70%{ text-shadow:1px 0 rgba(94,234,212,.22), -1px 0 rgba(79,70,229,.18); }
+  }
+
+  body.glitch-prelude{
+    cursor:wait;
+  }
+  body.glitch-prelude .wrap{
+    animation:glitchHue 0.18s steps(2) infinite alternate;
+  }
+  body.glitch-prelude .click-img,
+  body.glitch-prelude .shop tbody tr,
+  body.glitch-prelude .btn,
+  body.glitch-prelude .upgrade-tile,
+  body.glitch-prelude .tooltip-card{
+    pointer-events:none;
+    filter:saturate(.82);
+  }
+  @keyframes glitchHue{
+    0%{ filter:hue-rotate(-6deg) contrast(1.12) brightness(1.05); }
+    100%{ filter:hue-rotate(6deg) contrast(1.22) brightness(1.08); }
+  }
+  .world-end-overlay{
+    position:fixed;
+    inset:0;
+    background:#000;
+    color:#f8fafc;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:120;
+    padding:24px;
+  }
+  .world-end-overlay.open{
+    display:flex;
+  }
+  .world-end-overlay:focus{
+    outline:none;
+  }
+  .world-end-overlay-content{
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:24px;
+  }
+  .world-end-overlay h2{
+    margin:0 0 24px;
+    font-size:clamp(2.2rem, 5vw, 3.4rem);
+    letter-spacing:.15em;
+    text-transform:uppercase;
+  }
+  .world-end-overlay button{
+    padding:12px 28px;
+    border-radius:999px;
+    border:1px solid rgba(248,250,252,.6);
+    background:rgba(15,23,42,.85);
+    color:inherit;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease, box-shadow .12s ease;
+  }
+  .world-end-overlay button:hover{
+    background:rgba(30,41,59,.92);
+    box-shadow:0 0 0 2px rgba(96,165,250,.3);
+  }
+  .world-end-overlay button:focus-visible{
+    outline:2px solid #60a5fa;
+    outline-offset:4px;
+  }
+  body.world-end{
+    overflow:hidden;
+  }
+  body.world-end .wrap,
+  body.world-end header,
+  body.world-end main,
+  body.world-end .modal-overlay,
+  body.world-end #upgradeTooltip,
+  body.world-end #purchaseToast,
+  body.world-end #saveToast,
+  body.world-end #achievementToast{
+    pointer-events:none;
   }
 
   /* Palco */
@@ -697,6 +785,13 @@
 <div id="saveToast" class="save-toast">salvo</div>
 <div id="achievementToast" class="achievement-toast" aria-live="polite"></div>
 
+<div id="worldEndOverlay" class="world-end-overlay" role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="worldEndTitle" tabindex="-1">
+  <div class="world-end-overlay-content">
+    <h2 id="worldEndTitle">O MUNDO MORREU</h2>
+    <button id="worldResetButton" type="button">Resetar o mundo</button>
+  </div>
+</div>
+
 <div id="upgradeTooltip" class="tooltip-card" role="tooltip" aria-hidden="true">
   <div class="tooltip-name"></div>
   <div class="tooltip-effect"></div>
@@ -713,10 +808,15 @@ let achievementsState = null;
 let migratedLegacyUpgrades = false;
 let selectedCollectionUpgradeId = null;
 let redeemedCodes = new Set();
+let doomState = makeInitialDoomState();
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
 const redeemCodeButtonEl = document.getElementById('redeemCode');
+const worldEndOverlayEl = document.getElementById('worldEndOverlay');
+const worldEndButtonEl = document.getElementById('worldResetButton');
+let worldEndTimerHandle = null;
+let worldEndFocusTrapActive = false;
 
 const CODE_REWARDS = {
   entreak: 1_000_000_000_000_000
@@ -947,10 +1047,11 @@ function scheduleGlitchShift(){
   }, randInt(2000, 3000));
 }
 
-function startGlitchPrelude(durationMs = randInt(6000, 12000)){
+function startGlitchPrelude(durationMs = randInt(7000, 11000)){
   stopGlitchPrelude();
   glitchPrelude.active = true;
   glitchPrelude.durationMs = durationMs;
+  document.body.classList.add('glitch-prelude');
   applyGlitchJitter();
   scheduleGlitchJitter();
   pulseGlitchScanlines();
@@ -969,6 +1070,7 @@ function stopGlitchPrelude(){
   if(wrapEl){
     wrapEl.classList.remove('glitch-scanlines');
   }
+  document.body.classList.remove('glitch-prelude');
   glitchPrelude.tracked.forEach(node=>{
     if(!(node instanceof HTMLElement)) return;
     node.classList.remove('glitch-jitter','glitch-shift');
@@ -997,6 +1099,96 @@ function stopGlitchPrelude(){
 
 window.addEventListener('pagehide', stopGlitchPrelude);
 window.addEventListener('beforeunload', stopGlitchPrelude);
+
+function clearWorldEndTimer(){
+  if(worldEndTimerHandle){
+    clearTimeout(worldEndTimerHandle);
+    worldEndTimerHandle = null;
+  }
+}
+
+function handleWorldEndFocus(ev){
+  if(!worldEndOverlayEl?.classList.contains('open')) return;
+  if(worldEndOverlayEl.contains(ev.target)) return;
+  ev.stopPropagation();
+  worldEndButtonEl?.focus();
+}
+
+function handleWorldEndKeydown(ev){
+  if(ev.key !== 'Tab') return;
+  ev.preventDefault();
+  worldEndButtonEl?.focus();
+}
+
+function activateWorldEndFocusTrap(){
+  if(worldEndFocusTrapActive || !worldEndOverlayEl) return;
+  worldEndFocusTrapActive = true;
+  document.addEventListener('focus', handleWorldEndFocus, true);
+  worldEndOverlayEl.addEventListener('keydown', handleWorldEndKeydown);
+  worldEndButtonEl?.addEventListener('keydown', handleWorldEndKeydown);
+}
+
+function deactivateWorldEndFocusTrap(){
+  if(!worldEndFocusTrapActive) return;
+  worldEndFocusTrapActive = false;
+  document.removeEventListener('focus', handleWorldEndFocus, true);
+  worldEndOverlayEl?.removeEventListener('keydown', handleWorldEndKeydown);
+  worldEndButtonEl?.removeEventListener('keydown', handleWorldEndKeydown);
+}
+
+function showWorldEndOverlay(){
+  if(!worldEndOverlayEl) return;
+  stopGlitchPrelude();
+  clearWorldEndTimer();
+  worldEndOverlayEl.classList.add('open');
+  worldEndOverlayEl.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('world-end');
+  doomState = {...doomState, doomed:true, overlayShown:true, triggeredAt: doomState.triggeredAt ?? Date.now()};
+  activateWorldEndFocusTrap();
+  setTimeout(()=> worldEndButtonEl?.focus(), 0);
+  save();
+}
+
+function hideWorldEndOverlay(){
+  clearWorldEndTimer();
+  stopGlitchPrelude();
+  if(worldEndOverlayEl){
+    worldEndOverlayEl.classList.remove('open');
+    worldEndOverlayEl.setAttribute('aria-hidden', 'true');
+  }
+  document.body.classList.remove('world-end');
+  deactivateWorldEndFocusTrap();
+}
+
+function startWorldEndCountdown(){
+  const duration = startGlitchPrelude(randInt(7000, 11000));
+  clearWorldEndTimer();
+  worldEndTimerHandle = setTimeout(()=> showWorldEndOverlay(), duration);
+}
+
+function triggerWorldEndSequence(){
+  if(doomState.doomed && doomState.overlayShown){
+    showWorldEndOverlay();
+    return;
+  }
+  doomState = {...doomState, doomed:true, overlayShown:false, triggeredAt: Date.now()};
+  save();
+  startWorldEndCountdown();
+}
+
+function resumeWorldEndState(){
+  if(!doomState.doomed){
+    hideWorldEndOverlay();
+    return;
+  }
+  showWorldEndOverlay();
+}
+
+function handleWorldReset(){
+  doomState = makeInitialDoomState();
+  hideWorldEndOverlay();
+  deleteSave(true);
+}
 
 function getTotalBuildingsOwned(){
   if(typeof SHOP === 'undefined') return 0;
@@ -1439,6 +1631,7 @@ function save(showToast=false){
     shopState,
     upgradesState,
     achievementsState,
+    doomState,
     codes: Array.from(redeemedCodes)
   }));
   if(showToast) flashSave();
@@ -1478,6 +1671,17 @@ function load(){ try{
   }
   const codes = Array.isArray(d.codes) ? d.codes : [];
   redeemedCodes = new Set(codes.map(code=> String(code).toLowerCase()));
+  if(d.doomState && typeof d.doomState === 'object'){
+    const base = makeInitialDoomState();
+    doomState = {
+      ...base,
+      ...d.doomState,
+      doomed: !!d.doomState.doomed,
+      overlayShown: !!d.doomState.overlayShown
+    };
+  } else {
+    doomState = makeInitialDoomState();
+  }
 } catch(e){} }
 
 /* HUD (topo) */
@@ -1521,6 +1725,8 @@ function showFront(){
 
 /* reset */
 function resetState(){
+  hideWorldEndOverlay();
+  doomState = makeInitialDoomState();
   pts=0; clickPow=1; mps=0;
   playTimeSeconds = 0;
   totalClicks = 0;
@@ -1591,9 +1797,15 @@ function announcePurchase(name, rowEl){
   if(toast){
     const label = typeof name === 'string' && name.trim() ? name.trim().toUpperCase() : 'NAMORADA';
     toast.textContent = `VOCÊ COMPROU: ${label}`;
+    const isFinal = label === 'NAMORADA';
+    toast.classList.toggle('toast-final', isFinal);
     toast.classList.add('show');
     if(purchaseToastTimer) clearTimeout(purchaseToastTimer);
-    purchaseToastTimer = setTimeout(()=> toast.classList.remove('show'), 1200);
+    const duration = isFinal ? 2400 : 1200;
+    purchaseToastTimer = setTimeout(()=>{
+      toast.classList.remove('show');
+      if(isFinal) toast.classList.remove('toast-final');
+    }, duration);
   }
   if(rowEl instanceof HTMLElement){
     rowEl.classList.add('glitch-shift');
@@ -1637,6 +1849,10 @@ function promptAndRedeemCode(){
    Agora usamos as fórmulas exponenciais:
    precoProximo(base, escala, q) = ceil(base * escala^q)
 */
+
+function makeInitialDoomState(){
+  return { doomed:false, overlayShown:false, triggeredAt:null };
+}
 
 /* Parâmetros sugeridos (base, escala, mps/base) */
 const SHOP = [
@@ -2144,7 +2360,7 @@ function tryBuy(id){
 
   if(id === 'namorada' && st.owned === 1){
     announcePurchase('Namorada', row);
-    stopGlitchPrelude();
+    triggerWorldEndSequence();
     updateClickImage();
   }
 
@@ -2183,6 +2399,7 @@ evaluateAchievements(true);
 renderAchievementsPanel();
 renderHUD();
 updateClickImage();
+resumeWorldEndState();
 if(migratedLegacyUpgrades) save();
 loop();
 startAutoSave();
@@ -2205,4 +2422,7 @@ if(redeemCodeButtonEl){
   redeemCodeButtonEl.addEventListener('click', promptAndRedeemCode);
 }
 el('deleteSave').onclick=()=>deleteSave();
+if(worldEndButtonEl){
+  worldEndButtonEl.addEventListener('click', handleWorldReset);
+}
 </script>
