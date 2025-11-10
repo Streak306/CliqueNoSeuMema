@@ -1885,7 +1885,7 @@ const UPGRADE_DATA = [
     cost:100,
     img:'imagens/melhorias-futuras/up-dedo-t1.png',
     requirement:{type:'building', building:'dedo', count:1},
-    requirementText:'Possuir 1 Dedo',
+    requirementText:'Possuir 1 dedo',
     bonus:[
       {type:'click', mult:2},
       {type:'building', target:'dedo', amount:1.0}
@@ -1898,7 +1898,7 @@ const UPGRADE_DATA = [
     cost:500,
     img:'imagens/melhorias-futuras/up-dedo-t2.png',
     requirement:{type:'building', building:'dedo', count:1},
-    requirementText:'Possuir 1 Dedo',
+    requirementText:'Possuir 1 dedo',
     requires:['up-dedo-t1'],
     bonus:[
       {type:'click', mult:2},
@@ -1912,7 +1912,7 @@ const UPGRADE_DATA = [
     cost:10000,
     img:'imagens/melhorias-futuras/up-dedo-t3.png',
     requirement:{type:'building', building:'dedo', count:10},
-    requirementText:'Possuir 10 Dedos',
+    requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t2'],
     bonus:[
       {type:'click', mult:2},
@@ -1942,11 +1942,11 @@ const UPGRADE_DATA = [
   {
     id:'up-plantacao-t1',
     name:'Fertilizante',
-    effect:'As plantações são duas vezes tão eficientes.',
+    effect:'Os fertilizantes são duas vezes tão eficientes.',
     cost:120000,
     img:'imagens/melhorias-futuras/up-plantacao-t1.png',
     requirement:{type:'building', building:'plantacao', count:1},
-    requirementText:'Possuir 1 Plantação',
+    requirementText:'Possuir 1 plantacao',
     bonus:{type:'building', target:'plantacao', amount:1.0}
   },
   {
@@ -1956,7 +1956,7 @@ const UPGRADE_DATA = [
     cost:1300000,
     img:'imagens/melhorias-futuras/up-alojamento-t1.png',
     requirement:{type:'building', building:'alojamento', count:1},
-    requirementText:'Possuir 1 Alojamento',
+    requirementText:'Possuir 1 alojamento',
     bonus:{type:'building', target:'alojamento', amount:1.0}
   },
   {
@@ -1966,7 +1966,7 @@ const UPGRADE_DATA = [
     cost:14000000,
     img:'imagens/melhorias-futuras/up-casa-t1.png',
     requirement:{type:'building', building:'casa', count:1},
-    requirementText:'Possuir 1 Casa',
+    requirementText:'Possuir 1 Banco',
     bonus:{type:'building', target:'casa', amount:1.0}
   },
   {
@@ -2002,55 +2002,61 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t1',
     name:'Click',
-    effect:'+1% do seu MpS somado ao clique.',
+    effect:'1% do seu MpS.',
     cost:50000,
     img:'imagens/melhorias-futuras/up-cursor-t1.png',
     requirement:{type:'handmade', amount:1000},
+    requirementText:'1000 Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t2',
     name:'Click de Graphite',
-    effect:'+1% do seu MpS somado ao clique.',
+    effect:'1% do seu MpS.',
     cost:5000000,
     img:'imagens/melhorias-futuras/up-cursor-t2.png',
     requirement:{type:'handmade', amount:100000},
+    requirementText:'100000 Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t3',
     name:'Click de Ardósia',
-    effect:'+1% do seu MpS somado ao clique.',
+    effect:'1% do seu MpS.',
     cost:500000000,
     img:'imagens/melhorias-futuras/up-cursor-t3.png',
     requirement:{type:'handmade', amount:10000000},
+    requirementText:'10 milhões de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t4',
     name:'Click de Ferro',
-    effect:'+1% do seu MpS somado ao clique.',
+    effect:'1% do seu MpS.',
     cost:50000000000,
     img:'imagens/melhorias-futuras/up-cursor-t4.png',
     requirement:{type:'handmade', amount:1000000000},
+    requirementText:'1 Bilhão de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t5',
     name:'Click de Metal',
-    effect:'+1% do seu MpS somado ao clique.',
+    effect:'1% do seu MpS.',
     cost:5000000000000,
     img:'imagens/melhorias-futuras/up-cursor-t5.png',
     requirement:{type:'handmade', amount:100000000000},
+    requirementText:'100 Bilhões de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t6',
     name:'Click de Bronze',
-    effect:'+1% do seu MpS somado ao clique.',
+    effect:'1% do seu MpS.',
     cost:500000000000000,
     img:'imagens/melhorias-futuras/up-cursor-t6.png',
     requirement:{type:'handmade', amount:10000000000000},
+    requirementText:'10 Trilhões de Meminhas feitos com Click',
     bonus:{type:'click', pctOfMps:0.01}
   }
 ];
