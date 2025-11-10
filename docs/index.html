@@ -1776,8 +1776,9 @@ function loop(){
     const now=performance.now(), dt=(now-last)/1000; last=now;
     pts += mps*dt;
     playTimeSeconds += dt;
-    renderHUD();           // atualiza só o topo
-    updateAffordability(); // pinta se dá pra comprar, sem recriar DOM
+    renderHUD();                 // atualiza só o topo
+    updateAffordability();       // pinta se dá pra comprar, sem recriar DOM
+    updateUpgradeAffordability();
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -1863,16 +1864,16 @@ function makeInitialDoomState(){
 
 /* Parâmetros sugeridos (base, escala, mps/base) */
 const SHOP = [
-  {id:'dedo', base:15,          r:1.15, p:0.10,     limit:50},
-  {id:'roupa', base:100,         r:1.15, p:1.00,     limit:20},
-  {id:'agua',  base:1100,        r:1.15, p:8.00,     limit:20},
-  {id:'plantacao',  base:12000,  r:1.15, p:47.0,     limit:12},
-  {id:'alojamento', base:130000, r:1.15, p:260.0,    limit:8},
-  {id:'casa',       base:1400000,r:1.15, p:1400.0,   limit:5},
-  {id:'xbox',       base:20000000,r:1.15,p:7800.0,   limit:3},
-  {id:'computador', base:330000000,r:1.15,p:44000.0, limit:3},
-  {id:'microfone',  base:5100000000,r:1.15,p:260000.0,limit:2},
-  {id:'namorada',   base:75000000000,r:1.15,p:1600000.0,limit:1}
+  {id:'dedo',        name:'Dedo',        base:15,           r:1.15, p:0.10,      limit:50},
+  {id:'roupa',       name:'Roupa',       base:100,          r:1.15, p:1.00,      limit:20},
+  {id:'agua',        name:'Água',        base:1100,         r:1.15, p:8.00,      limit:20},
+  {id:'plantacao',   name:'Plantação',   base:12000,        r:1.15, p:47.0,      limit:12},
+  {id:'alojamento',  name:'Alojamento',  base:130000,       r:1.15, p:260.0,     limit:8},
+  {id:'casa',        name:'Casa',        base:1400000,      r:1.15, p:1400.0,    limit:5},
+  {id:'xbox',        name:'Xbox',        base:20000000,     r:1.15, p:7800.0,    limit:3},
+  {id:'computador',  name:'Computador',  base:330000000,    r:1.15, p:44000.0,   limit:3},
+  {id:'microfone',   name:'Microfone',   base:5100000000,   r:1.15, p:260000.0,  limit:2},
+  {id:'namorada',    name:'Namorada',    base:75000000000,  r:1.15, p:1600000.0, limit:1}
 ];
 
 const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{ acc[item.id] = item; return acc; }, {});
@@ -2002,7 +2003,7 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t1',
     name:'Click',
-    effect:'1% do seu MpS.',
+    effect:'Clicando em ganhos +1% do seu MpS.',
     cost:50000,
     img:'imagens/melhorias-futuras/up-cursor-t1.png',
     requirement:{type:'handmade', amount:1000},
@@ -2012,7 +2013,7 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t2',
     name:'Click de Graphite',
-    effect:'1% do seu MpS.',
+    effect:'Clicando em ganhos +1% do seu MpS.',
     cost:5000000,
     img:'imagens/melhorias-futuras/up-cursor-t2.png',
     requirement:{type:'handmade', amount:100000},
@@ -2022,7 +2023,7 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t3',
     name:'Click de Ardósia',
-    effect:'1% do seu MpS.',
+    effect:'Clicando em ganhos +1% do seu MpS.',
     cost:500000000,
     img:'imagens/melhorias-futuras/up-cursor-t3.png',
     requirement:{type:'handmade', amount:10000000},
@@ -2032,7 +2033,7 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t4',
     name:'Click de Ferro',
-    effect:'1% do seu MpS.',
+    effect:'Clicando em ganhos +1% do seu MpS.',
     cost:50000000000,
     img:'imagens/melhorias-futuras/up-cursor-t4.png',
     requirement:{type:'handmade', amount:1000000000},
@@ -2042,7 +2043,7 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t5',
     name:'Click de Metal',
-    effect:'1% do seu MpS.',
+    effect:'Clicando em ganhos +1% do seu MpS.',
     cost:5000000000000,
     img:'imagens/melhorias-futuras/up-cursor-t5.png',
     requirement:{type:'handmade', amount:100000000000},
@@ -2052,7 +2053,7 @@ const UPGRADE_DATA = [
   {
     id:'up-cursor-t6',
     name:'Click de Bronze',
-    effect:'1% do seu MpS.',
+    effect:'Clicando em ganhos +1% do seu MpS.',
     cost:500000000000000,
     img:'imagens/melhorias-futuras/up-cursor-t6.png',
     requirement:{type:'handmade', amount:10000000000000},
@@ -2138,7 +2139,8 @@ function renderShop(){
 
     // Se o item estiver desbloqueado mas você ainda não possui NENHUM (owned === 0),
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
-    const displayName = (!locked && st.owned === 0) ? '?????' : it.name;
+    const itemName = it.name ?? it.id;
+    const displayName = (!locked && st.owned === 0) ? '?????' : itemName;
 
     tr.innerHTML = `
       <td class="name">
@@ -2271,6 +2273,20 @@ function getUpgradeElement(id){
   const el = document.querySelector(`[data-upgrade="${id}"]`);
   if(el) upgradeElements.set(id, el);
   return el;
+}
+
+function shouldRefreshHandmadeUpgrades(previousValue, currentValue){
+  if(!(Number.isFinite(previousValue) && Number.isFinite(currentValue))) return false;
+  if(currentValue <= previousValue) return false;
+  return UPGRADE_DATA.some(up=>{
+    if(up.requirement?.type !== 'handmade') return false;
+    if(isUpgradePurchased(up.id)) return false;
+    const threshold = up.requirement.amount ?? Number.POSITIVE_INFINITY;
+    if(!Number.isFinite(threshold)) return false;
+    if(previousValue >= threshold) return false;
+    if(currentValue < threshold) return false;
+    return !getUpgradeElement(up.id);
+  });
 }
 
 function tryBuyUpgrade(id){
@@ -2503,11 +2519,19 @@ function getClickGain(){
 }
 el('click').onclick=()=>{
   const gain = getClickGain();
+  const previousHandmade = handmadeMemes;
   pts += gain;
   totalClicks += 1;
   handmadeMemes += gain;
+  const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
   evaluateAchievements();
   renderHUD();
+  if(unlockedHandmadeUpgrade){
+    renderUpgrades();
+  } else {
+    updateUpgradeAffordability();
+  }
+  updateAffordability();
   save();
   showFront();
 };
