@@ -1874,34 +1874,43 @@ const UPGRADE_DATA = [
   {
     id:'up-dedo-t1',
     name:'Mão aprimorada',
-    effect:'Cada Dedo gera +1 clique extra',
+    effect:'Cliques ×2 e +1% do MPS; Dedo ×2.',
     cost:5000,
     img:'imagens/melhorias-futuras/up-dedo-t1.png',
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Tenha 10 Dedos',
-    bonus:{type:'finger', perDedo:1}
+    bonus:[
+      {type:'click', mult:2, pctOfMps:0.01},
+      {type:'building', target:'dedo', amount:1.0}
+    ]
   },
   {
     id:'up-dedo-t2',
     name:'Mão de Graphite',
-    effect:'Cada Dedo gera +1 clique extra (acumula)',
+    effect:'Cliques ×2 (acumula) e +1% do MPS; Dedo ×2.',
     cost:250000,
     img:'imagens/melhorias-futuras/up-dedo-t2.png',
     requirement:{type:'building', building:'dedo', count:25},
     requirementText:'Tenha 25 Dedos e o upgrade anterior',
     requires:['up-dedo-t1'],
-    bonus:{type:'finger', perDedo:1}
+    bonus:[
+      {type:'click', mult:2, pctOfMps:0.01},
+      {type:'building', target:'dedo', amount:1.0}
+    ]
   },
   {
     id:'up-dedo-t3',
     name:'Mão de Slate',
-    effect:'Cada Dedo gera +1 clique extra (acumula)',
+    effect:'Cliques ×2 (acumula) e +1% do MPS; Dedo ×2.',
     cost:10000000,
     img:'imagens/melhorias-futuras/up-dedo-t3.png',
     requirement:{type:'building', building:'dedo', count:40},
     requirementText:'Tenha 40 Dedos e o upgrade anterior',
     requires:['up-dedo-t2'],
-    bonus:{type:'finger', perDedo:1}
+    bonus:[
+      {type:'click', mult:2, pctOfMps:0.01},
+      {type:'building', target:'dedo', amount:1.0}
+    ]
   },
   {
     id:'up-roupa-t1',
@@ -2214,26 +2223,23 @@ function tryBuyUpgrade(id){
   save(true);
 }
 
-function getBuildingMultiplier(buildingId){
-  let bonus = 0;
-  UPGRADE_DATA.forEach(up=>{
-    if(!isUpgradePurchased(up.id)) return;
-    if(up.bonus?.type === 'building' && up.bonus.target === buildingId){
-      bonus += up.bonus.amount;
-    }
-  });
-  return 1 + bonus;
+function getUpgradeBonuses(up){
+  if(!up?.bonus) return [];
+  return Array.isArray(up.bonus) ? up.bonus : [up.bonus];
 }
 
-function getFingerExtraPerDedo(){
-  let extra = 0;
+function getBuildingMultiplier(buildingId){
+  let multiplier = 1;
   UPGRADE_DATA.forEach(up=>{
     if(!isUpgradePurchased(up.id)) return;
-    if(up.bonus?.type === 'finger'){
-      extra += up.bonus.perDedo ?? 0;
-    }
+    getUpgradeBonuses(up).forEach(bonus=>{
+      if(bonus?.type === 'building' && bonus.target === buildingId){
+        const amount = bonus.amount ?? 0;
+        multiplier *= 1 + amount;
+      }
+    });
   });
-  return extra;
+  return multiplier;
 }
 
 function recalculateProduction(){
@@ -2245,9 +2251,21 @@ function recalculateProduction(){
     total += owned * it.p * multiplier;
   });
   mps = total;
-  const dedos = shopState.dedo?.owned ?? 0;
-  const perDedo = getFingerExtraPerDedo();
-  clickPow = 1 + (dedos * perDedo);
+  let clickMult = 1;
+  let clickPctOfMps = 0;
+  UPGRADE_DATA.forEach(up=>{
+    if(!isUpgradePurchased(up.id)) return;
+    getUpgradeBonuses(up).forEach(bonus=>{
+      if(bonus?.type === 'click'){
+        const mult = bonus.mult ?? 1;
+        clickMult *= mult;
+        const pct = bonus.pctOfMps ?? 0;
+        clickPctOfMps += pct;
+      }
+    });
+  });
+  const baseClick = 1;
+  clickPow = baseClick * clickMult + (mps * clickPctOfMps);
 }
 
 function renderUpgrades(){
