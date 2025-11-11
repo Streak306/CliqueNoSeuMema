@@ -619,3 +619,23 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
   .shop-card{ min-height: auto; }
   .upgrades-card{ min-height: auto; }
 }
+
+/* === Tooltip de melhorias === */
+.tooltip-card{
+  position:fixed;
+  z-index:1000;
+  max-width:280px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(20,20,24,0.94);
+  color:#fff;
+  box-shadow:0 6px 22px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.04) inset;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity .12s ease, transform .12s ease;
+}
+.tooltip-card.visible{ opacity:1; transform:translateY(0); }
+.tooltip-card .tooltip-name{ font-weight:700; margin-bottom:4px; }
+.tooltip-card .tooltip-effect{ font-size:.92rem; line-height:1.25rem; opacity:.92; margin-bottom:6px; }
+.tooltip-card .tooltip-cost{ font-size:.85rem; opacity:.82; }
