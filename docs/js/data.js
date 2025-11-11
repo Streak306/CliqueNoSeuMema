@@ -93,7 +93,7 @@ export const UPGRADE_DATA = [
     cost:10000,
     img:'imagens/melhorias-futuras/up-dedo-t4.png',
     requirement:{type:'building', building:'dedo', count:100},
-    requirementText:'Possuir 100 dedos',
+    requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t3'],
     bonus:[
       {type:'click', mult:2},
