@@ -45,7 +45,7 @@ export const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{
 }, {});
 //UPGRADES
 export const UPGRADE_DATA = [
-  {
+   {
     id:'up-dedo-t1',
     name:'Mão aprimorada',
     effect:'O click e os dedos são duas vezes tão eficientes.',
@@ -76,10 +76,24 @@ export const UPGRADE_DATA = [
     id:'up-dedo-t3',
     name:'Mão de Slate',
     effect:'O click e os dedos são duas vezes tão eficientes.',
-    cost:10000,
-    img:'imagens/melhorias-futuras/up-dedo-t3.png', 
+    cost:1000,
+    img:'imagens/melhorias-futuras/up-dedo-t3.png',
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Possuir 10 dedos',
+    requires:['up-dedo-t2'],
+    bonus:[
+      {type:'click', mult:2},
+      {type:'building', target:'dedo', amount:1.0}
+    ]
+  },
+    {
+    id:'up-dedo-t4',
+    name:'Mão de Slate',
+    effect:'O click e os dedos são duas vezes tão eficientes.',
+    cost:10000,
+    img:'imagens/melhorias-futuras/up-dedo-t3.png',
+    requirement:{type:'building', building:'dedo', count:100},
+    requirementText:'Possuir 100 dedos',
     requires:['up-dedo-t2'],
     bonus:[
       {type:'click', mult:2},
