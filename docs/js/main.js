@@ -1311,6 +1311,7 @@ function getBuildingMultiplier(buildingId){
         const amount = bonus.amount ?? 0;
         multiplier *= 1 + amount;
       }
+      if(bonus?.type === 'fingers'){ const coef = bonus.coef ?? 0; const mul = bonus.mult ?? 1; fingersCoef += coef * mul; }
     });
   });
   return multiplier;
@@ -1325,8 +1326,15 @@ function recalculateProduction(){
     total += owned * it.p * multiplier;
   });
   mps = total;
+  // Fingers effect: bonus to Dedos production proportional to non-Dedo objects
+  const nonDedoObjects = SHOP.filter(it => it.id !== 'dedo')
+    .reduce((s,it)=> s + (shopState[it.id]?.owned ?? 0), 0);
+  const dedos = shopState['dedo']?.owned ?? 0;
+  const extraFromFingers = fingersCoef * nonDedoObjects * dedos;
+  mps += extraFromFingers;
   let clickMult = 1;
   let clickPctOfMps = 0;
+  let fingersCoef = 0;
   UPGRADE_DATA.forEach(up=>{
     if(!isUpgradePurchased(up.id)) return;
     getUpgradeBonuses(up).forEach(bonus=>{
@@ -1339,7 +1347,8 @@ function recalculateProduction(){
     });
   });
   const baseClick = 1;
-  clickPow = baseClick * clickMult + (mps * clickPctOfMps);
+  let clickAdd = fingersCoef * nonDedoObjects;
+  clickPow = baseClick * clickMult + (mps * clickPctOfMps) + clickAdd;
 }
 
 function renderUpgrades(){

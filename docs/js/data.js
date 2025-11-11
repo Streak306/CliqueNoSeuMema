@@ -76,7 +76,7 @@ export const UPGRADE_DATA = [
     id:'up-dedo-t3',
     name:'Mão de Slate',
     effect:'O click e os dedos são duas vezes tão eficientes.',
-    cost:1000,
+    cost:10000,
     img:'imagens/melhorias-futuras/up-dedo-t3.png',
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Possuir 10 dedos',
@@ -90,49 +90,40 @@ export const UPGRADE_DATA = [
     id:'up-dedo-t4',
     name:'Mão de Ferro',
     effect:'O click e os dedos são duas vezes tão eficientes.',
-    cost:10000,
+    cost:100000,
     img:'imagens/melhorias-futuras/up-dedo-t4.png',
     requirement:{type:'building', building:'dedo', count:25},
-    requirementText:'Possuir 10 dedos',
+    requirementText:'Possuir 25 dedos',
     requires:['up-dedo-t3'],
-    bonus:[
-      {type:'click', mult:2},
-      {type:'building', target:'dedo', amount:1.0}
-    ]
+    bonus:{ type:'fingers', coef:0.1, mult:1 }
   },
       {
     id:'up-dedo-t5',
     name:'Mão de Streak',
     effect:'O click e os dedos são duas vezes tão eficientes.',
-    cost:100000,
+    cost:10000000,
     img:'imagens/melhorias-futuras/up-dedo-t5.png',
-    requirement:{type:'building', building:'dedo', count:30},
-    requirementText:'Possuir 30 dedos',
+    requirement:{type:'building', building:'dedo', count:50},
+    requirementText:'Possuir 50 dedos',
     requires:['up-dedo-t4'],
-    bonus:[
-      {type:'click', mult:2},
-      {type:'building', target:'dedo', amount:1.0}
-    ]
+    bonus:{ type:'fingers', coef:0.1, mult:5 }
   },
       {
     id:'up-dedo-t6',
     name:'Memarkez',
     effect:'O click e os dedos são duas vezes tão eficientes.',
-    cost:1000000,
+    cost:100000000,
     img:'imagens/melhorias-futuras/up-dedo-t6.png',
-    requirement:{type:'building', building:'dedo', count:35},
-    requirementText:'Possuir 50 dedos',
+    requirement:{type:'building', building:'dedo', count:100},
+    requirementText:'Possuir 100 dedos',
     requires:['up-dedo-t5'],
-    bonus:[
-      {type:'click', mult:2},
-      {type:'building', target:'dedo', amount:1.0}
-    ]
+    bonus:{ type:'fingers', coef:0.1, mult:10 }
   },
   {
     id:'up-roupa-t1',
     name:'Tênis Impressionante',
     effect:'As roupas são duas vezes tão eficientes.',
-    cost:1000,
+    cost:100000000,
     img:'imagens/melhorias-futuras/up-roupa-t1.png',
     requirement:{type:'building', building:'roupa', count:1},
     requirementText:'Possuir 1 Roupa',
