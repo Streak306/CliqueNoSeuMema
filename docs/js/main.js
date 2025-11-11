@@ -1519,6 +1519,33 @@ el('click').onclick=()=>{
   save();
   showFront();
 };
+// EFEITO DE PARTÍCULA 🔹
+function criarParticula(x, y) {
+  const particle = document.createElement('div');
+  particle.classList.add('particle');
+  particle.textContent = '+1'; // pode trocar por emoji ou número real
+  
+  // posição do clique
+  particle.style.left = x + 'px';
+  particle.style.top = y + 'px';
+  
+  // cor pode variar
+  particle.style.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+
+  document.body.appendChild(particle);
+
+  setTimeout(() => {
+    particle.remove();
+  }, 1000);
+}
+
+// Adiciona o evento no clique
+mema.addEventListener('click', (e) => {
+  const x = e.clientX;
+  const y = e.clientY;
+  criarParticula(x, y);
+});
+
 
 /* ações */
 if(redeemCodeButtonEl){
