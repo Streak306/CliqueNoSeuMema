@@ -63,7 +63,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Graphite',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:500,
-<img src="imagens/melhorias-futuras/up-dedo-t2.png" draggable="false" alt="Mão de Graphite">
+    <img src="imagens/melhorias-futuras/up-dedo-t2.png" draggable="false" alt="Mão de Graphite">
     requirement:{type:'building', building:'dedo', count:1},
     requirementText:'Possuir 1 dedo',
     requires:['up-dedo-t1'],
