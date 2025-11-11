@@ -88,13 +88,41 @@ export const UPGRADE_DATA = [
   },
     {
     id:'up-dedo-t4',
-    name:'Mão de Streak',
+    name:'Mão de Ferro',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:10000,
     img:'imagens/melhorias-futuras/up-dedo-t4.png',
     requirement:{type:'building', building:'dedo', count:25},
     requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t3'],
+    bonus:[
+      {type:'click', mult:2},
+      {type:'building', target:'dedo', amount:1.0}
+    ]
+  },
+      {
+    id:'up-dedo-t5',
+    name:'Mão de Streak',
+    effect:'O click e os dedos são duas vezes tão eficientes.',
+    cost:100000,
+    img:'imagens/melhorias-futuras/up-dedo-t5.png',
+    requirement:{type:'building', building:'dedo', count:30},
+    requirementText:'Possuir 30 dedos',
+    requires:['up-dedo-t4'],
+    bonus:[
+      {type:'click', mult:2},
+      {type:'building', target:'dedo', amount:1.0}
+    ]
+  },
+      {
+    id:'up-dedo-t6',
+    name:'Memarkez',
+    effect:'O click e os dedos são duas vezes tão eficientes.',
+    cost:1000000,
+    img:'imagens/melhorias-futuras/up-dedo-t6.png',
+    requirement:{type:'building', building:'dedo', count:35},
+    requirementText:'Possuir 50 dedos',
+    requires:['up-dedo-t5'],
     bonus:[
       {type:'click', mult:2},
       {type:'building', target:'dedo', amount:1.0}
