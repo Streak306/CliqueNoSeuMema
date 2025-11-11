@@ -666,3 +666,55 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
   .shop-card{ min-height: auto; }
   .upgrades-card{ min-height: auto; }
 }
+
+/* Evento Mema está fétil */
+@keyframes flashScreen {
+  0%, 100% { background-color: #000; }
+  50% { background-color: #fff; }
+}
+body.flash-mode {
+  animation: flashScreen 0.2s steps(2) infinite;
+}
+
+body.invert-mode {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+header.title-glitch h1 {
+  text-shadow: 0 0 6px red, 0 0 12px blue;
+  transform: scale(1.05) rotate(-1deg);
+  animation: titleGlitch 0.3s infinite alternate;
+}
+@keyframes titleGlitch {
+  0% { transform: scale(1.05) rotate(-1deg); }
+  100% { transform: scale(0.95) rotate(1deg); }
+}
+
+.click-img.glitch-sprite {
+  animation: spriteGlitch 0.2s infinite;
+  filter: hue-rotate(90deg) blur(1px);
+}
+@keyframes spriteGlitch {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+#irreversibleOverlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fefefe;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+}
+#irreversibleOverlay.show {
+  display: flex;
+}
