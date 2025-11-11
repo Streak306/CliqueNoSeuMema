@@ -101,7 +101,7 @@ export const UPGRADE_DATA = [
     name:'Água Salgada',
     effect:'As águas são duas vezes tão eficientes.',
     cost:11000,
-    <img src='imagens/melhorias-futuras/up-agua-t1.png'draggable="false" alt= "Água Salgada">
+    <img src="imagens/melhorias-futuras/up-agua-t1.png"draggable="false" alt= "Água Salgada">
     requirement:{type:'building', building:'agua', count:1},
     requirementText:'Possuir 1 Água',
     bonus:{type:'building', target:'agua', amount:1.0}
