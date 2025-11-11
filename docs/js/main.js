@@ -407,34 +407,6 @@ const tooltipNameEl = tooltipCardEl?.querySelector('.tooltip-name') ?? null;
 const tooltipEffectEl = tooltipCardEl?.querySelector('.tooltip-effect') ?? null;
 const tooltipCostEl = tooltipCardEl?.querySelector('.tooltip-cost') ?? null;
 let activeUpgradeTooltip = null;
-// === EFEITO DE PARTÍCULAS ===
-const mema = document.getElementById('click');
-
-function criarParticula(x, y) {
-  const particle = document.createElement('div');
-  particle.classList.add('particle');
-  particle.textContent = '+1'; // pode trocar por emoji ou valor real
-
-  particle.style.left = x + 'px';
-  particle.style.top = y + 'px';
-  particle.style.position = 'absolute';
-  particle.style.zIndex = '9999';
-  particle.style.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
-  particle.style.pointerEvents = 'none';
-  particle.style.fontWeight = 'bold';
-  particle.style.textShadow = '0 0 6px currentColor';
-  particle.style.animation = 'subir 1s ease-out forwards';
-  document.body.appendChild(particle);
-
-  setTimeout(() => particle.remove(), 1000);
-}
-
-mema?.addEventListener('click', (e) => {
-  const x = e.clientX;
-  const y = e.clientY;
-  criarParticula(x, y);
-});
-
 
 function refreshUpgradeTooltip(up){
   if(!tooltipCardEl || !tooltipNameEl || !tooltipEffectEl || !tooltipCostEl) return;
