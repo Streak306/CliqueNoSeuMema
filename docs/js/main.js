@@ -1450,13 +1450,13 @@ function tryBuy(id){
   pts -= priceSingle;
   st.owned += 1;
 
-if (item.id === 'namorada' && item.qtd === 1) {
-    triggerEventoFertil();
-    announcePurchase('Namorada', row);
-    triggerWorldEndSequence();
-    updateClickImage();
+if (item.id == 'namorada' && item.qtd == 1) {
+  triggerEventForItem();
+  announcePurchase('Namorada', row);
+  document.body.classList.add('world-end');
+  document.getElementById('worldEndOverlay')?.classList.add('open');
+  updateClickImage();
 }
-
 
   recalculateProduction();
 
@@ -1573,3 +1573,27 @@ function triggerEventoFertil() {
     header.querySelector('h1').textContent = 'Memarkez';
   }, 15000);
 }
+
+// Configura a tela final "O Mema está fértil" com botão "Continuar"
+(function setupTelaFertilFinal() {
+  const overlay = document.getElementById('worldEndOverlay');
+  const btn = document.getElementById('worldResetButton');
+  const title = document.getElementById('worldEndTitle');
+  const headerTitle = document.querySelector('header h1');
+  const clickImg = document.getElementById('click');
+
+  if (!overlay || !btn || !title || !headerTitle || !clickImg) return;
+
+  // Atualiza os textos
+  title.textContent = 'O Mema está fértil.';
+  btn.textContent = 'Continuar';
+
+  // Quando clicar em "Continuar", fecha a tela e limpa os efeitos
+  btn.addEventListener('click', () => {
+    overlay.classList.remove('open');
+    document.body.classList.remove('world-end', 'flash-mode', 'invert-mode');
+    headerTitle.textContent = 'Memarkez';
+    clickImg.classList.remove('glitch-sprite');
+    clickImg.style.pointerEvents = 'auto';
+  });
+})();
