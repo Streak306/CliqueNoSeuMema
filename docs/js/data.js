@@ -2,9 +2,19 @@ export const CODE_REWARDS = {
   entreak: 1_000_000_000_000_000
 };
 
-<img src="imagens/variacoes-mema/mema_back.png" draggable="false" alt="Mema Back">
-<img src="imagens/variacoes-mema/mema_front.png" draggable="false" alt="Mema Front">
-<img src="imagens/variacoes-mema/mema_reset.png" draggable="false" alt="Mema Reset">
+export const IMG_BACK  = 'imagens/variacoes-mema/mema_back.png';
+export const IMG_FRONT = 'imagens/variacoes-mema/mema_front.png';
+export const IMG_RESET = 'imagens/variacoes-mema/mema_reset.png';
+export const FRONT_TIME_MS = 400;
+
+// 🔒 Impedir que qualquer imagem seja arrastada
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("img").forEach(img => {
+    img.draggable = false;
+    img.addEventListener("dragstart", e => e.preventDefault()); // garante 100%
+  });
+});
+
 
 
 export const GLITCH_DIGIT_TARGETS = [
