@@ -128,48 +128,6 @@ h1{ margin:6px 0 12px 0; font-size:2.6rem; letter-spacing:.3px; }
   justify-content:center;
 }
 .upgrade-tile.purchased .upgrade-check{ display:flex; }
-.tooltip-card{
-  position:fixed;
-  pointer-events:none;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  min-width:200px;
-  max-width:min(260px, 92vw);
-  padding:14px 16px;
-  background:rgba(13,17,23,.96);
-  border:1px solid rgba(96,165,250,.35);
-  border-radius:14px;
-  box-shadow:0 16px 34px rgba(0,0,0,.5);
-  color:var(--fg);
-  opacity:0;
-  visibility:hidden;
-  transform:translateY(8px);
-  transition:opacity .16s ease, transform .16s ease;
-  z-index:60;
-}
-.tooltip-card.visible{
-  opacity:1;
-  visibility:visible;
-  transform:translateY(0);
-}
-.tooltip-card .tooltip-name{
-  font-weight:700;
-  font-size:.92rem;
-  line-height:1.25;
-}
-.tooltip-card .tooltip-effect{
-  font-size:.8rem;
-  color:var(--muted);
-  line-height:1.4;
-}
-.tooltip-card .tooltip-cost{
-  font-size:.78rem;
-  border-top:1px solid rgba(96,165,250,.25);
-  padding-top:8px;
-  margin-top:4px;
-  letter-spacing:.15px;
-}
 .upgrade-tile.buzz{ animation:buzz .15s linear 2; }
 
 /* make the shop card match stage height so items don't look "outside" */
@@ -490,14 +448,10 @@ h1{ margin:6px 0 12px 0; font-size:2.6rem; letter-spacing:.3px; }
 body.glitch-prelude{
   cursor:wait;
 }
-body.glitch-prelude .wrap{
-  animation:glitchHue 0.18s steps(2) infinite alternate;
-}
 body.glitch-prelude .click-img,
 body.glitch-prelude .shop tbody tr,
 body.glitch-prelude .btn,
-body.glitch-prelude .upgrade-tile,
-body.glitch-prelude .tooltip-card{
+body.glitch-prelude .upgrade-tile{
   pointer-events:none;
   filter:saturate(.82);
 }
@@ -562,7 +516,6 @@ body.world-end .wrap,
 body.world-end header,
 body.world-end main,
 body.world-end .modal-overlay,
-body.world-end #upgradeTooltip,
 body.world-end #purchaseToast,
 body.world-end #saveToast,
 body.world-end #achievementToast{
