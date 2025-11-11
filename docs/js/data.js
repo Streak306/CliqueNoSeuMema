@@ -92,7 +92,7 @@ export const UPGRADE_DATA = [
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:10000,
     img:'imagens/melhorias-futuras/up-dedo-t4.png',
-    requirement:{type:'building', building:'dedo', count:15},
+    requirement:{type:'building', building:'dedo', count:25},
     requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t3'],
     bonus:[
