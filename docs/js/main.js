@@ -1451,10 +1451,11 @@ function tryBuy(id){
   st.owned += 1;
 
   if(id === 'namorada' && st.owned === 1){
-    announcePurchase('Namorada', row);
+    // announcePurchase('Namorada', row); // removido o toast
     triggerWorldEndSequence();
     updateClickImage();
   }
+
 
   recalculateProduction();
 
