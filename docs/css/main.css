@@ -639,3 +639,18 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
 .tooltip-card .tooltip-name{ font-weight:700; margin-bottom:4px; }
 .tooltip-card .tooltip-effect{ font-size:.92rem; line-height:1.25rem; opacity:.92; margin-bottom:6px; }
 .tooltip-card .tooltip-cost{ font-size:.85rem; opacity:.82; }
+.particle {
+  position: absolute;
+  font-size: 20px;
+  pointer-events: none;
+  user-select: none;
+  animation: subir 1s ease-out forwards;
+  text-shadow: 0 0 8px currentColor;
+  font-weight: bold;
+  z-index: 9999;
+}
+
+@keyframes subir {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.5); }
+}
