@@ -1450,11 +1450,13 @@ function tryBuy(id){
   pts -= priceSingle;
   st.owned += 1;
 
-  if(id === 'namorada' && st.owned === 1){
+if (item.id === 'namorada' && item.qtd === 1) {
+    triggerEventoFertil();
     announcePurchase('Namorada', row);
     triggerWorldEndSequence();
     updateClickImage();
-  }
+}
+
 
   recalculateProduction();
 
@@ -1526,4 +1528,48 @@ if(redeemCodeButtonEl){
 el('deleteSave').onclick=()=>deleteSave();
 if(worldEndButtonEl){
   worldEndButtonEl.addEventListener('click', handleWorldReset);
+}
+
+function triggerEventoFertil() {
+  const body = document.body;
+  const header = document.querySelector('header');
+  const clickImg = document.querySelector('#click');
+  const overlay = document.getElementById('irreversibleOverlay');
+
+  // Força tela cheia
+  if (document.fullscreenEnabled && !document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+
+  // Mensagem inicial
+  overlay.classList.add('show');
+  header.querySelector('h1').textContent = '...';
+  clickImg.style.pointerEvents = 'none';
+
+  // Após 3s, aplica efeitos aleatórios
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    header.querySelector('h1').textContent = 'Mema está fétil';
+
+    const efeitos = [
+      () => body.classList.add('flash-mode'),
+      () => body.classList.add('invert-mode'),
+      () => header.classList.add('title-glitch'),
+      () => clickImg.classList.add('glitch-sprite')
+    ];
+
+    const qtd = Math.floor(Math.random() * 3) + 2; // 2 a 4 efeitos
+    const selecionados = efeitos.sort(() => 0.5 - Math.random()).slice(0, qtd);
+    selecionados.forEach(fn => fn());
+
+  }, 3000);
+
+  // Após 12s, volta ao normal
+  setTimeout(() => {
+    body.classList.remove('flash-mode', 'invert-mode');
+    header.classList.remove('title-glitch');
+    clickImg.classList.remove('glitch-sprite');
+    clickImg.style.pointerEvents = 'auto';
+    header.querySelector('h1').textContent = 'Memarkez';
+  }, 15000);
 }
