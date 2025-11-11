@@ -50,7 +50,7 @@ export const UPGRADE_DATA = [
     name:'Mão aprimorada',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:100,
-    img:'imagens/melhorias-futuras/up-dedo-t1.png',
+    <img src="imagens/melhorias-futuras/up-dedo-t1.png" draggable="false" alt="Mão aprimorada">
     requirement:{type:'building', building:'dedo', count:1},
     requirementText:'Possuir 1 dedo',
     bonus:[
@@ -63,9 +63,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Graphite',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:500,
-    <img src="imagens/melhorias-futuras/up-dedo-t1.png" draggable="false" alt="Mão aprimorada">
 <img src="imagens/melhorias-futuras/up-dedo-t2.png" draggable="false" alt="Mão de Graphite">
-
     requirement:{type:'building', building:'dedo', count:1},
     requirementText:'Possuir 1 dedo',
     requires:['up-dedo-t1'],
@@ -79,7 +77,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Slate',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:10000,
-    img:'imagens/melhorias-futuras/up-dedo-t3.png',
+    <img src="imagens/melhorias-futuras/up-dedo-t3.png" draggable="false" alt="Mão de Slate">
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t2'],
