@@ -10,11 +10,10 @@ export const FRONT_TIME_MS = 400;
 // 🔒 Impedir que qualquer imagem seja arrastada
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("img").forEach(img => {
-    img.draggable = false;
+    img.draggable = false; // <-- CORRETO: dentro do forEach
     img.addEventListener("dragstart", e => e.preventDefault()); // garante 100%
   });
 });
-
 
 
 export const GLITCH_DIGIT_TARGETS = [
