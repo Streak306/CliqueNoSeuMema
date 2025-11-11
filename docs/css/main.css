@@ -654,3 +654,51 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
   0% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-80px) scale(0.5); }
 }
+
+// === Mini-game: Acerte o Mema ===
+function iniciarMiniGame() {
+  const memaMini = document.createElement('img');
+  memaMini.src = IMG_FRONT; // usa a mesma imagem do seu jogo
+  memaMini.className = 'mema-mini';
+  memaMini.style.position = 'fixed';
+  memaMini.style.width = '100px';
+  memaMini.style.cursor = 'pointer';
+  memaMini.style.zIndex = '9999';
+  
+  // posição aleatória na tela
+  const x = Math.random() * (window.innerWidth - 100);
+  const y = Math.random() * (window.innerHeight - 100);
+  memaMini.style.left = `${x}px`;
+  memaMini.style.top = `${y}px`;
+
+  document.body.appendChild(memaMini);
+
+  // desaparece depois de 1.5s se não for clicado
+  const timeout = setTimeout(() => {
+    memaMini.remove();
+  }, 1500);
+
+  // clique dá bônus
+  memaMini.addEventListener('click', () => {
+    clearTimeout(timeout);
+    pts += 1000; // bônus
+    renderStatsPanel(); // atualiza pontos
+    memaMini.remove();
+
+    // pequena partícula de "+1000"
+    const part = document.createElement('span');
+    part.textContent = '+1000!';
+    part.className = 'particle';
+    part.style.left = `${x + 40}px`;
+    part.style.top = `${y}px`;
+    document.body.appendChild(part);
+    setTimeout(() => part.remove(), 1000);
+  });
+}
+
+// aparecer aleatoriamente a cada 30–60 segundos
+setInterval(() => {
+  if (Math.random() < 0.5) { // 50% de chance
+    iniciarMiniGame();
+  }
+}, 30000);
