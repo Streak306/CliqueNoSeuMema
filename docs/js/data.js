@@ -77,7 +77,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Slate',
     effect:'O click e os dedos são duas vezes tão eficientes.'
     cost:10000,
-    img:"imagens/melhorias-futuras/up-dedo-t3.png", 
+    img:'imagens/melhorias-futuras/up-dedo-t3.png', 
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t2'],
@@ -101,7 +101,7 @@ export const UPGRADE_DATA = [
     name:'Água Salgada',
     effect:'As águas são duas vezes tão eficientes.',
     cost:11000,
-    img:"imagens/melhorias-futuras/up-agua-t1.png"
+    img:'imagens/melhorias-futuras/up-agua-t1.png',
     requirement:{type:'building', building:'agua', count:1},
     requirementText:'Possuir 1 Água',
     bonus:{type:'building', target:'agua', amount:1.0}
