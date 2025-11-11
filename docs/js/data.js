@@ -28,7 +28,7 @@ export const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{
   acc[item.id] = item;
   return acc;
 }, {});
-
+//UPGRADES
 export const UPGRADE_DATA = [
   {
     id:'up-dedo-t1',
@@ -217,7 +217,7 @@ export const UPGRADE_MAP = UPGRADE_DATA.reduce((acc, up)=>{
   acc[up.id] = up;
   return acc;
 }, {});
-
+// Conquistas
 export const ACHIEVEMENT_DATA = [
   { id:'ach-polidactilia', name:'Polidactilia', description:'Tenha 50 Dedos', requirement:{ type:'building', building:'dedo', count:50 } },
   { id:'ach-calcinha', name:'Calcinha', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
