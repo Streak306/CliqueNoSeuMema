@@ -658,7 +658,7 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
 // === Mini-game: Acerte o Mema ===
 function iniciarMiniGame() {
   const memaMini = document.createElement('img');
-  memaMini.src = IMG_FRONT; // usa a mesma imagem do seu jogo
+  memaMini.src = 'imagens/variacoes-mema/mema_reset.png';
   memaMini.className = 'mema-mini';
   memaMini.style.position = 'fixed';
   memaMini.style.width = '100px';
