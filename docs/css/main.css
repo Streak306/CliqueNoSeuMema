@@ -731,3 +731,24 @@ setInterval(() => {
   from { opacity: 1; transform: translateY(0); }
   to { opacity: 0; transform: translateY(-50px); }
 }
+
+  #menuExtras button {
+  background: #ff6;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.painel {
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.oculto {
+  display: none;
+}
