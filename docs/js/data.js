@@ -27,7 +27,7 @@ export const GLITCH_DIGIT_TARGETS = [
 ];
 
 export const SHOP = [
-  {id:'dedo',        name:'Dedo',        base:15,           r:1.15, p:0.10,      limit:50},
+  {id:'dedo',        name:'Dedo',        base:15,           r:1.15, p:0.10,      limit:100},
   {id:'roupa',       name:'Roupa',       base:100,          r:1.15, p:1.00,      limit:20},
   {id:'agua',        name:'Água',        base:1100,         r:1.15, p:8.00,      limit:20},
   {id:'plantacao',   name:'Plantação',   base:12000,        r:1.15, p:47.0,      limit:12},
