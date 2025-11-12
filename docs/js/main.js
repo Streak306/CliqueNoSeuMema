@@ -1536,3 +1536,58 @@ el('deleteSave').onclick=()=>deleteSave();
 if(worldEndButtonEl){
   worldEndButtonEl.addEventListener('click', handleWorldReset);
 }
+
+// === MINI-GAME: ACERTE O MEMA DOURADO ===
+const BONUS_VALUE = 500; // quantidade de Meminhas que o jogador ganha
+const BONUS_INTERVAL = 15000; // intervalo em ms (15 segundos)
+const BONUS_DURATION = 2000; // quanto tempo o Mema dourado fica visível
+
+function spawnMemaDourado() {
+  // cria o elemento
+  const memaBonus = document.createElement('img');
+  memaBonus.src = 'imagens/variacoes-mema/mema_dourado.png'; // cria uma versão dourada da imagem
+  memaBonus.alt = 'Mema Dourado!';
+  memaBonus.classList.add('mema-bonus');
+
+  // posição aleatória
+  const x = Math.random() * (window.innerWidth - 100);
+  const y = Math.random() * (window.innerHeight - 100);
+  memaBonus.style.left = `${x}px`;
+  memaBonus.style.top = `${y}px`;
+
+  document.body.appendChild(memaBonus);
+
+  // clique → ganha bônus
+  memaBonus.addEventListener('click', () => {
+    adicionarPontos(BONUS_VALUE);
+    mostrarBonusTexto(`+${BONUS_VALUE} Meminhas!`, x, y);
+    memaBonus.remove();
+  });
+
+  // desaparece depois de um tempo
+  setTimeout(() => {
+    memaBonus.remove();
+  }, BONUS_DURATION);
+}
+
+// mostra texto animado do bônus
+function mostrarBonusTexto(texto, x, y) {
+  const el = document.createElement('div');
+  el.classList.add('bonus-text');
+  el.textContent = texto;
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  document.body.appendChild(el);
+
+  setTimeout(() => el.remove(), 1000);
+}
+
+// função que adiciona Meminhas ao contador principal
+function adicionarPontos(valor) {
+  const ptsEl = document.getElementById('pts');
+  const atual = parseInt(ptsEl.textContent.replace(/\D/g, '')) || 0;
+  ptsEl.textContent = atual + valor;
+}
+
+// spawn automático a cada intervalo
+setInterval(spawnMemaDourado, BONUS_INTERVAL);
