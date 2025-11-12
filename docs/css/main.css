@@ -702,3 +702,32 @@ setInterval(() => {
     iniciarMiniGame();
   }
 }, 30000);
+//mini game
+  .mema-bonus {
+  position: fixed;
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  z-index: 2000;
+  animation: brilhar 1s infinite alternate;
+}
+
+@keyframes brilhar {
+  from { filter: brightness(1); transform: scale(1); }
+  to { filter: brightness(2) drop-shadow(0 0 10px gold); transform: scale(1.1); }
+}
+
+.bonus-text {
+  position: fixed;
+  font-weight: bold;
+  color: gold;
+  font-size: 20px;
+  animation: subirBonus 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 3000;
+}
+
+@keyframes subirBonus {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-50px); }
+}
