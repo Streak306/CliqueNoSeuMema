@@ -1545,7 +1545,7 @@ const BONUS_DURATION = 2000; // quanto tempo o Mema dourado fica visível
 function spawnMemaDourado() {
   // cria o elemento
   const memaBonus = document.createElement('img');
-  memaBonus.src = 'imagens/variacoes-mema/mema_dourado.png'; // cria uma versão dourada da imagem
+  memaBonus.src = 'imagens/variacoes-mema/mema_reset.png'; // cria uma versão dourada da imagem
   memaBonus.alt = 'Mema Dourado!';
   memaBonus.classList.add('mema-bonus');
 
