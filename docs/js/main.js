@@ -26,7 +26,9 @@ let collapseState = makeInitialCollapseState();
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
+const clickImageEl = document.getElementById('click');
 const redeemCodeButtonEl = document.getElementById('redeemCode');
+const deleteSaveButtonEl = document.getElementById('deleteSave');
 const collapseOverlayEl = document.getElementById('collapseOverlay');
 const collapseBlueListEl = document.getElementById('collapseBlueMessages');
 const collapseLogLinesEl = document.getElementById('collapseLogLines');
@@ -1585,38 +1587,39 @@ startAutoSave();
 function getClickGain(){
   return Math.max(1, Math.floor(clickPow));
 }
-el('click').onclick=()=>{
-  const gain = getClickGain();
-  const previousHandmade = handmadeMemes;
-  pts += gain;
-  totalClicks += 1;
-  handmadeMemes += gain;
-  const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
-  evaluateAchievements();
-  renderHUD();
-  if(unlockedHandmadeUpgrade){
-    renderUpgrades();
-  } else {
-    updateUpgradeAffordability();
-  }
-  updateAffordability();
-  save();
-  showFront();
-};
+if(clickImageEl){
+  clickImageEl.addEventListener('click', (e)=>{
+    const gain = getClickGain();
+    const previousHandmade = handmadeMemes;
+    pts += gain;
+    totalClicks += 1;
+    handmadeMemes += gain;
+    const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
+    evaluateAchievements();
+    renderHUD();
+    if(unlockedHandmadeUpgrade){
+      renderUpgrades();
+    } else {
+      updateUpgradeAffordability();
+    }
+    updateAffordability();
+    save();
+    showFront();
 
-// Adiciona o evento no clique
-mema.addEventListener('click', (e) => {
-  const x = e.clientX;
-  const y = e.clientY;
-  criarParticula(x, y);
-});
+    if(typeof criarParticula === 'function'){
+      criarParticula(e.clientX, e.clientY);
+    }
+  });
+}
 
 
 /* ações */
 if(redeemCodeButtonEl){
   redeemCodeButtonEl.addEventListener('click', promptAndRedeemCode);
 }
-el('deleteSave').onclick=()=>deleteSave();
+if(deleteSaveButtonEl){
+  deleteSaveButtonEl.addEventListener('click', ()=> deleteSave());
+}
 // === MINI-GAME: ACERTE O MEMA DOURADO ===
 const BONUS_VALUE = 500; // quantidade de Meminhas que o jogador ganha
 const BONUS_INTERVAL = 15000; // intervalo em ms (15 segundos)
