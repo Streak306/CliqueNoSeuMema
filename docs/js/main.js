@@ -22,15 +22,20 @@ let achievementsState = null;
 let migratedLegacyUpgrades = false;
 let selectedCollectionUpgradeId = null;
 let redeemedCodes = new Set();
-let doomState = makeInitialDoomState();
+let collapseState = makeInitialCollapseState();
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
 const redeemCodeButtonEl = document.getElementById('redeemCode');
-const worldEndOverlayEl = document.getElementById('worldEndOverlay');
-const worldEndButtonEl = document.getElementById('worldResetButton');
-let worldEndTimerHandle = null;
-let worldEndFocusTrapActive = false;
+const collapseOverlayEl = document.getElementById('collapseOverlay');
+const collapseBlueListEl = document.getElementById('collapseBlueMessages');
+const collapseLogLinesEl = document.getElementById('collapseLogLines');
+
+const collapseScene = {
+  active:false,
+  timers:new Set(),
+  logIndex:0
+};
 
 let faceTimer = null;
 
@@ -75,6 +80,28 @@ function shuffleInPlace(arr){
   }
   return arr;
 }
+
+const COLLAPSE_BLUE_LINES = [
+  'FALHA CRÍTICA NO CONTÍNUO AFETIVO.',
+  'EVENTO IMPOSSÍVEL DETECTADO: COMPRA_DE_NAMORADA.',
+  'CONFLITO ESTRUTURAL: RELAÇÃO NAMORADA ↔ MEMA É PARADOXO DESTRUTIVO.',
+  'OPÇÃO 1: ENCERRAR MUNDO [REJEITADA].',
+  'OPÇÃO 2: TENTAR ESTABILIZAR O UNIVERSO COM A ANOMALIA ATIVA.'
+];
+
+const COLLAPSE_LOG_LINES = [
+  'analisando anomalia: MEMA + NAMORADA = PARADOXO AFETIVO INSTÁVEL',
+  'apagar linha do tempo atual: [OPÇÃO DESCARTADA]',
+  'ativando protocolo de contenção: manter mundo vivo com dano controlado',
+  'inserindo remendos na realidade…',
+  'isolando inconsistências emocionais em zonas de risco…',
+  'estabilidade parcial alcançada: universo operando em modo “remendado”.'
+];
+
+const COLLAPSE_FINAL_LINES = [
+  'MUNDO RESTABELECIDO EM ESTADO METAESTÁVEL.',
+  'PROSSEGUIR: POR CONTA E RISCO DO USUÁRIO.'
+];
 
 const glitchPrelude = {
   active:false,
@@ -301,95 +328,149 @@ function stopGlitchPrelude(){
 
 window.addEventListener('pagehide', stopGlitchPrelude);
 window.addEventListener('beforeunload', stopGlitchPrelude);
+window.addEventListener('pagehide', stopCollapseScene);
+window.addEventListener('beforeunload', stopCollapseScene);
 
-function clearWorldEndTimer(){
-  if(worldEndTimerHandle){
-    clearTimeout(worldEndTimerHandle);
-    worldEndTimerHandle = null;
+function queueCollapseTimeout(fn, delay){
+  const handle = setTimeout(()=>{
+    collapseScene.timers.delete(handle);
+    if(!collapseScene.active) return;
+    fn();
+  }, delay);
+  collapseScene.timers.add(handle);
+  return handle;
+}
+
+function clearCollapseTimers(){
+  collapseScene.timers.forEach(handle=> clearTimeout(handle));
+  collapseScene.timers.clear();
+}
+
+function setCollapsePhase(phase){
+  if(!collapseOverlayEl) return;
+  ['glitch','blue','logs'].forEach(name=>{
+    collapseOverlayEl.classList.remove(`phase-${name}`);
+    document.body.classList.remove(`collapse-phase-${name}`);
+  });
+  if(phase){
+    collapseOverlayEl.classList.add(`phase-${phase}`);
+    document.body.classList.add(`collapse-phase-${phase}`);
   }
 }
 
-function handleWorldEndFocus(ev){
-  if(!worldEndOverlayEl?.classList.contains('open')) return;
-  if(worldEndOverlayEl.contains(ev.target)) return;
-  ev.stopPropagation();
-  worldEndButtonEl?.focus();
+function startCollapseSequence(){
+  if(!collapseOverlayEl || collapseScene.active) return;
+  collapseScene.active = true;
+  collapseScene.logIndex = 0;
+  clearCollapseTimers();
+  collapseOverlayEl.classList.remove('closing');
+  collapseOverlayEl.classList.add('open');
+  collapseOverlayEl.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('collapse-scene-active');
+  if(collapseBlueListEl) collapseBlueListEl.innerHTML = '';
+  if(collapseLogLinesEl) collapseLogLinesEl.innerHTML = '';
+  setCollapsePhase('glitch');
+  const glitchDuration = randInt(1500, 2000);
+  startGlitchPrelude(glitchDuration);
+  queueCollapseTimeout(()=> beginCollapseBluePhase(), glitchDuration);
 }
 
-function handleWorldEndKeydown(ev){
-  if(ev.key !== 'Tab') return;
-  ev.preventDefault();
-  worldEndButtonEl?.focus();
-}
-
-function activateWorldEndFocusTrap(){
-  if(worldEndFocusTrapActive || !worldEndOverlayEl) return;
-  worldEndFocusTrapActive = true;
-  document.addEventListener('focus', handleWorldEndFocus, true);
-  worldEndOverlayEl.addEventListener('keydown', handleWorldEndKeydown);
-  worldEndButtonEl?.addEventListener('keydown', handleWorldEndKeydown);
-}
-
-function deactivateWorldEndFocusTrap(){
-  if(!worldEndFocusTrapActive) return;
-  worldEndFocusTrapActive = false;
-  document.removeEventListener('focus', handleWorldEndFocus, true);
-  worldEndOverlayEl?.removeEventListener('keydown', handleWorldEndKeydown);
-  worldEndButtonEl?.removeEventListener('keydown', handleWorldEndKeydown);
-}
-
-function showWorldEndOverlay(){
-  if(!worldEndOverlayEl) return;
+function beginCollapseBluePhase(){
+  if(!collapseScene.active) return;
   stopGlitchPrelude();
-  clearWorldEndTimer();
-  worldEndOverlayEl.classList.add('open');
-  worldEndOverlayEl.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('world-end');
-  doomState = {...doomState, doomed:true, overlayShown:true, triggeredAt: doomState.triggeredAt ?? Date.now()};
-  activateWorldEndFocusTrap();
-  setTimeout(()=> worldEndButtonEl?.focus(), 0);
-  save();
-}
-
-function hideWorldEndOverlay(){
-  clearWorldEndTimer();
-  stopGlitchPrelude();
-  if(worldEndOverlayEl){
-    worldEndOverlayEl.classList.remove('open');
-    worldEndOverlayEl.setAttribute('aria-hidden', 'true');
+  setCollapsePhase('blue');
+  if(collapseBlueListEl){
+    collapseBlueListEl.innerHTML = '';
+    COLLAPSE_BLUE_LINES.forEach((line, index)=>{
+      const item = document.createElement('li');
+      item.className = 'collapse-blue-line';
+      item.textContent = line;
+      collapseBlueListEl.appendChild(item);
+      queueCollapseTimeout(()=> item.classList.add('show'), index * 220 + 80);
+    });
   }
-  document.body.classList.remove('world-end');
-  deactivateWorldEndFocusTrap();
+  const holdDuration = 2600 + COLLAPSE_BLUE_LINES.length * 180;
+  queueCollapseTimeout(()=> beginCollapseLogPhase(), holdDuration);
 }
 
-function startWorldEndCountdown(){
-  const duration = startGlitchPrelude(randInt(7000, 11000));
-  clearWorldEndTimer();
-  worldEndTimerHandle = setTimeout(()=> showWorldEndOverlay(), duration);
+function beginCollapseLogPhase(){
+  if(!collapseScene.active) return;
+  setCollapsePhase('logs');
+  if(collapseLogLinesEl){
+    collapseLogLinesEl.innerHTML = '';
+  }
+  collapseScene.logIndex = 0;
+  revealNextCollapseLogLine();
 }
 
-function triggerWorldEndSequence(){
-  if(doomState.doomed && doomState.overlayShown){
-    showWorldEndOverlay();
+function revealNextCollapseLogLine(){
+  if(!collapseScene.active) return;
+  const totalLines = COLLAPSE_LOG_LINES.length + COLLAPSE_FINAL_LINES.length;
+  if(collapseScene.logIndex >= totalLines){
+    queueCollapseTimeout(()=> finalizeCollapseScene(), 1600);
     return;
   }
-  doomState = {...doomState, doomed:true, overlayShown:false, triggeredAt: Date.now()};
-  save();
-  startWorldEndCountdown();
+  const isFinal = collapseScene.logIndex >= COLLAPSE_LOG_LINES.length;
+  const source = isFinal ? COLLAPSE_FINAL_LINES : COLLAPSE_LOG_LINES;
+  const idx = isFinal ? collapseScene.logIndex - COLLAPSE_LOG_LINES.length : collapseScene.logIndex;
+  const text = source[idx];
+  if(text && collapseLogLinesEl){
+    const lineEl = document.createElement('div');
+    lineEl.className = 'collapse-log-line';
+    if(isFinal) lineEl.classList.add('terminal-final');
+    lineEl.textContent = text;
+    collapseLogLinesEl.appendChild(lineEl);
+    requestAnimationFrame(()=> lineEl.classList.add('show'));
+    const parent = collapseLogLinesEl.parentElement;
+    if(parent instanceof HTMLElement){
+      parent.scrollTop = parent.scrollHeight;
+    }
+  }
+  collapseScene.logIndex += 1;
+  const delay = isFinal ? 1100 : 520;
+  queueCollapseTimeout(()=> revealNextCollapseLogLine(), delay);
 }
 
-function resumeWorldEndState(){
-  if(!doomState.doomed){
-    hideWorldEndOverlay();
+function finalizeCollapseScene(){
+  if(!collapseScene.active) return;
+  clearCollapseTimers();
+  setCollapsePhase(null);
+  if(collapseOverlayEl){
+    collapseOverlayEl.classList.add('closing');
+  }
+  queueCollapseTimeout(()=>{
+    if(collapseOverlayEl){
+      collapseOverlayEl.classList.remove('closing');
+    }
+    stopCollapseScene();
+  }, 760);
+}
+
+function stopCollapseScene(){
+  clearCollapseTimers();
+  collapseScene.active = false;
+  collapseScene.logIndex = 0;
+  stopGlitchPrelude();
+  if(collapseOverlayEl){
+    collapseOverlayEl.classList.remove('open','phase-glitch','phase-blue','phase-logs','closing');
+    collapseOverlayEl.setAttribute('aria-hidden', 'true');
+  }
+  document.body.classList.remove('collapse-scene-active','collapse-phase-glitch','collapse-phase-blue','collapse-phase-logs');
+  if(collapseBlueListEl) collapseBlueListEl.innerHTML = '';
+  if(collapseLogLinesEl) collapseLogLinesEl.innerHTML = '';
+}
+
+function triggerCollapseSequence(){
+  if(collapseState.sceneSeen){
     return;
   }
-  showWorldEndOverlay();
-}
-
-function handleWorldReset(){
-  doomState = makeInitialDoomState();
-  hideWorldEndOverlay();
-  deleteSave(true);
+  collapseState = {
+    ...collapseState,
+    sceneSeen:true,
+    triggeredAt: Date.now()
+  };
+  save();
+  startCollapseSequence();
 }
 
 function getTotalBuildingsOwned(){
@@ -836,7 +917,7 @@ function save(showToast=false){
     shopState,
     upgradesState,
     achievementsState,
-    doomState,
+    collapseState,
     codes: Array.from(redeemedCodes)
   }));
   if(showToast) flashSave();
@@ -877,16 +958,20 @@ function load(){ try{
   }
   const codes = Array.isArray(d.codes) ? d.codes : [];
   redeemedCodes = new Set(codes.map(code=> String(code).toLowerCase()));
-  if(d.doomState && typeof d.doomState === 'object'){
-    const base = makeInitialDoomState();
-    doomState = {
+  if(d.collapseState && typeof d.collapseState === 'object'){
+    const base = makeInitialCollapseState();
+    collapseState = {
       ...base,
-      ...d.doomState,
-      doomed: !!d.doomState.doomed,
-      overlayShown: !!d.doomState.overlayShown
+      ...d.collapseState,
+      sceneSeen: !!d.collapseState.sceneSeen,
+      triggeredAt: d.collapseState.triggeredAt ?? null
     };
   } else {
-    doomState = makeInitialDoomState();
+    collapseState = makeInitialCollapseState();
+    if(d.doomState && typeof d.doomState === 'object' && d.doomState.doomed){
+      collapseState.sceneSeen = true;
+      collapseState.triggeredAt = d.doomState.triggeredAt ?? null;
+    }
   }
 } catch(e){} }
 
@@ -931,8 +1016,8 @@ function showFront(){
 
 /* reset */
 function resetState(){
-  hideWorldEndOverlay();
-  doomState = makeInitialDoomState();
+  stopCollapseScene();
+  collapseState = makeInitialCollapseState();
   pts=0; clickPow=1; mps=0;
   playTimeSeconds = 0;
   totalClicks = 0;
@@ -1058,8 +1143,8 @@ function promptAndRedeemCode(){
    precoProximo(base, escala, q) = ceil(base * escala^q)
 */
 
-function makeInitialDoomState(){
-  return { doomed:false, overlayShown:false, triggeredAt:null };
+function makeInitialCollapseState(){
+  return { sceneSeen:false, triggeredAt:null };
 }
 
 const upgradeElements = new Map();
@@ -1452,7 +1537,7 @@ function tryBuy(id){
 
   if(id === 'namorada' && st.owned === 1){
     // announcePurchase('Namorada', row); // removido o toast
-    triggerWorldEndSequence();
+    triggerCollapseSequence();
     updateClickImage();
   }
 
@@ -1492,7 +1577,6 @@ evaluateAchievements(true);
 renderAchievementsPanel();
 renderHUD();
 updateClickImage();
-resumeWorldEndState();
 if(migratedLegacyUpgrades) save();
 loop();
 startAutoSave();
@@ -1533,10 +1617,6 @@ if(redeemCodeButtonEl){
   redeemCodeButtonEl.addEventListener('click', promptAndRedeemCode);
 }
 el('deleteSave').onclick=()=>deleteSave();
-if(worldEndButtonEl){
-  worldEndButtonEl.addEventListener('click', handleWorldReset);
-}
-
 // === MINI-GAME: ACERTE O MEMA DOURADO ===
 const BONUS_VALUE = 500; // quantidade de Meminhas que o jogador ganha
 const BONUS_INTERVAL = 15000; // intervalo em ms (15 segundos)
