@@ -40,6 +40,7 @@ const collapseScene = {
 };
 
 let faceTimer = null;
+let collapseImageMode = false;
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
@@ -350,13 +351,18 @@ function clearCollapseTimers(){
 
 function setCollapsePhase(phase){
   if(!collapseOverlayEl) return;
-  ['glitch','blue','logs'].forEach(name=>{
+  ['crack','glitch','blue','logs'].forEach(name=>{
     collapseOverlayEl.classList.remove(`phase-${name}`);
     document.body.classList.remove(`collapse-phase-${name}`);
   });
   if(phase){
     collapseOverlayEl.classList.add(`phase-${phase}`);
     document.body.classList.add(`collapse-phase-${phase}`);
+    if(phase !== 'glitch'){
+      document.body.classList.remove('collapse-glitch-invert');
+    }
+  } else {
+    document.body.classList.remove('collapse-glitch-invert');
   }
 }
 
@@ -365,21 +371,52 @@ function startCollapseSequence(){
   collapseScene.active = true;
   collapseScene.logIndex = 0;
   clearCollapseTimers();
+  activateCollapseImageMode();
   collapseOverlayEl.classList.remove('closing');
   collapseOverlayEl.classList.add('open');
   collapseOverlayEl.setAttribute('aria-hidden', 'false');
   document.body.classList.add('collapse-scene-active');
   if(collapseBlueListEl) collapseBlueListEl.innerHTML = '';
   if(collapseLogLinesEl) collapseLogLinesEl.innerHTML = '';
+  setCollapsePhase('crack');
+  const crackDuration = randInt(720, 940);
+  queueCollapseTimeout(()=> beginCollapseGlitchPhase(), crackDuration);
+}
+
+function startGlitchColorFlicker(durationMs){
+  if(!collapseScene.active || durationMs <= 0) return;
+  document.body.classList.remove('collapse-glitch-invert');
+  let elapsed = 0;
+  const total = durationMs;
+  const pulse = ()=>{
+    if(!collapseScene.active) return;
+    if(elapsed >= total){
+      document.body.classList.remove('collapse-glitch-invert');
+      return;
+    }
+    document.body.classList.add('collapse-glitch-invert');
+    const onTime = randInt(70, 140);
+    queueCollapseTimeout(()=> document.body.classList.remove('collapse-glitch-invert'), onTime);
+    const pause = randInt(110, 210);
+    elapsed += onTime + pause;
+    queueCollapseTimeout(pulse, Math.max(70, pause));
+  };
+  pulse();
+}
+
+function beginCollapseGlitchPhase(){
+  if(!collapseScene.active) return;
   setCollapsePhase('glitch');
-  const glitchDuration = randInt(1500, 2000);
+  const glitchDuration = randInt(2600, 3400);
   startGlitchPrelude(glitchDuration);
+  startGlitchColorFlicker(glitchDuration);
   queueCollapseTimeout(()=> beginCollapseBluePhase(), glitchDuration);
 }
 
 function beginCollapseBluePhase(){
   if(!collapseScene.active) return;
   stopGlitchPrelude();
+  document.body.classList.remove('collapse-glitch-invert');
   setCollapsePhase('blue');
   if(collapseBlueListEl){
     collapseBlueListEl.innerHTML = '';
@@ -429,7 +466,7 @@ function revealNextCollapseLogLine(){
     }
   }
   collapseScene.logIndex += 1;
-  const delay = isFinal ? 1100 : 520;
+  const delay = isFinal ? 1500 : 880;
   queueCollapseTimeout(()=> revealNextCollapseLogLine(), delay);
 }
 
@@ -454,12 +491,16 @@ function stopCollapseScene(){
   collapseScene.logIndex = 0;
   stopGlitchPrelude();
   if(collapseOverlayEl){
-    collapseOverlayEl.classList.remove('open','phase-glitch','phase-blue','phase-logs','closing');
+    collapseOverlayEl.classList.remove('open','phase-crack','phase-glitch','phase-blue','phase-logs','closing');
     collapseOverlayEl.setAttribute('aria-hidden', 'true');
   }
-  document.body.classList.remove('collapse-scene-active','collapse-phase-glitch','collapse-phase-blue','collapse-phase-logs');
+  document.body.classList.remove('collapse-glitch-invert');
+  document.body.classList.remove('collapse-scene-active','collapse-phase-crack','collapse-phase-glitch','collapse-phase-blue','collapse-phase-logs');
   if(collapseBlueListEl) collapseBlueListEl.innerHTML = '';
   if(collapseLogLinesEl) collapseLogLinesEl.innerHTML = '';
+  if(collapseImageMode){
+    deactivateCollapseImageMode();
+  }
 }
 
 function triggerCollapseSequence(){
@@ -990,6 +1031,23 @@ function hasNamorada(){
   return (shopState?.namorada?.owned ?? 0) > 0;
 }
 
+function activateCollapseImageMode(){
+  collapseImageMode = true;
+  const img = el('click');
+  if(img){
+    if(faceTimer){
+      clearTimeout(faceTimer);
+      faceTimer = null;
+    }
+    img.src = IMG_BACK;
+  }
+}
+
+function deactivateCollapseImageMode(){
+  collapseImageMode = false;
+  updateClickImage();
+}
+
 function updateClickImage(){
   const img = el('click');
   if(!img) return;
@@ -997,15 +1055,33 @@ function updateClickImage(){
     clearTimeout(faceTimer);
     faceTimer = null;
   }
-  img.src = hasNamorada() ? IMG_RESET : IMG_BACK;
+  if(collapseImageMode){
+    img.src = IMG_BACK;
+    return;
+  }
+  img.src = IMG_BACK;
 }
 
 /* feedback imagem */
 function showFront(){
   const img = el('click');
   if(!img) return;
+  if(collapseImageMode){
+    img.src = IMG_RESET;
+    if(faceTimer) clearTimeout(faceTimer);
+    faceTimer = setTimeout(()=>{
+      updateClickImage();
+      faceTimer = null;
+    }, FRONT_TIME_MS);
+    return;
+  }
   if(hasNamorada()){
-    updateClickImage();
+    img.src = IMG_RESET;
+    if(faceTimer) clearTimeout(faceTimer);
+    faceTimer = setTimeout(()=>{
+      updateClickImage();
+      faceTimer = null;
+    }, FRONT_TIME_MS);
     return;
   }
   img.src = IMG_FRONT;
@@ -1541,6 +1617,7 @@ function tryBuy(id){
     // announcePurchase('Namorada', row); // removido o toast
     triggerCollapseSequence();
     updateClickImage();
+    window.scrollTo({top:0, behavior:'smooth'});
   }
 
 
