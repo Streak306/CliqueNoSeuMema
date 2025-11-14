@@ -1059,7 +1059,6 @@ function updateClickImage(){
     img.src = IMG_BACK;
     return;
   }
-  img.src = IMG_BACK;
 }
 
 /* feedback imagem */
@@ -1070,7 +1069,6 @@ function showFront(){
     img.src = IMG_RESET;
     if(faceTimer) clearTimeout(faceTimer);
     faceTimer = setTimeout(()=>{
-      updateClickImage();
       faceTimer = null;
     }, FRONT_TIME_MS);
     return;
