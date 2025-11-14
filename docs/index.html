@@ -123,10 +123,21 @@
 <div id="saveToast" class="save-toast">salvo</div>
 <div id="achievementToast" class="achievement-toast" aria-live="polite"></div>
 
-<div id="worldEndOverlay" class="world-end-overlay" role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="worldEndTitle" tabindex="-1">
-  <div class="world-end-overlay-content">
-    <h2 id="worldEndTitle">O MUNDO MORREU</h2>
-    <button id="worldResetButton" type="button">Resetar o mundo</button>
+<div id="collapseOverlay" class="collapse-overlay" aria-hidden="true">
+  <div class="collapse-layer collapse-layer--glitch" aria-hidden="true">
+    <div class="collapse-glitch-bands"></div>
+    <div class="collapse-glitch-noise"></div>
+  </div>
+  <div class="collapse-layer collapse-layer--blue" aria-hidden="true">
+    <div class="collapse-blue-screen" role="presentation">
+      <h2>UNIVERSO.EXE - RECUPERAÇÃO CRÍTICA</h2>
+      <ul id="collapseBlueMessages" class="collapse-blue-messages" role="presentation"></ul>
+    </div>
+  </div>
+  <div class="collapse-layer collapse-layer--logs" aria-hidden="true">
+    <div class="collapse-log-screen" role="presentation">
+      <div class="collapse-log-lines" id="collapseLogLines" role="presentation"></div>
+    </div>
   </div>
 </div>
   <script type="module" src="js/main.js"></script>
