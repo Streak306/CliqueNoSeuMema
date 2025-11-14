@@ -40,6 +40,7 @@ const collapseScene = {
 };
 
 let faceTimer = null;
+let collapseImageMode = false;
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
@@ -365,6 +366,7 @@ function startCollapseSequence(){
   collapseScene.active = true;
   collapseScene.logIndex = 0;
   clearCollapseTimers();
+  activateCollapseImageMode();
   collapseOverlayEl.classList.remove('closing');
   collapseOverlayEl.classList.add('open');
   collapseOverlayEl.setAttribute('aria-hidden', 'false');
@@ -429,7 +431,7 @@ function revealNextCollapseLogLine(){
     }
   }
   collapseScene.logIndex += 1;
-  const delay = isFinal ? 1100 : 520;
+  const delay = isFinal ? 1500 : 880;
   queueCollapseTimeout(()=> revealNextCollapseLogLine(), delay);
 }
 
@@ -460,6 +462,9 @@ function stopCollapseScene(){
   document.body.classList.remove('collapse-scene-active','collapse-phase-glitch','collapse-phase-blue','collapse-phase-logs');
   if(collapseBlueListEl) collapseBlueListEl.innerHTML = '';
   if(collapseLogLinesEl) collapseLogLinesEl.innerHTML = '';
+  if(collapseImageMode){
+    deactivateCollapseImageMode();
+  }
 }
 
 function triggerCollapseSequence(){
@@ -990,12 +995,33 @@ function hasNamorada(){
   return (shopState?.namorada?.owned ?? 0) > 0;
 }
 
+function activateCollapseImageMode(){
+  collapseImageMode = true;
+  const img = el('click');
+  if(img){
+    if(faceTimer){
+      clearTimeout(faceTimer);
+      faceTimer = null;
+    }
+    img.src = IMG_BACK;
+  }
+}
+
+function deactivateCollapseImageMode(){
+  collapseImageMode = false;
+  updateClickImage();
+}
+
 function updateClickImage(){
   const img = el('click');
   if(!img) return;
   if(faceTimer){
     clearTimeout(faceTimer);
     faceTimer = null;
+  }
+  if(collapseImageMode){
+    img.src = IMG_BACK;
+    return;
   }
   img.src = hasNamorada() ? IMG_RESET : IMG_BACK;
 }
@@ -1004,6 +1030,19 @@ function updateClickImage(){
 function showFront(){
   const img = el('click');
   if(!img) return;
+  if(collapseImageMode){
+    img.src = IMG_RESET;
+    if(faceTimer) clearTimeout(faceTimer);
+    faceTimer = setTimeout(()=>{
+      if(!collapseImageMode){
+        updateClickImage();
+      } else {
+        img.src = IMG_BACK;
+      }
+      faceTimer = null;
+    }, FRONT_TIME_MS);
+    return;
+  }
   if(hasNamorada()){
     updateClickImage();
     return;
@@ -1541,6 +1580,7 @@ function tryBuy(id){
     // announcePurchase('Namorada', row); // removido o toast
     triggerCollapseSequence();
     updateClickImage();
+    window.scrollTo({top:0, behavior:'smooth'});
   }
 
 
