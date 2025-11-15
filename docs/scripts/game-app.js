@@ -16,10 +16,24 @@ import {
 } from './data/game-data.js';
 
 /* ===== Estado do jogo ===== */
-let pts = 0, clickPow = 1, mps = 0;
+let bancoDeMemas = 0;
+let memasPorCliqueBase = 1;
+let memasPorCliqueEfetivo = 1;
+let memasPorSegundoBase = 0;
+let memasPorSegundoEfetivo = 0;
 let playTimeSeconds = 0;
 let totalClicks = 0;
 let handmadeMemes = 0;
+let multiplicadorGlobalMPS = 1;
+let multiplicadorGlobalCliques = 1;
+let multiplicadorDescontoGlobal = 1;
+let multiplicadorCustoNamorada = 1;
+let modoCliqueCaotico = false;
+const listaBuffsAtivos = [];
+let tempoAteProximoMemaBuff = 0;
+let tempoAteProximoMemaDeBuff = 0;
+let memaBuffAtual = null;
+let memaDeBuffAtual = null;
 let upgradesState = null;
 let achievementsState = null;
 let migratedLegacyUpgrades = false;
@@ -47,8 +61,318 @@ const collapseScene = {
 let faceTimer = null;
 let collapseImageMode = false;
 
+const INTERVALO_MEMA_BUFF = {min:60, max:300};
+const INTERVALO_MEMA_DEBUFF = {min:90, max:300};
+const DURACAO_ICONE_EVENTO = 13;
+const MEMA_BUFF_ICON = 'assets/images/variacoes-mema/MemaBuff.png';
+const MEMA_DEBUFF_ICON = 'assets/images/variacoes-mema/MemaDeBuff.png';
+const MEMA_EVENT_ICON_SIZE = 96;
+
 /* Helpers */
 const el=(id)=>document.getElementById(id);
+
+function gerarNumeroAleatorio(min, max){
+  const a = Number(min);
+  const b = Number(max);
+  if(!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  const low = Math.min(a, b);
+  const high = Math.max(a, b);
+  return Math.random() * (high - low) + low;
+}
+
+function escolherPorPeso(lista){
+  if(!Array.isArray(lista) || !lista.length) return null;
+  const total = lista.reduce((acc, item)=> acc + Math.max(0, Number(item?.weight ?? 0)), 0);
+  if(total <= 0) return lista[lista.length - 1];
+  let sorteio = Math.random() * total;
+  for(const item of lista){
+    sorteio -= Math.max(0, Number(item?.weight ?? 0));
+    if(sorteio <= 0) return item;
+  }
+  return lista[lista.length - 1];
+}
+
+function atualizarValoresEfetivos(){
+  memasPorSegundoEfetivo = memasPorSegundoBase * multiplicadorGlobalMPS;
+  const baseCliques = Math.max(0, memasPorCliqueBase);
+  memasPorCliqueEfetivo = Math.max(1, baseCliques * multiplicadorGlobalCliques);
+}
+
+function recalcularMultiplicadoresGlobais(){
+  multiplicadorGlobalMPS = 1;
+  multiplicadorGlobalCliques = 1;
+  multiplicadorDescontoGlobal = 1;
+  multiplicadorCustoNamorada = 1;
+  modoCliqueCaotico = false;
+  listaBuffsAtivos.forEach(buff=>{
+    const mods = buff?.modificadores ?? {};
+    if(typeof mods.mps === 'number') multiplicadorGlobalMPS *= mods.mps;
+    if(typeof mods.cliques === 'number') multiplicadorGlobalCliques *= mods.cliques;
+    if(typeof mods.desconto === 'number') multiplicadorDescontoGlobal *= mods.desconto;
+    if(typeof mods.custoNamorada === 'number') multiplicadorCustoNamorada *= mods.custoNamorada;
+    if(mods.cliqueCaotico) modoCliqueCaotico = true;
+  });
+  atualizarValoresEfetivos();
+}
+
+function atualizarBuffs(delta){
+  if(!listaBuffsAtivos.length) return;
+  let changed = false;
+  for(let i = listaBuffsAtivos.length - 1; i >= 0; i--){
+    const buff = listaBuffsAtivos[i];
+    buff.duracaoRestante -= delta;
+    if(buff.duracaoRestante <= 0){
+      listaBuffsAtivos.splice(i, 1);
+      changed = true;
+    }
+  }
+  if(changed){
+    recalcularMultiplicadoresGlobais();
+    renderShop();
+    renderUpgrades();
+    updateAffordability();
+    renderHUD();
+    save();
+  }
+}
+
+const MEMA_BUFF_EFFECTS = [
+  {
+    id:'producao-insana',
+    weight:40,
+    duration:77,
+    modificadores:{ mps:7 }
+  },
+  {
+    id:'cliques-freneticos',
+    weight:30,
+    getDuration:()=> gerarNumeroAleatorio(10, 20),
+    modificadores:{ cliques:100 }
+  },
+  {
+    id:'bolada-instantanea',
+    weight:20,
+    instantaneo:true,
+    aplicar:()=>{
+      const mpsEfetivo = memasPorSegundoBase * multiplicadorGlobalMPS;
+      const ganhoBase = mpsEfetivo * 60 * 10;
+      const limitePorBanco = bancoDeMemas * 0.15;
+      const recompensa = Math.min(ganhoBase, limitePorBanco);
+      if(recompensa > 0){
+        bancoDeMemas += recompensa;
+      }
+    }
+  },
+  {
+    id:'desconto-relampago',
+    weight:10,
+    duration:60,
+    modificadores:{ desconto:0.9 }
+  }
+];
+
+const MEMA_DEBUFF_EFFECTS = [
+  {
+    id:'queda-de-producao',
+    weight:40,
+    duration:60,
+    modificadores:{ mps:0.5 }
+  },
+  {
+    id:'perda-de-memas',
+    weight:30,
+    instantaneo:true,
+    aplicar:()=>{
+      if(bancoDeMemas <= 0) return;
+      const perda = bancoDeMemas * 0.10;
+      bancoDeMemas = Math.max(0, bancoDeMemas - perda);
+    }
+  },
+  {
+    id:'relacao-tensa',
+    weight:20,
+    duration:60,
+    modificadores:{ custoNamorada:1.2 }
+  },
+  {
+    id:'caos-nos-cliques',
+    weight:10,
+    duration:30,
+    modificadores:{ cliqueCaotico:true }
+  }
+];
+
+function obterDuracaoBuff(def){
+  if(typeof def.getDuration === 'function'){
+    return Math.max(0, Number(def.getDuration()));
+  }
+  return Math.max(0, Number(def.duration ?? 0));
+}
+
+function registrarBuffTemporario(def, origem){
+  const duracao = obterDuracaoBuff(def);
+  if(!(duracao > 0)) return;
+  const modificadores = {};
+  if(typeof def.modificadores?.mps === 'number') modificadores.mps = def.modificadores.mps;
+  if(typeof def.modificadores?.cliques === 'number') modificadores.cliques = def.modificadores.cliques;
+  if(typeof def.modificadores?.desconto === 'number') modificadores.desconto = def.modificadores.desconto;
+  if(typeof def.modificadores?.custoNamorada === 'number') modificadores.custoNamorada = def.modificadores.custoNamorada;
+  if(def.modificadores?.cliqueCaotico) modificadores.cliqueCaotico = true;
+  listaBuffsAtivos.push({
+    id:`${origem}-${def.id}-${Date.now()}-${Math.random()}`,
+    origem,
+    efeitoId:def.id,
+    duracaoRestante:duracao,
+    modificadores
+  });
+  recalcularMultiplicadoresGlobais();
+}
+
+function aplicarBuff(def, origem){
+  if(!def) return;
+  if(def.instantaneo && typeof def.aplicar === 'function'){
+    const antes = bancoDeMemas;
+    def.aplicar();
+    if(bancoDeMemas !== antes) renderHUD();
+  } else {
+    registrarBuffTemporario(def, origem);
+  }
+  renderShop();
+  renderUpgrades();
+  updateAffordability();
+  renderHUD();
+  save();
+}
+
+function agendarProximoMemaBuff(){
+  tempoAteProximoMemaBuff = gerarNumeroAleatorio(INTERVALO_MEMA_BUFF.min, INTERVALO_MEMA_BUFF.max);
+}
+
+function agendarProximoMemaDeBuff(){
+  tempoAteProximoMemaDeBuff = gerarNumeroAleatorio(INTERVALO_MEMA_DEBUFF.min, INTERVALO_MEMA_DEBUFF.max);
+}
+
+function removerMemaBuff(){
+  if(memaBuffAtual?.el?.isConnected) memaBuffAtual.el.remove();
+  memaBuffAtual = null;
+}
+
+function removerMemaDeBuff(){
+  if(memaDeBuffAtual?.el?.isConnected) memaDeBuffAtual.el.remove();
+  memaDeBuffAtual = null;
+}
+
+function obterPosicaoIcone(){
+  const container = stageEl;
+  if(!container){
+    return {left: gerarNumeroAleatorio(0, window.innerWidth - MEMA_EVENT_ICON_SIZE), top: gerarNumeroAleatorio(0, window.innerHeight - MEMA_EVENT_ICON_SIZE)};
+  }
+  const largura = Math.max(MEMA_EVENT_ICON_SIZE, container.clientWidth);
+  const altura = Math.max(MEMA_EVENT_ICON_SIZE, container.clientHeight);
+  const margem = 16;
+  const maxX = Math.max(margem, largura - MEMA_EVENT_ICON_SIZE - margem);
+  const maxY = Math.max(margem, altura - MEMA_EVENT_ICON_SIZE - margem);
+  const left = Math.min(maxX, Math.max(margem, gerarNumeroAleatorio(margem, maxX)));
+  const top = Math.min(maxY, Math.max(margem, gerarNumeroAleatorio(margem, maxY)));
+  return {left, top};
+}
+
+function criarIconeEvento({tipo}){
+  if(!stageEl) return null;
+  const src = tipo === 'buff' ? MEMA_BUFF_ICON : MEMA_DEBUFF_ICON;
+  const alt = tipo === 'buff' ? 'Mema Buff' : 'Mema DeBuff';
+  const el = document.createElement('img');
+  el.src = src;
+  el.alt = alt;
+  el.className = `mema-event-icon ${tipo === 'buff' ? 'mema-event-icon--buff' : 'mema-event-icon--debuff'}`;
+  const {left, top} = obterPosicaoIcone();
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+  stageEl.appendChild(el);
+  return el;
+}
+
+function criarMemaBuff(){
+  if(memaBuffAtual || !stageEl) return;
+  const el = criarIconeEvento({tipo:'buff'});
+  if(!el) return;
+  const data = { el, tempoRestante:DURACAO_ICONE_EVENTO };
+  memaBuffAtual = data;
+  el.addEventListener('click', ()=>{
+    aoClicarNoMemaBuff();
+  }, {once:true});
+}
+
+function criarMemaDeBuff(){
+  if(memaDeBuffAtual || !stageEl) return;
+  if(getQtdNamoradas() <= 0) return;
+  const el = criarIconeEvento({tipo:'debuff'});
+  if(!el) return;
+  const data = { el, tempoRestante:DURACAO_ICONE_EVENTO };
+  memaDeBuffAtual = data;
+  el.addEventListener('click', ()=>{
+    aoClicarNoMemaDeBuff();
+  }, {once:true});
+}
+
+function aoClicarNoMemaBuff(){
+  if(!memaBuffAtual) return;
+  removerMemaBuff();
+  agendarProximoMemaBuff();
+  const efeito = escolherPorPeso(MEMA_BUFF_EFFECTS);
+  aplicarBuff(efeito, 'MemaBuff');
+}
+
+function aoClicarNoMemaDeBuff(){
+  if(!memaDeBuffAtual) return;
+  removerMemaDeBuff();
+  if(getQtdNamoradas() >= 1){
+    const efeito = escolherPorPeso(MEMA_DEBUFF_EFFECTS);
+    aplicarBuff(efeito, 'MemaDeBuff');
+  }
+  agendarProximoMemaDeBuff();
+}
+
+function atualizarEventosTemporarios(delta){
+  if(!memaBuffAtual){
+    tempoAteProximoMemaBuff -= delta;
+    if(tempoAteProximoMemaBuff <= 0){
+      criarMemaBuff();
+    }
+  } else {
+    memaBuffAtual.tempoRestante -= delta;
+    if(memaBuffAtual.tempoRestante <= 0){
+      removerMemaBuff();
+      agendarProximoMemaBuff();
+    }
+  }
+
+  const qtdNamoradas = getQtdNamoradas();
+  if(qtdNamoradas >= 1){
+    if(!memaDeBuffAtual){
+      tempoAteProximoMemaDeBuff -= delta;
+      if(tempoAteProximoMemaDeBuff <= 0){
+        criarMemaDeBuff();
+      }
+    } else {
+      memaDeBuffAtual.tempoRestante -= delta;
+      if(memaDeBuffAtual.tempoRestante <= 0){
+        removerMemaDeBuff();
+        agendarProximoMemaDeBuff();
+      }
+    }
+  } else {
+    if(memaDeBuffAtual){
+      removerMemaDeBuff();
+      agendarProximoMemaDeBuff();
+    }
+  }
+}
+
+function inicializarEventosTemporarios(){
+  if(!(tempoAteProximoMemaBuff > 0)) agendarProximoMemaBuff();
+  if(!(tempoAteProximoMemaDeBuff > 0)) agendarProximoMemaDeBuff();
+}
 
 // 🧮 Formatação numérica — concentra toda a lógica dos quatro modos de exibição.
 function getScaleForValue(value){
@@ -664,10 +988,10 @@ function refreshUpgradeTooltip(up){
   let statusText = '';
   if(purchased){
     statusText = 'Já comprado';
-  } else if(pts >= cost){
+  } else if(bancoDeMemas >= cost){
     statusText = 'Pode comprar';
   } else {
-    const missing = Math.max(0, cost - pts);
+    const missing = Math.max(0, cost - bancoDeMemas);
     statusText = `Faltam ${formatNumber(missing)} pontos`;
   }
   tooltipCostEl.textContent = `Custo: ${formatNumber(cost)} – ${statusText}`;
@@ -741,15 +1065,15 @@ window.addEventListener('resize', repositionActiveUpgradeTooltip);
 function renderStatsPanel(){
   const bancoEl = el('statBanco');
   if(!bancoEl) return;
-  bancoEl.textContent = formatNumber(pts);
+  bancoEl.textContent = formatNumber(bancoDeMemas);
   const tempoEl = el('statTempo');
   if(tempoEl) tempoEl.textContent = fmtTime(playTimeSeconds);
   const constrEl = el('statConstr');
   if(constrEl) constrEl.textContent = formatNumber(getTotalBuildingsOwned());
   const mpsEl = el('statMps');
-  if(mpsEl) mpsEl.textContent = formatNumber(mps, {decimals:2, minimumFractionDigits:2});
+  if(mpsEl) mpsEl.textContent = formatNumber(memasPorSegundoEfetivo, {decimals:2, minimumFractionDigits:2});
   const cliqueEl = el('statClique');
-  if(cliqueEl) cliqueEl.textContent = formatNumber(Math.max(1, Math.floor(clickPow)));
+  if(cliqueEl) cliqueEl.textContent = formatNumber(Math.max(1, Math.floor(memasPorCliqueEfetivo)));
   const cliquesEl = el('statCliques');
   if(cliquesEl) cliquesEl.textContent = formatNumber(totalClicks);
   const handmadeEl = el('statHandmade');
@@ -1071,9 +1395,17 @@ function setupSettingsModal(){
 let shopState = null; // definido após catálogo
 function save(showToast=false){
   localStorage.setItem('mcw', JSON.stringify({
-    pts,
-    clickPow,
-    mps,
+    pts: bancoDeMemas,
+    bancoDeMemas,
+    clickPow: memasPorCliqueEfetivo,
+    clickPowBase: memasPorCliqueBase,
+    mps: memasPorSegundoEfetivo,
+    mpsBase: memasPorSegundoBase,
+    multiplicadorGlobalMPS,
+    multiplicadorGlobalCliques,
+    multiplicadorDescontoGlobal,
+    multiplicadorCustoNamorada,
+    modoCliqueCaotico,
     playTimeSeconds,
     totalClicks,
     handmadeMemes,
@@ -1089,7 +1421,16 @@ function save(showToast=false){
 function load(){ try{
   migratedLegacyUpgrades = false;
   const d = JSON.parse(localStorage.getItem('mcw')||'{}');
-  pts=d.pts??0; clickPow=d.clickPow??1; mps=d.mps??0;
+  bancoDeMemas = d.bancoDeMemas ?? d.pts ?? 0;
+  memasPorCliqueBase = d.clickPowBase ?? 1;
+  memasPorCliqueEfetivo = d.clickPow ?? memasPorCliqueBase;
+  memasPorSegundoBase = d.mpsBase ?? 0;
+  memasPorSegundoEfetivo = d.mps ?? memasPorSegundoBase;
+  multiplicadorGlobalMPS = Number.isFinite(d.multiplicadorGlobalMPS) ? d.multiplicadorGlobalMPS : 1;
+  multiplicadorGlobalCliques = Number.isFinite(d.multiplicadorGlobalCliques) ? d.multiplicadorGlobalCliques : 1;
+  multiplicadorDescontoGlobal = Number.isFinite(d.multiplicadorDescontoGlobal) ? d.multiplicadorDescontoGlobal : 1;
+  multiplicadorCustoNamorada = Number.isFinite(d.multiplicadorCustoNamorada) ? d.multiplicadorCustoNamorada : 1;
+  modoCliqueCaotico = !!d.modoCliqueCaotico;
   playTimeSeconds = d.playTimeSeconds ?? d.playTime ?? 0;
   totalClicks = d.totalClicks ?? 0;
   handmadeMemes = d.handmadeMemes ?? 0;
@@ -1146,15 +1487,19 @@ function load(){ try{
 
 /* HUD (topo) */
 function renderHUD(){
-  el('pts').textContent = formatNumber(pts);
-  el('pc').textContent = formatNumber(Math.floor(clickPow));
-  el('mps').textContent = formatNumber(mps, {decimals:2, minimumFractionDigits:2});
+  el('pts').textContent = formatNumber(bancoDeMemas);
+  el('pc').textContent = formatNumber(Math.floor(memasPorCliqueEfetivo));
+  el('mps').textContent = formatNumber(memasPorSegundoEfetivo, {decimals:2, minimumFractionDigits:2});
   // não re-renderiza a loja aqui
   renderStatsPanel();
 }
 
+function getQtdNamoradas(){
+  return shopState?.namorada?.owned ?? 0;
+}
+
 function hasNamorada(){
-  return (shopState?.namorada?.owned ?? 0) > 0;
+  return getQtdNamoradas() > 0;
 }
 
 // 🖼️ Define qual rosto o Mema mostra ao ser clicado (front ou reset após a namorada).
@@ -1225,7 +1570,23 @@ function showFront(){
 function resetState(){
   stopCollapseScene();
   collapseState = makeInitialCollapseState();
-  pts=0; clickPow=1; mps=0;
+  bancoDeMemas = 0;
+  memasPorCliqueBase = 1;
+  memasPorCliqueEfetivo = 1;
+  memasPorSegundoBase = 0;
+  memasPorSegundoEfetivo = 0;
+  multiplicadorGlobalMPS = 1;
+  multiplicadorGlobalCliques = 1;
+  multiplicadorDescontoGlobal = 1;
+  multiplicadorCustoNamorada = 1;
+  modoCliqueCaotico = false;
+  listaBuffsAtivos.length = 0;
+  tempoAteProximoMemaBuff = 0;
+  tempoAteProximoMemaDeBuff = 0;
+  if(memaBuffAtual?.el?.isConnected) memaBuffAtual.el.remove();
+  memaBuffAtual = null;
+  if(memaDeBuffAtual?.el?.isConnected) memaDeBuffAtual.el.remove();
+  memaDeBuffAtual = null;
   playTimeSeconds = 0;
   totalClicks = 0;
   handmadeMemes = 0;
@@ -1243,6 +1604,7 @@ function resetState(){
   const toast = el('achievementToast');
   if(toast) toast.classList.remove('show');
   applyNumberFormatMode(DEFAULT_NUMBER_FORMAT, {skipSave:true, force:true});
+  inicializarEventosTemporarios();
   updateClickImage();
 }
 function deleteSave(force=false){
@@ -1267,11 +1629,12 @@ function loop(){
   let last=performance.now();
   function tick(){
     const now=performance.now(), dt=(now-last)/1000; last=now;
-    pts += mps*dt;
+    atualizarBuffs(dt);
+    atualizarEventosTemporarios(dt);
+    bancoDeMemas += memasPorSegundoEfetivo*dt;
     playTimeSeconds += dt;
     renderHUD();                 // atualiza só o topo
     updateAffordability();       // pinta se dá pra comprar, sem recriar DOM
-    updateUpgradeAffordability();
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -1333,7 +1696,7 @@ function promptAndRedeemCode(){
   }
 
   const reward = CODE_REWARDS[normalized];
-  pts += reward;
+  bancoDeMemas += reward;
   redeemedCodes.add(normalized);
   renderHUD();
   updateAffordability();
@@ -1383,7 +1746,27 @@ if(!achievementsState) achievementsState = makeInitialAchievementState();
 function precoProximo(base, escala, qPossuidas){
   return Math.ceil(base * Math.pow(escala, qPossuidas));
 }
-/* Render da loja — atualiza visibilidade e cores com base em pts e desbloqueio */
+
+function aplicarDescontoAoCusto(baseCost, {aplicarCustoNamorada = false} = {}){
+  if(!Number.isFinite(baseCost)) return 0;
+  let final = baseCost * multiplicadorDescontoGlobal;
+  if(aplicarCustoNamorada){
+    final *= multiplicadorCustoNamorada;
+  }
+  return Math.max(1, Math.ceil(final));
+}
+
+function getBuildingCost(it, owned){
+  const baseCost = precoProximo(it.base, it.r, owned);
+  const aplicarNamorada = it.id === 'namorada';
+  return aplicarDescontoAoCusto(baseCost, {aplicarCustoNamorada: aplicarNamorada});
+}
+
+function getUpgradeCost(up){
+  const base = up.cost ?? 0;
+  return aplicarDescontoAoCusto(base);
+}
+/* Render da loja — atualiza visibilidade e cores com base em bancoDeMemas e desbloqueio */
 function renderShop(){
   const body = document.getElementById('shopBody');
   if(!body) return;
@@ -1407,10 +1790,10 @@ function renderShop(){
     tr.className = atLimit ? 'max' : 'clickable';
 
     // determinar preço da próxima unidade
-    const priceSingle = precoProximo(it.base, it.r, st.owned);
+    const priceSingle = getBuildingCost(it, st.owned);
 
     // determinar se pode comprar agora (custo alcançável e não no limite)
-    const canAffordSingle = (!atLimit) && (pts >= priceSingle);
+    const canAffordSingle = (!atLimit) && (bancoDeMemas >= priceSingle);
 
     const perUnit = it.p * getBuildingMultiplier(it.id);
 
@@ -1512,9 +1895,9 @@ function getUpgradeBenefitLines(up){
 }
 
 function updateUpgradeElement(el, up){
-  const cost = up.cost ?? 0;
+  const cost = getUpgradeCost(up);
   const purchased = isUpgradePurchased(up.id);
-  const affordable = pts >= cost;
+  const affordable = bancoDeMemas >= cost;
   el.classList.toggle('purchased', purchased);
   el.classList.toggle('available', !purchased && affordable);
   el.classList.toggle('locked', !purchased && !affordable);
@@ -1530,7 +1913,7 @@ function updateUpgradeElement(el, up){
   } else if(affordable){
     statusText = 'Pronto para comprar';
   } else {
-    const missing = Math.max(0, cost - pts);
+    const missing = Math.max(0, cost - bancoDeMemas);
     if(missing > 0) statusText = `Faltam ${formatNumber(missing)} pontos`;
   }
   if(statusText) descriptionParts.push(statusText);
@@ -1576,8 +1959,8 @@ function tryBuyUpgrade(id){
   if(!up) return;
   if(isUpgradePurchased(id)) return;
   if(!canShowUpgrade(up)) return;
-  const cost = up.cost ?? 0;
-  if(pts < cost){
+  const cost = getUpgradeCost(up);
+  if(bancoDeMemas < cost){
     const el = getUpgradeElement(id);
     if(el){
       el.classList.add('buzz');
@@ -1586,7 +1969,7 @@ function tryBuyUpgrade(id){
     return;
   }
 
-  pts -= cost;
+  bancoDeMemas -= cost;
   setUpgradePurchased(id, true);
   recalculateProduction();
   renderShop();
@@ -1623,7 +2006,7 @@ function recalculateProduction(){
     const multiplier = getBuildingMultiplier(it.id);
     total += owned * it.p * multiplier;
   });
-  mps = total;
+  memasPorSegundoBase = total;
   let clickMult = 1;
   let clickPctOfMps = 0;
   UPGRADE_DATA.forEach(up=>{
@@ -1638,7 +2021,8 @@ function recalculateProduction(){
     });
   });
   const baseClick = 1;
-  clickPow = baseClick * clickMult + (mps * clickPctOfMps);
+  memasPorCliqueBase = baseClick * clickMult + (memasPorSegundoBase * clickPctOfMps);
+  atualizarValoresEfetivos();
 }
 
 function renderUpgrades(){
@@ -1707,9 +2091,9 @@ function updateAffordability(){
     const row  = document.querySelector(`tr[data-buy="${it.id}"]`);
     if(!row) return;
 
-    const priceSingle = precoProximo(it.base, it.r, st.owned);
+    const priceSingle = getBuildingCost(it, st.owned);
     const underLimit = st.owned < it.limit;
-    const canPay = pts >= priceSingle;
+    const canPay = bancoDeMemas >= priceSingle;
     const can = underLimit && canPay;
 
     const costEl = row.querySelector('.cost');
@@ -1730,11 +2114,11 @@ function tryBuy(id){
   const remainingLimit = it.limit - st.owned;
   if(remainingLimit <= 0) return;
 
-  const priceSingle = precoProximo(it.base, it.r, st.owned);
+  const priceSingle = getBuildingCost(it, st.owned);
   // encontrar a linha atual no DOM (pode ter sido re-renderizada)
   const row = document.querySelector(`tr[data-buy="${id}"]`);
 
-  if(pts < priceSingle){
+  if(bancoDeMemas < priceSingle){
     if(row){
       // feedback: buzz
       row.classList.add('buzz');
@@ -1746,7 +2130,7 @@ function tryBuy(id){
   }
 
   // compra: subtrai custo e atualiza owned
-  pts -= priceSingle;
+  bancoDeMemas -= priceSingle;
   st.owned += 1;
 
   if(id === 'namorada' && st.owned === 1){
@@ -1785,7 +2169,9 @@ function tryBuy(id){
 /* init */
 setupSettingsModal();
 load();
+recalcularMultiplicadoresGlobais();
 recalculateProduction();
+inicializarEventosTemporarios();
 renderShop();
 renderUpgrades();
 evaluateAchievements(true);
@@ -1797,16 +2183,30 @@ loop();
 startAutoSave();
 
 /* clique na imagem = ganhar pontos */
-function getClickGain(){
-  return Math.max(1, Math.floor(clickPow));
+function getClickOutcome(){
+  const base = Math.max(1, Math.floor(memasPorCliqueEfetivo));
+  if(!modoCliqueCaotico){
+    return {delta: base, handmade: base};
+  }
+  if(Math.random() < 0.5){
+    const ganho = Math.max(1, Math.floor(base * 5));
+    return {delta: ganho, handmade: ganho};
+  }
+  const perda = Math.max(1, Math.floor(base * 2));
+  return {delta: -perda, handmade: 0};
 }
 if(clickImageEl){
   clickImageEl.addEventListener('click', (e)=>{
-    const gain = getClickGain();
+    const outcome = getClickOutcome();
     const previousHandmade = handmadeMemes;
-    pts += gain;
+    if(outcome.delta >= 0){
+      bancoDeMemas += outcome.delta;
+      handmadeMemes += outcome.handmade;
+    } else {
+      const perda = Math.min(bancoDeMemas, Math.abs(outcome.delta));
+      bancoDeMemas -= perda;
+    }
     totalClicks += 1;
-    handmadeMemes += gain;
     const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
     evaluateAchievements();
     renderHUD();
@@ -1890,9 +2290,12 @@ function mostrarBonusTexto(texto, x, y) {
 
 // função que adiciona Meminhas ao contador principal
 function adicionarPontos(valor) {
-  const ptsEl = document.getElementById('pts');
-  const atual = parseInt(ptsEl.textContent.replace(/\D/g, '')) || 0;
-  ptsEl.textContent = atual + valor;
+  const incremento = Number(valor);
+  if(!Number.isFinite(incremento) || incremento <= 0) return;
+  bancoDeMemas += incremento;
+  renderHUD();
+  updateAffordability();
+  save();
 }
 
 // spawn automático a cada intervalo
