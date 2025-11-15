@@ -1059,6 +1059,7 @@ function updateClickImage(){
     img.src = IMG_BACK;
     return;
   }
+  img.src = IMG_BACK;
 }
 
 /* feedback imagem */
