@@ -1,11 +1,33 @@
+// 🎁 Tabela de códigos resgatáveis — mantém os presentes organizados em um único lugar.
 export const CODE_REWARDS = {
   entreak: 1_000_000_000_000_000
 };
 
+// 🎨 Caminhos centrais das imagens do Mema; usados tanto no preload quanto nas trocas de rosto.
+export const IMG_BACK  = 'assets/images/variacoes-mema/mema_back.png';
+export const IMG_FRONT = 'assets/images/variacoes-mema/mema_front.png';
+export const IMG_RESET = 'assets/images/variacoes-mema/mema_reset.png';
 
-export const IMG_BACK  = 'imagens/variacoes-mema/mema_back.png';
-export const IMG_FRONT = 'imagens/variacoes-mema/mema_front.png';
-export const IMG_RESET = 'imagens/variacoes-mema/mema_reset.png';
+// 🧮 Escalas utilizadas para formatar números gigantes de forma amigável.
+// Cada objeto segue a tabela enviada: ordem (potência), valor base, nome e sufixo sugerido.
+export const NUMBER_SCALES = [
+  { order:0, value:1,               power:0,  name:'',          suffix:''   },
+  { order:1, value:1e3,             power:3,  name:'mil',       suffix:'K'  },
+  { order:2, value:1e6,             power:6,  name:'milhão',    suffix:'M'  },
+  { order:3, value:1e9,             power:9,  name:'bilhão',    suffix:'B'  },
+  { order:4, value:1e12,            power:12, name:'trilhão',   suffix:'T'  },
+  { order:5, value:1e15,            power:15, name:'quadrilhão',suffix:'Qa' },
+  { order:6, value:1e18,            power:18, name:'quintilhão',suffix:'Qi' },
+  { order:7, value:1e21,            power:21, name:'sextilhão', suffix:'Sx' },
+  { order:8, value:1e24,            power:24, name:'septilhão', suffix:'Sp' },
+  { order:9, value:1e27,            power:27, name:'octilhão',  suffix:'Oc' },
+  { order:10,value:1e30,            power:30, name:'nonilhão',  suffix:'No' },
+  { order:11,value:1e33,            power:33, name:'decilhão',  suffix:'De' }
+];
+
+export const NUMBER_FORMAT_IDS = ['power','exact','name','suffix'];
+export const DEFAULT_NUMBER_FORMAT = 'suffix';
+
 export const FRONT_TIME_MS = 400;
 
 // 🔒 Impedir que qualquer imagem seja arrastada
@@ -22,10 +44,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// 🔢 Elementos que sofrem efeito "glitch" durante a cena de colapso.
 export const GLITCH_DIGIT_TARGETS = [
   'pts','pc','mps','statBanco','statTempo','statConstr','statMps','statClique','statCliques'
 ];
 
+// 🛒 Catálogo base de prédios. Cada item controla preço inicial (base), escala de preço (r),
+// produção por segundo (p) e limite máximo disponível.
 export const SHOP = [
   {id:'dedo',        name:'Dedo',        base:15,           r:1.15, p:0.10,      limit:100},
   {id:'roupa',       name:'Roupa',       base:100,          r:1.15, p:1.00,      limit:20},
@@ -44,13 +69,14 @@ export const SHOP_LOOKUP = SHOP.reduce((acc, item)=>{
   return acc;
 }, {});
 //UPGRADES
+// 🧱 Lista mestre das melhorias. Dividir em blocos por prédio ajuda a manter a manutenção simples.
 export const UPGRADE_DATA = [
    {
     id:'up-dedo-t1',
     name:'Mão aprimorada',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:100,
-    img:'imagens/melhorias-futuras/up-dedo-t1.png',
+    img:'assets/images/melhorias-futuras/up-dedo-t1.png',
     requirement:{type:'building', building:'dedo', count:1},
     requirementText:'Possuir 1 dedo',
     bonus:[
@@ -63,7 +89,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Graphite',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:500,
-    img:'imagens/melhorias-futuras/up-dedo-t2.png',
+    img:'assets/images/melhorias-futuras/up-dedo-t2.png',
     requirement:{type:'building', building:'dedo', count:1},
     requirementText:'Possuir 1 dedo',
     requires:['up-dedo-t1'],
@@ -77,7 +103,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Slate',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:1000,
-    img:'imagens/melhorias-futuras/up-dedo-t3.png',
+    img:'assets/images/melhorias-futuras/up-dedo-t3.png',
     requirement:{type:'building', building:'dedo', count:10},
     requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t2'],
@@ -91,7 +117,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Ferro',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:10000,
-    img:'imagens/melhorias-futuras/up-dedo-t4.png',
+    img:'assets/images/melhorias-futuras/up-dedo-t4.png',
     requirement:{type:'building', building:'dedo', count:25},
     requirementText:'Possuir 10 dedos',
     requires:['up-dedo-t3'],
@@ -105,7 +131,7 @@ export const UPGRADE_DATA = [
     name:'Mão de Streak',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:100000,
-    img:'imagens/melhorias-futuras/up-dedo-t5.png',
+    img:'assets/images/melhorias-futuras/up-dedo-t5.png',
     requirement:{type:'building', building:'dedo', count:30},
     requirementText:'Possuir 30 dedos',
     requires:['up-dedo-t4'],
@@ -119,7 +145,7 @@ export const UPGRADE_DATA = [
     name:'Memarkez',
     effect:'O click e os dedos são duas vezes tão eficientes.',
     cost:1000000,
-    img:'imagens/melhorias-futuras/up-dedo-t6.png',
+    img:'assets/images/melhorias-futuras/up-dedo-t6.png',
     requirement:{type:'building', building:'dedo', count:35},
     requirementText:'Possuir 50 dedos',
     requires:['up-dedo-t5'],
@@ -133,7 +159,7 @@ export const UPGRADE_DATA = [
     name:'Tênis Impressionante',
     effect:'As roupas são duas vezes tão eficientes.',
     cost:1000,
-    img:'imagens/melhorias-futuras/up-roupa-t1.png',
+    img:'assets/images/melhorias-futuras/up-roupa-t1.png',
     requirement:{type:'building', building:'roupa', count:1},
     requirementText:'Possuir 1 Roupa',
     bonus:{type:'building', target:'roupa', amount:1.0}
@@ -143,7 +169,7 @@ export const UPGRADE_DATA = [
     name:'Água Salgada',
     effect:'As águas são duas vezes tão eficientes.',
     cost:11000,
-    img:'imagens/melhorias-futuras/up-agua-t1.png',
+    img:'assets/images/melhorias-futuras/up-agua-t1.png',
     requirement:{type:'building', building:'agua', count:1},
     requirementText:'Possuir 1 Água',
     bonus:{type:'building', target:'agua', amount:1.0}
@@ -153,7 +179,7 @@ export const UPGRADE_DATA = [
     name:'Fertilizante',
     effect:'Os fertilizantes são duas vezes tão eficientes.',
     cost:120000,
-    img:'imagens/melhorias-futuras/up-plantacao-t1.png',
+    img:'assets/images/melhorias-futuras/up-plantacao-t1.png',
     requirement:{type:'building', building:'plantacao', count:1},
     requirementText:'Possuir 1 plantacao',
     bonus:{type:'building', target:'plantacao', amount:1.0}
@@ -163,7 +189,7 @@ export const UPGRADE_DATA = [
     name:'Cerca',
     effect:'Os alojamentos são duas vezes tão eficientes.',
     cost:1300000,
-    img:'imagens/melhorias-futuras/up-alojamento-t1.png',
+    img:'assets/images/melhorias-futuras/up-alojamento-t1.png',
     requirement:{type:'building', building:'alojamento', count:1},
     requirementText:'Possuir 1 alojamento',
     bonus:{type:'building', target:'alojamento', amount:1.0}
@@ -173,7 +199,7 @@ export const UPGRADE_DATA = [
     name:'Porta',
     effect:'As casas são duas vezes tão eficientes.',
     cost:14000000,
-    img:'imagens/melhorias-futuras/up-casa-t1.png',
+    img:'assets/images/melhorias-futuras/up-casa-t1.png',
     requirement:{type:'building', building:'casa', count:1},
     requirementText:'Possuir 1 Banco',
     bonus:{type:'building', target:'casa', amount:1.0}
@@ -183,7 +209,7 @@ export const UPGRADE_DATA = [
     name:'Controle360',
     effect:'Os xbox são duas vezes tão eficientes.',
     cost:200000000,
-    img:'imagens/melhorias-futuras/up-xbox-t1.png',
+    img:'assets/images/melhorias-futuras/up-xbox-t1.png',
     requirement:{type:'building', building:'xbox', count:1},
     requirementText:'Possuir 1 Xbox',
     bonus:{type:'building', target:'xbox', amount:1.0}
@@ -193,7 +219,7 @@ export const UPGRADE_DATA = [
     name:'Ryzen',
     effect:'Os computadores são duas vezes tão eficientes.',
     cost:3300000000,
-    img:'imagens/melhorias-futuras/up-computador-t1.png',
+    img:'assets/images/melhorias-futuras/up-computador-t1.png',
     requirement:{type:'building', building:'computador', count:1},
     requirementText:'Possuir 1 Computador',
     bonus:{type:'building', target:'computador', amount:1.0}
@@ -203,7 +229,7 @@ export const UPGRADE_DATA = [
     name:'Rap de Anime',
     effect:'Os microfones são duas vezes tão eficientes.',
     cost:51000000000,
-    img:'imagens/melhorias-futuras/up-microfone-t1.png',
+    img:'assets/images/melhorias-futuras/up-microfone-t1.png',
     requirement:{type:'building', building:'microfone', count:1},
     requirementText:'Possuir 1 Microfone',
     bonus:{type:'building', target:'microfone', amount:1.0}
@@ -212,60 +238,150 @@ export const UPGRADE_DATA = [
     id:'up-cursor-t1',
     name:'Click',
     effect:'Clicando em ganhos +1% do seu MpS.',
-    cost:50000,
-    img:'imagens/melhorias-futuras/up-cursor-t1.png',
-    requirement:{type:'handmade', amount:1000},
-    requirementText:'1000 Meminhas feitos com click',
+    cost:50_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t1.png',
+    requirement:{type:'handmade', amount:1_000},
+    requirementText:'1.000 Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t2',
-    name:'Click de Graphite',
+    name:'Click de Pedra',
     effect:'Clicando em ganhos +1% do seu MpS.',
-    cost:5000000,
-    img:'imagens/melhorias-futuras/up-cursor-t2.png',
-    requirement:{type:'handmade', amount:100000},
-    requirementText:'100000 Meminhas feitos com click',
+    cost:5_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t2.png',
+    requirement:{type:'handmade', amount:100_000},
+    requirementText:'100.000 Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t3',
-    name:'Click de Ardósia',
+    name:'Click de Carvão',
     effect:'Clicando em ganhos +1% do seu MpS.',
-    cost:500000000,
-    img:'imagens/melhorias-futuras/up-cursor-t3.png',
-    requirement:{type:'handmade', amount:10000000},
+    cost:500_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t3.png',
+    requirement:{type:'handmade', amount:10_000_000},
     requirementText:'10 milhões de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t4',
-    name:'Click de Ferro',
+    name:'Click de Cobre',
     effect:'Clicando em ganhos +1% do seu MpS.',
-    cost:50000000000,
-    img:'imagens/melhorias-futuras/up-cursor-t4.png',
-    requirement:{type:'handmade', amount:1000000000},
-    requirementText:'1 Bilhão de Meminhas feitos com click',
+    cost:50_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t4.png',
+    requirement:{type:'handmade', amount:1_000_000_000},
+    requirementText:'1 bilhão de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t5',
-    name:'Click de Metal',
+    name:'Click de Ferro',
     effect:'Clicando em ganhos +1% do seu MpS.',
-    cost:5000000000000,
-    img:'imagens/melhorias-futuras/up-cursor-t5.png',
-    requirement:{type:'handmade', amount:100000000000},
-    requirementText:'100 Bilhões de Meminhas feitos com click',
+    cost:5_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t5.png',
+    requirement:{type:'handmade', amount:100_000_000_000},
+    requirementText:'100 bilhões de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   },
   {
     id:'up-cursor-t6',
+    name:'Click de Estanho',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:500_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t6.png',
+    requirement:{type:'handmade', amount:10_000_000_000_000},
+    requirementText:'10 trilhões de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t7',
     name:'Click de Bronze',
     effect:'Clicando em ganhos +1% do seu MpS.',
-    cost:500000000000000,
-    img:'imagens/melhorias-futuras/up-cursor-t6.png',
-    requirement:{type:'handmade', amount:10000000000000},
-    requirementText:'10 Trilhões de Meminhas feitos com Click',
+    cost:50_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t7.png',
+    requirement:{type:'handmade', amount:1_000_000_000_000_000},
+    requirementText:'1 quatrilhão de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t8',
+    name:'Click de Prata',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:5_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t8.png',
+    requirement:{type:'handmade', amount:100_000_000_000_000_000},
+    requirementText:'100 quatrilhões de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t9',
+    name:'Click de Ouro',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:500_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t9.png',
+    requirement:{type:'handmade', amount:10_000_000_000_000_000_000},
+    requirementText:'10 quintilhões de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t10',
+    name:'Click de Platina',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:50_000_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t10.png',
+    requirement:{type:'handmade', amount:1_000_000_000_000_000_000_000},
+    requirementText:'1 sextilhão de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t11',
+    name:'Click de Titânio',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:5_000_000_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t11.png',
+    requirement:{type:'handmade', amount:100_000_000_000_000_000_000_000},
+    requirementText:'100 sextilhões de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t12',
+    name:'Click de Urânio',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:500_000_000_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t12.png',
+    requirement:{type:'handmade', amount:10_000_000_000_000_000_000_000_000},
+    requirementText:'10 septilhões de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t13',
+    name:'Click de Rubi',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:50_000_000_000_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t13.png',
+    requirement:{type:'handmade', amount:1_000_000_000_000_000_000_000_000_000},
+    requirementText:'1 octilhão de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t14',
+    name:'Click de Esmeralda',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:5_000_000_000_000_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t14.png',
+    requirement:{type:'handmade', amount:100_000_000_000_000_000_000_000_000_000},
+    requirementText:'100 octilhões de Meminhas feitos com click',
+    bonus:{type:'click', pctOfMps:0.01}
+  },
+  {
+    id:'up-cursor-t15',
+    name:'Click de Diamante',
+    effect:'Clicando em ganhos +1% do seu MpS.',
+    cost:500_000_000_000_000_000_000_000_000_000_000,
+    img:'assets/images/melhorias-futuras/up-cursor-t15.png',
+    requirement:{type:'handmade', amount:10_000_000_000_000_000_000_000_000_000_000},
+    requirementText:'10 nonilhões de Meminhas feitos com click',
     bonus:{type:'click', pctOfMps:0.01}
   }
 ];
@@ -275,6 +391,7 @@ export const UPGRADE_MAP = UPGRADE_DATA.reduce((acc, up)=>{
   return acc;
 }, {});
 // Conquistas
+// 🏅 Conquistas — serve como checklist para novos objetivos.
 export const ACHIEVEMENT_DATA = [
   { id:'ach-polidactilia', name:'Polidactilia', description:'Tenha 50 Dedos', requirement:{ type:'building', building:'dedo', count:50 } },
   { id:'ach-calcinha', name:'Calcinha', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
