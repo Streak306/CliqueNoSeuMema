@@ -3,6 +3,9 @@ import {
   IMG_BACK,
   IMG_FRONT,
   IMG_RESET,
+  NUMBER_SCALES,
+  NUMBER_FORMAT_IDS,
+  DEFAULT_NUMBER_FORMAT,
   FRONT_TIME_MS,
   GLITCH_DIGIT_TARGETS,
   SHOP,
@@ -10,7 +13,7 @@ import {
   UPGRADE_DATA,
   UPGRADE_MAP,
   ACHIEVEMENT_DATA
-} from './data.js';
+} from './data/game-data.js';
 
 /* ===== Estado do jogo ===== */
 let pts = 0, clickPow = 1, mps = 0;
@@ -23,12 +26,14 @@ let migratedLegacyUpgrades = false;
 let selectedCollectionUpgradeId = null;
 let redeemedCodes = new Set();
 let collapseState = makeInitialCollapseState();
+let numberFormatMode = DEFAULT_NUMBER_FORMAT;
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
 const clickImageEl = document.getElementById('click');
 const redeemCodeButtonEl = document.getElementById('redeemCode');
 const deleteSaveButtonEl = document.getElementById('deleteSave');
+const numberFormatButtons = Array.from(document.querySelectorAll('.number-format-option'));
 const collapseOverlayEl = document.getElementById('collapseOverlay');
 const collapseBlueListEl = document.getElementById('collapseBlueMessages');
 const collapseLogLinesEl = document.getElementById('collapseLogLines');
@@ -44,14 +49,129 @@ let collapseImageMode = false;
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
-/* formatação curta legível (K/M/B/T) */
-function fmtShort(n){
-  const abs = Math.abs(n);
-  if(abs >= 1e12) return (n/1e12).toFixed(3)+'T';
-  if(abs >= 1e9)  return (n/1e9 ).toFixed(3)+'B';
-  if(abs >= 1e6)  return (n/1e6 ).toFixed(2)+'M';
-  if(abs >= 1e3)  return (n/1e3 ).toFixed(2)+'K';
-  return Math.floor(n).toString();
+
+// 🧮 Formatação numérica — concentra toda a lógica dos quatro modos de exibição.
+function getScaleForValue(value){
+  const abs = Math.abs(value);
+  for(let i = NUMBER_SCALES.length - 1; i >= 0; i--){
+    if(abs >= NUMBER_SCALES[i].value) return NUMBER_SCALES[i];
+  }
+  return NUMBER_SCALES[0];
+}
+
+function formatLocaleValue(value, {maximumFractionDigits = 0, minimumFractionDigits = 0} = {}){
+  const max = Math.max(maximumFractionDigits, minimumFractionDigits);
+  const min = Math.min(minimumFractionDigits, max);
+  return Number(value).toLocaleString('pt-BR', {
+    maximumFractionDigits: max,
+    minimumFractionDigits: min
+  });
+}
+
+function determineFractionDigits(scaledValue, options = {}){
+  if(typeof options.decimals === 'number'){
+    const forced = Math.max(options.decimals, options.minimumFractionDigits ?? 0);
+    return { max: forced, min: options.minimumFractionDigits ?? 0 };
+  }
+  const abs = Math.abs(scaledValue);
+  let fallback = 2;
+  if(abs >= 100) fallback = 0;
+  else if(abs >= 10) fallback = 1;
+  const min = options.minimumFractionDigits ?? 0;
+  return { max: Math.max(fallback, min), min };
+}
+
+function pluralizeUnit(baseName, scaledValue){
+  if(!baseName) return '';
+  const abs = Math.abs(scaledValue);
+  if(Math.abs(abs - 1) < 1e-9) return baseName;
+  if(baseName.endsWith('ão')) return baseName.replace(/ão$/, 'ões');
+  if(baseName.endsWith('mil')) return baseName;
+  return `${baseName}s`;
+}
+
+function formatNumber(value, options = {}){
+  if(!Number.isFinite(value)) return '0';
+  const scale = getScaleForValue(value);
+
+  switch(numberFormatMode){
+    case 'exact':{
+      const digits = determineFractionDigits(value, options);
+      return formatLocaleValue(value, digits);
+    }
+    case 'power':{
+      if(scale.order === 0){
+        const digits = determineFractionDigits(value, options);
+        return formatLocaleValue(value, digits);
+      }
+      const scaled = value / scale.value;
+      const digits = determineFractionDigits(scaled, options);
+      const formatted = formatLocaleValue(scaled, digits);
+      return `${formatted} × 10^${scale.power}`;
+    }
+    case 'name':{
+      if(scale.order === 0){
+        const digits = determineFractionDigits(value, options);
+        return formatLocaleValue(value, digits);
+      }
+      const scaled = value / scale.value;
+      const digits = determineFractionDigits(scaled, options);
+      const formatted = formatLocaleValue(scaled, digits);
+      const unit = pluralizeUnit(scale.name, scaled);
+      return unit ? `${formatted} ${unit}` : formatted;
+    }
+    case 'suffix':
+    default:{
+      const abs = Math.abs(value);
+      if(abs < 1_000){
+        const digits = determineFractionDigits(value, options);
+        return formatLocaleValue(value, digits);
+      }
+      const scaled = value / scale.value;
+      const digits = determineFractionDigits(scaled, options);
+      const formatted = formatLocaleValue(scaled, digits);
+      return `${formatted}${scale.suffix}`;
+    }
+  }
+}
+
+function isValidNumberFormat(mode){
+  return typeof mode === 'string' && NUMBER_FORMAT_IDS.includes(mode);
+}
+
+function updateNumberFormatButtonState(){
+  if(!numberFormatButtons?.length) return;
+  numberFormatButtons.forEach(btn=>{
+    const mode = btn.dataset.numberFormat;
+    const isActive = mode === numberFormatMode;
+    btn.classList.toggle('is-active', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
+function rerenderAllNumericSections(){
+  renderHUD();
+  renderShop();
+  updateAffordability();
+  updateUpgradeAffordability();
+  renderOwnedUpgradesCollection();
+  renderAchievementsPanel();
+  if(activeUpgradeTooltip?.up){
+    refreshUpgradeTooltip(activeUpgradeTooltip.up);
+  }
+}
+
+function applyNumberFormatMode(mode, {skipSave=false, force=false} = {}){
+  if(!isValidNumberFormat(mode)) return;
+  const changed = numberFormatMode !== mode;
+  numberFormatMode = mode;
+  updateNumberFormatButtonState();
+  if(changed || force){
+    rerenderAllNumericSections();
+  }
+  if(changed && !skipSave){
+    save();
+  }
 }
 
 function fmtTime(seconds){
@@ -548,9 +668,9 @@ function refreshUpgradeTooltip(up){
     statusText = 'Pode comprar';
   } else {
     const missing = Math.max(0, cost - pts);
-    statusText = `Faltam ${fmtShort(missing)} pontos`;
+    statusText = `Faltam ${formatNumber(missing)} pontos`;
   }
-  tooltipCostEl.textContent = `Custo: ${fmtShort(cost)} – ${statusText}`;
+  tooltipCostEl.textContent = `Custo: ${formatNumber(cost)} – ${statusText}`;
 }
 
 function positionUpgradeTooltip(target, evt){
@@ -621,23 +741,23 @@ window.addEventListener('resize', repositionActiveUpgradeTooltip);
 function renderStatsPanel(){
   const bancoEl = el('statBanco');
   if(!bancoEl) return;
-  bancoEl.textContent = fmtShort(pts);
+  bancoEl.textContent = formatNumber(pts);
   const tempoEl = el('statTempo');
   if(tempoEl) tempoEl.textContent = fmtTime(playTimeSeconds);
   const constrEl = el('statConstr');
-  if(constrEl) constrEl.textContent = getTotalBuildingsOwned();
+  if(constrEl) constrEl.textContent = formatNumber(getTotalBuildingsOwned());
   const mpsEl = el('statMps');
-  if(mpsEl) mpsEl.textContent = mps.toFixed(2);
+  if(mpsEl) mpsEl.textContent = formatNumber(mps, {decimals:2, minimumFractionDigits:2});
   const cliqueEl = el('statClique');
-  if(cliqueEl) cliqueEl.textContent = Math.max(1, Math.floor(clickPow));
+  if(cliqueEl) cliqueEl.textContent = formatNumber(Math.max(1, Math.floor(clickPow)));
   const cliquesEl = el('statCliques');
-  if(cliquesEl) cliquesEl.textContent = totalClicks;
+  if(cliquesEl) cliquesEl.textContent = formatNumber(totalClicks);
   const handmadeEl = el('statHandmade');
-  if(handmadeEl) handmadeEl.textContent = Math.max(0, Math.floor(handmadeMemes)).toLocaleString('pt-BR');
+  if(handmadeEl) handmadeEl.textContent = formatNumber(Math.max(0, Math.floor(handmadeMemes)));
   const countEl = el('collectionCount');
-  if(countEl && typeof UPGRADE_DATA !== 'undefined') countEl.textContent = `Você tem ${getPurchasedUpgradeCount()}/${UPGRADE_DATA.length} melhorias`;
+  if(countEl && typeof UPGRADE_DATA !== 'undefined') countEl.textContent = `Você tem ${formatNumber(getPurchasedUpgradeCount())}/${formatNumber(UPGRADE_DATA.length)} melhorias`;
   const achCountEl = el('achievementsCount');
-  if(achCountEl && typeof ACHIEVEMENT_DATA !== 'undefined') achCountEl.textContent = `Você desbloqueou ${getUnlockedAchievementCount()}/${ACHIEVEMENT_DATA.length} conquistas`;
+  if(achCountEl && typeof ACHIEVEMENT_DATA !== 'undefined') achCountEl.textContent = `Você desbloqueou ${formatNumber(getUnlockedAchievementCount())}/${formatNumber(ACHIEVEMENT_DATA.length)} conquistas`;
 }
 
 function resetCollectionDetail(){
@@ -698,7 +818,7 @@ function showUpgradeDetails(up){
     }
   }
   const costEl = el('collectionDetailCost');
-  if(costEl) costEl.textContent = owned ? fmtShort(up.cost ?? 0) : '???';
+  if(costEl) costEl.textContent = owned ? formatNumber(up.cost ?? 0) : '???';
   const reqEl = el('collectionDetailRequirements');
   if(reqEl){
     reqEl.innerHTML = '';
@@ -840,7 +960,7 @@ function renderAchievementsPanel(){
 
   const countEl = el('achievementsCount');
   if(countEl && typeof ACHIEVEMENT_DATA !== 'undefined'){
-    countEl.textContent = `Você desbloqueou ${getUnlockedAchievementCount()}/${ACHIEVEMENT_DATA.length} conquistas`;
+    countEl.textContent = `Você desbloqueou ${formatNumber(getUnlockedAchievementCount())}/${formatNumber(ACHIEVEMENT_DATA.length)} conquistas`;
   }
 }
 
@@ -961,6 +1081,7 @@ function save(showToast=false){
     upgradesState,
     achievementsState,
     collapseState,
+    numberFormatMode,
     codes: Array.from(redeemedCodes)
   }));
   if(showToast) flashSave();
@@ -1001,6 +1122,11 @@ function load(){ try{
   }
   const codes = Array.isArray(d.codes) ? d.codes : [];
   redeemedCodes = new Set(codes.map(code=> String(code).toLowerCase()));
+  if(isValidNumberFormat(d.numberFormatMode)){
+    applyNumberFormatMode(d.numberFormatMode, {skipSave:true, force:true});
+  } else {
+    applyNumberFormatMode(DEFAULT_NUMBER_FORMAT, {skipSave:true, force:true});
+  }
   if(d.collapseState && typeof d.collapseState === 'object'){
     const base = makeInitialCollapseState();
     collapseState = {
@@ -1020,15 +1146,20 @@ function load(){ try{
 
 /* HUD (topo) */
 function renderHUD(){
-  el('pts').textContent = fmtShort(pts);
-  el('pc').textContent = Math.floor(clickPow);
-  el('mps').textContent = mps.toFixed(2);
+  el('pts').textContent = formatNumber(pts);
+  el('pc').textContent = formatNumber(Math.floor(clickPow));
+  el('mps').textContent = formatNumber(mps, {decimals:2, minimumFractionDigits:2});
   // não re-renderiza a loja aqui
   renderStatsPanel();
 }
 
 function hasNamorada(){
   return (shopState?.namorada?.owned ?? 0) > 0;
+}
+
+// 🖼️ Define qual rosto o Mema mostra ao ser clicado (front ou reset após a namorada).
+function getClickReactionImage(){
+  return hasNamorada() ? IMG_RESET : IMG_FRONT;
 }
 
 function activateCollapseImageMode(){
@@ -1074,21 +1205,20 @@ function showFront(){
     }, FRONT_TIME_MS);
     return;
   }
-  if(hasNamorada()){
-    img.src = IMG_RESET;
-    if(faceTimer) clearTimeout(faceTimer);
+  const reaction = getClickReactionImage();
+  img.src = reaction;
+  if(faceTimer) clearTimeout(faceTimer);
+  if(reaction === IMG_RESET){
     faceTimer = setTimeout(()=>{
       updateClickImage();
       faceTimer = null;
     }, FRONT_TIME_MS);
-    return;
+  } else {
+    faceTimer = setTimeout(()=>{
+      img.src = IMG_BACK;
+      faceTimer = null;
+    }, FRONT_TIME_MS);
   }
-  img.src = IMG_FRONT;
-  if(faceTimer) clearTimeout(faceTimer);
-  faceTimer = setTimeout(()=>{
-    img.src = IMG_BACK;
-    faceTimer = null;
-  }, FRONT_TIME_MS);
 }
 
 /* reset */
@@ -1112,6 +1242,7 @@ function resetState(){
   achievementToastShowing = false;
   const toast = el('achievementToast');
   if(toast) toast.classList.remove('show');
+  applyNumberFormatMode(DEFAULT_NUMBER_FORMAT, {skipSave:true, force:true});
   updateClickImage();
 }
 function deleteSave(force=false){
@@ -1208,12 +1339,13 @@ function promptAndRedeemCode(){
   updateAffordability();
   evaluateAchievements();
   save(true);
-  alert(`Código resgatado! Você ganhou ${fmtShort(reward)} Meminhas.`);
+  alert(`Código resgatado! Você ganhou ${formatNumber(reward)} Meminhas.`);
 }
 
 /* preload imagens */
 (new Image()).src = IMG_BACK;
 (new Image()).src = IMG_FRONT;
+(new Image()).src = IMG_RESET;
 
 /* ===== Loja =====
    Agora usamos as fórmulas exponenciais:
@@ -1287,14 +1419,19 @@ function renderShop(){
     const itemName = it.name ?? it.id;
     const displayName = (!locked && st.owned === 0) ? '?????' : itemName;
 
+    const formattedCost = formatNumber(priceSingle);
+    const formattedPerUnit = formatNumber(perUnit, {decimals:2, minimumFractionDigits:2});
+    const formattedOwned = formatNumber(st.owned);
+    const formattedLimit = formatNumber(it.limit);
+
     tr.innerHTML = `
       <td class="name">
         <div>${displayName}</div>
-        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${fmtShort(priceSingle)}</div>
+        <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${formattedCost}</div>
         <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
-      <td>+${perUnit.toFixed(2)}</td>
-      <td class="owned-limit"><span class="owned">${st.owned}</span><span class="sep">/</span><span class="limit-num">${it.limit}</span></td>
+      <td>+${formattedPerUnit}</td>
+      <td class="owned-limit"><span class="owned">${formattedOwned}</span><span class="sep">/</span><span class="limit-num">${formattedLimit}</span></td>
     `;
 
     // aplica a classe visual de "pode comprar" se o preço couber
@@ -1352,11 +1489,11 @@ function getUpgradeRequirementLines(up){
   if(up.requirement?.type === 'building' && !up.requirementText){
     const name = SHOP_LOOKUP[up.requirement.building]?.name ?? up.requirement.building;
     const count = up.requirement.count ?? 0;
-    lines.push(`Compre ${count} ${name}`);
+    lines.push(`Compre ${formatNumber(count)} ${name}`);
   }
   if(up.requirement?.type === 'handmade' && !up.requirementText){
     const amount = Math.max(0, Math.floor(up.requirement.amount ?? 0));
-    const formatted = amount.toLocaleString('pt-BR');
+    const formatted = formatNumber(amount);
     lines.push(`${formatted} Meminhas feitos com click`);
   }
   if(up.requires && up.requires.length){
@@ -1383,7 +1520,7 @@ function updateUpgradeElement(el, up){
   el.classList.toggle('locked', !purchased && !affordable);
   el.disabled = purchased;
 
-  const descriptionParts = [`Custo: ${fmtShort(cost)}`];
+  const descriptionParts = [`Custo: ${formatNumber(cost)}`];
   const benefits = getUpgradeBenefitLines(up);
   if(benefits.length) descriptionParts.push(benefits.join(' • '));
 
@@ -1394,7 +1531,7 @@ function updateUpgradeElement(el, up){
     statusText = 'Pronto para comprar';
   } else {
     const missing = Math.max(0, cost - pts);
-    if(missing > 0) statusText = `Faltam ${fmtShort(missing)} pontos`;
+    if(missing > 0) statusText = `Faltam ${formatNumber(missing)} pontos`;
   }
   if(statusText) descriptionParts.push(statusText);
   el.setAttribute('aria-description', descriptionParts.join(' • '));
@@ -1696,6 +1833,16 @@ if(redeemCodeButtonEl){
 if(deleteSaveButtonEl){
   deleteSaveButtonEl.addEventListener('click', ()=> deleteSave());
 }
+// 🎛️ Botões de formato numérico — cada clique chama applyNumberFormatMode.
+if(numberFormatButtons.length){
+  numberFormatButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const mode = btn.dataset.numberFormat;
+      applyNumberFormatMode(mode);
+    });
+  });
+  updateNumberFormatButtonState();
+}
 // === MINI-GAME: ACERTE O MEMA DOURADO ===
 const BONUS_VALUE = 500; // quantidade de Meminhas que o jogador ganha
 const BONUS_INTERVAL = 15000; // intervalo em ms (15 segundos)
@@ -1704,7 +1851,7 @@ const BONUS_DURATION = 2000; // quanto tempo o Mema dourado fica visível
 function spawnMemaDourado() {
   // cria o elemento
   const memaBonus = document.createElement('img');
-  memaBonus.src = 'imagens/variacoes-mema/mema_reset.png'; // cria uma versão dourada da imagem
+  memaBonus.src = IMG_RESET; // usa a textura de reset para o brilho dourado
   memaBonus.alt = 'Mema Dourado!';
   memaBonus.classList.add('mema-bonus');
 
@@ -1719,7 +1866,7 @@ function spawnMemaDourado() {
   // clique → ganha bônus
   memaBonus.addEventListener('click', () => {
     adicionarPontos(BONUS_VALUE);
-    mostrarBonusTexto(`+${BONUS_VALUE} Meminhas!`, x, y);
+    mostrarBonusTexto(`+${formatNumber(BONUS_VALUE)} Meminhas!`, x, y);
     memaBonus.remove();
   });
 

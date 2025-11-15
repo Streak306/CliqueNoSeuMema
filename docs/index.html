@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Clique no seu Mema</title>
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="styles/main.css">
 </head>
   <div id="upgradeTooltip" class="tooltip-card" role="tooltip" aria-hidden="true">
     <div class="tooltip-name"></div>
@@ -39,7 +39,7 @@
     </aside>
 
     <section class="stage">
-      <img id="click" class="click-img" src="imagens/variacoes-mema/mema_back.png" alt="Clique no seu Mema">
+      <img id="click" class="click-img" src="assets/images/variacoes-mema/mema_back.png" alt="Clique no seu Mema">
     </section>
 
     <aside class="card shop-card">
@@ -73,6 +73,16 @@
     <div class="modal-content">
       <div class="modal-panel active" data-panel="config" role="tabpanel">
         <p class="muted">Gerencie seu progresso e preferências.</p>
+        <section class="settings-section" aria-labelledby="numberFormatTitle">
+          <h3 id="numberFormatTitle">Formato dos números</h3>
+          <p class="muted">Escolha como os valores aparecem em todo o jogo.</p>
+          <div class="number-format-options" role="group" aria-label="Opções de formatação numérica">
+            <button class="btn number-format-option" data-number-format="power">Potência de 10</button>
+            <button class="btn number-format-option" data-number-format="exact">Valor exato</button>
+            <button class="btn number-format-option" data-number-format="name">Nome</button>
+            <button class="btn number-format-option" data-number-format="suffix">Sufixo</button>
+          </div>
+        </section>
         <button class="btn" id="redeemCode" style="margin-top:12px;max-width:220px;">Inserir código</button>
         <button class="btn" id="deleteSave" style="margin-top:12px;max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
       </div>
@@ -143,7 +153,7 @@
     </div>
   </div>
 </div>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="scripts/game-app.js"></script>
   
 </body>
 </html>

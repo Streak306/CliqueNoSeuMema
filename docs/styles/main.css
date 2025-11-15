@@ -41,7 +41,7 @@ h1{ margin:6px 0 12px 0; font-size:2.6rem; letter-spacing:.3px; }
 #pts{font-size:1.6rem;font-variant-numeric:tabular-nums}
 
 /* simple button style (missing before) */
-.btn{
+.btn{ 
   padding:10px 14px;border:1px solid var(--border);border-radius:12px;
   background:#171c24;color:var(--fg);cursor:pointer;
   transition:filter .15s ease, transform .08s ease;
@@ -49,6 +49,19 @@ h1{ margin:6px 0 12px 0; font-size:2.6rem; letter-spacing:.3px; }
 }
 .btn:hover{ filter:brightness(1.06); }
 .btn:active{ transform:translateY(1px) }
+
+/* Preferências (configurações) */
+.settings-section{ margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--panel-bg); }
+.settings-section h3{ margin:0 0 6px 0; font-size:1.05rem; }
+.settings-section p{ margin:0 0 12px 0; font-size:.9rem; }
+.number-format-options{ display:flex; flex-wrap:wrap; gap:10px; }
+.number-format-option{ flex:1 1 180px; justify-content:center; display:flex; align-items:center; }
+.number-format-option.is-active{
+  background:rgba(96,165,250,.16);
+  border-color:rgba(96,165,250,.65);
+  color:var(--accent);
+}
+.number-format-option[aria-pressed="true"]{ box-shadow:0 0 0 2px rgba(96,165,250,.3); }
 
 /* Grid principal */
 .grid{
@@ -908,7 +921,7 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
 // === Mini-game: Acerte o Mema ===
 function iniciarMiniGame() {
   const memaMini = document.createElement('img');
-  memaMini.src = 'imagens/variacoes-mema/mema_reset.png';
+  memaMini.src = 'assets/images/variacoes-mema/mema_reset.png';
   memaMini.className = 'mema-mini';
   memaMini.style.position = 'fixed';
   memaMini.style.width = '100px';
