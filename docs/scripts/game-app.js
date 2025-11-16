@@ -51,12 +51,19 @@ const numberFormatButtons = Array.from(document.querySelectorAll('.number-format
 const collapseOverlayEl = document.getElementById('collapseOverlay');
 const collapseBlueListEl = document.getElementById('collapseBlueMessages');
 const collapseLogLinesEl = document.getElementById('collapseLogLines');
+const buffHudEl = document.getElementById('buffHud');
+const buffTooltipEl = document.getElementById('buffTooltip');
+const buffTooltipNameEl = buffTooltipEl?.querySelector('.tooltip-name') ?? null;
+const buffTooltipEffectEl = buffTooltipEl?.querySelector('.tooltip-effect') ?? null;
+const buffTooltipMetaEl = buffTooltipEl?.querySelector('.tooltip-meta') ?? null;
 
 const collapseScene = {
   active:false,
   timers:new Set(),
   logIndex:0
 };
+
+let activeBuffTooltipData = null;
 
 let faceTimer = null;
 let collapseImageMode = false;
@@ -67,6 +74,85 @@ const DURACAO_ICONE_EVENTO = 13;
 const MEMA_BUFF_ICON = 'assets/images/variacoes-mema/MemaBuff.png';
 const MEMA_DEBUFF_ICON = 'assets/images/variacoes-mema/MemaDeBuff.png';
 const MEMA_EVENT_ICON_SIZE = 96;
+const BUFF_FEEDBACK_DURATION_MS = 1500;
+
+const MEMA_EFFECTS_INFO = {
+  'producao-insana': {
+    nome: 'Produção Insana',
+    sigla: 'PI',
+    descricao: 'Multiplica a produção por segundo em ×7 durante 77s.',
+    resumo: 'MpS ×7 por 77s',
+    tipo: 'positivo'
+  },
+  'cliques-freneticos': {
+    nome: 'Cliques Frenéticos',
+    sigla: 'CF',
+    descricao: 'Multiplica o valor dos cliques em ×100 por alguns segundos.',
+    resumo: 'Cliques ×100',
+    tipo: 'positivo'
+  },
+  'bolada-instantanea': {
+    nome: 'Bolada Instantânea',
+    sigla: 'BI',
+    descricao: 'Ganha instantaneamente até 10 minutos de produção (limitado a 15% do banco).',
+    resumo: 'Bolada imediata',
+    tipo: 'positivo'
+  },
+  'desconto-relampago': {
+    nome: 'Desconto Relâmpago',
+    sigla: 'DR',
+    descricao: 'Reduz todos os custos da loja em 10% por 60s.',
+    resumo: '-10% em tudo',
+    tipo: 'positivo'
+  },
+  'queda-de-producao': {
+    nome: 'Queda de Produção',
+    sigla: 'QP',
+    descricao: 'Reduz a produção por segundo pela metade por 60s.',
+    resumo: 'MpS ×0,5 por 60s',
+    tipo: 'negativo'
+  },
+  'perda-de-memas': {
+    nome: 'Perda de Memas',
+    sigla: 'PM',
+    descricao: 'Remove 10% das Memas do banco imediatamente.',
+    resumo: '-10% do banco',
+    tipo: 'negativo'
+  },
+  'relacao-tensa': {
+    nome: 'Relação Tensa',
+    sigla: 'RT',
+    descricao: 'Aumenta em 20% o custo das namoradas por 60s.',
+    resumo: '+20% custo de namoradas',
+    tipo: 'negativo'
+  },
+  'caos-nos-cliques': {
+    nome: 'Caos nos Cliques',
+    sigla: 'CC',
+    descricao: 'Cliques alternam entre ganhos 5× e perdas 2× do valor base por 30s.',
+    resumo: 'Cliques caóticos',
+    tipo: 'negativo'
+  }
+};
+
+const MEMA_EVENT_TOOLTIP_CONTENT = {
+  buff: {
+    nome: 'MemaBuff raro',
+    descricao: 'Clique para ativar um efeito positivo extremamente poderoso.',
+    meta: 'Evento disponível por tempo limitado.'
+  },
+  debuff: {
+    nome: 'MemaDeBuff caótico',
+    descricao: 'Clique por sua conta e risco: efeitos negativos imprevisíveis.',
+    meta: 'Somente aparece quando há namoradas ativas.'
+  }
+};
+
+const buffFlashEvents = [];
+let lastBuffHudSignature = '';
+let buffHudNeedsForceRender = false;
+
+renderBuffHud(true);
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
@@ -90,6 +176,121 @@ function escolherPorPeso(lista){
     if(sorteio <= 0) return item;
   }
   return lista[lista.length - 1];
+}
+
+function getEffectInfo(efeitoId, origem){
+  const fallbackTipo = origem === 'MemaDeBuff' ? 'negativo' : 'positivo';
+  const info = MEMA_EFFECTS_INFO[efeitoId];
+  if(info){
+    return {
+      nome: info.nome,
+      sigla: info.sigla,
+      descricao: info.descricao,
+      resumo: info.resumo,
+      tipo: info.tipo ?? fallbackTipo
+    };
+  }
+  return {
+    nome: 'Efeito misterioso',
+    sigla: '??',
+    descricao: 'Um efeito desconhecido está ativo.',
+    resumo: '',
+    tipo: fallbackTipo
+  };
+}
+
+function registrarFlashEfeito(efeitoId, origem, valor){
+  const baseNow = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const expiresAt = baseNow + 1200;
+  buffFlashEvents.push({
+    id: `flash-${origem}-${efeitoId}-${Date.now()}-${Math.random()}`,
+    efeitoId,
+    origem,
+    valor: Number.isFinite(valor) ? valor : 0,
+    expiresAt
+  });
+}
+
+function positionBuffTooltip(event){
+  if(!buffTooltipEl) return;
+  const offset = 18;
+  const x = (event?.clientX ?? 0) + offset;
+  const y = (event?.clientY ?? 0) + offset;
+  buffTooltipEl.style.left = `${x}px`;
+  buffTooltipEl.style.top = `${y}px`;
+}
+
+function updateBuffTooltipMeta(){
+  if(!buffTooltipMetaEl || !activeBuffTooltipData) return;
+  const metaValue = typeof activeBuffTooltipData.meta === 'function'
+    ? activeBuffTooltipData.meta()
+    : activeBuffTooltipData.meta;
+  buffTooltipMetaEl.textContent = metaValue || '';
+}
+
+function showBuffTooltip(content, event){
+  if(!buffTooltipEl || !buffTooltipNameEl || !buffTooltipEffectEl) return;
+  activeBuffTooltipData = content;
+  buffTooltipNameEl.textContent = content?.nome ?? 'Efeito';
+  buffTooltipEffectEl.textContent = content?.descricao ?? '';
+  updateBuffTooltipMeta();
+  positionBuffTooltip(event);
+  buffTooltipEl.classList.add('visible');
+  buffTooltipEl.setAttribute('aria-hidden', 'false');
+}
+
+function moveBuffTooltip(event){
+  if(!buffTooltipEl || !buffTooltipEl.classList.contains('visible')) return;
+  updateBuffTooltipMeta();
+  positionBuffTooltip(event);
+}
+
+function hideBuffTooltip(){
+  if(!buffTooltipEl) return;
+  buffTooltipEl.classList.remove('visible');
+  buffTooltipEl.setAttribute('aria-hidden', 'true');
+  activeBuffTooltipData = null;
+}
+
+function attachTooltipToEventIcon(el, tipo){
+  if(!el) return;
+  const payload = tipo === 'buff' ? MEMA_EVENT_TOOLTIP_CONTENT.buff : MEMA_EVENT_TOOLTIP_CONTENT.debuff;
+  el.addEventListener('mouseenter', (event)=>{
+    showBuffTooltip({
+      nome: payload.nome,
+      descricao: payload.descricao,
+      meta: payload.meta
+    }, event);
+  });
+  el.addEventListener('mousemove', moveBuffTooltip);
+  el.addEventListener('mouseleave', hideBuffTooltip);
+}
+
+function showBuffFeedback({efeitoId, origem, instantaneo, valor, duracao, event}){
+  const info = getEffectInfo(efeitoId, origem);
+  const label = origem === 'MemaBuff' ? 'MemaBuff' : 'MemaDeBuff';
+  let detalhe = info.resumo ?? '';
+  if(instantaneo){
+    if(Number.isFinite(valor) && valor !== 0){
+      const prefix = valor > 0 ? '+' : '−';
+      detalhe = `${prefix}${formatNumber(Math.abs(valor))} Memas`;
+    } else if(!detalhe){
+      detalhe = 'Efeito instantâneo';
+    }
+  }
+  const texto = detalhe ? `${label}: ${info.nome} (${detalhe})` : `${label}: ${info.nome}`;
+  const x = event?.clientX ?? (window.innerWidth / 2);
+  const y = event?.clientY ?? (window.innerHeight / 2);
+  const feedback = document.createElement('div');
+  feedback.className = `buff-feedback ${origem === 'MemaBuff' ? 'buff-feedback--positivo' : 'buff-feedback--negativo'}`;
+  feedback.textContent = texto;
+  feedback.style.left = `${x}px`;
+  feedback.style.top = `${y}px`;
+  document.body.appendChild(feedback);
+  requestAnimationFrame(()=> feedback.classList.add('show'));
+  setTimeout(()=>{
+    if(feedback.isConnected) feedback.remove();
+  }, BUFF_FEEDBACK_DURATION_MS);
 }
 
 function atualizarValoresEfetivos(){
@@ -160,7 +361,9 @@ const MEMA_BUFF_EFFECTS = [
       const recompensa = Math.min(ganhoBase, limitePorBanco);
       if(recompensa > 0){
         bancoDeMemas += recompensa;
+        return recompensa;
       }
+      return 0;
     }
   },
   {
@@ -186,6 +389,7 @@ const MEMA_DEBUFF_EFFECTS = [
       if(bancoDeMemas <= 0) return;
       const perda = bancoDeMemas * 0.10;
       bancoDeMemas = Math.max(0, bancoDeMemas - perda);
+      return -perda;
     }
   },
   {
@@ -223,25 +427,42 @@ function registrarBuffTemporario(def, origem){
     origem,
     efeitoId:def.id,
     duracaoRestante:duracao,
+    duracaoTotal:duracao,
     modificadores
   });
+  const registro = listaBuffsAtivos[listaBuffsAtivos.length - 1];
   recalcularMultiplicadoresGlobais();
+  return registro;
 }
 
 function aplicarBuff(def, origem){
-  if(!def) return;
+  if(!def) return null;
+  const resultado = {
+    efeitoId: def.id,
+    origem,
+    instantaneo: Boolean(def.instantaneo),
+    valor: 0,
+    duracao: 0
+  };
   if(def.instantaneo && typeof def.aplicar === 'function'){
     const antes = bancoDeMemas;
-    def.aplicar();
-    if(bancoDeMemas !== antes) renderHUD();
+    const retorno = def.aplicar();
+    const delta = Number.isFinite(retorno) ? retorno : (bancoDeMemas - antes);
+    resultado.valor = delta;
+    registrarFlashEfeito(def.id, origem, delta);
+    buffHudNeedsForceRender = true;
   } else {
-    registrarBuffTemporario(def, origem);
+    const registro = registrarBuffTemporario(def, origem);
+    resultado.duracao = registro?.duracaoTotal ?? 0;
+    resultado.restante = registro?.duracaoRestante ?? 0;
+    buffHudNeedsForceRender = true;
   }
   renderShop();
   renderUpgrades();
   updateAffordability();
   renderHUD();
   save();
+  return resultado;
 }
 
 function agendarProximoMemaBuff(){
@@ -289,6 +510,7 @@ function criarIconeEvento({tipo}){
   el.style.left = `${left}px`;
   el.style.top = `${top}px`;
   stageEl.appendChild(el);
+  attachTooltipToEventIcon(el, tipo);
   return el;
 }
 
@@ -298,8 +520,8 @@ function criarMemaBuff(){
   if(!el) return;
   const data = { el, tempoRestante:DURACAO_ICONE_EVENTO };
   memaBuffAtual = data;
-  el.addEventListener('click', ()=>{
-    aoClicarNoMemaBuff();
+  el.addEventListener('click', (event)=>{
+    aoClicarNoMemaBuff(event);
   }, {once:true});
 }
 
@@ -310,27 +532,48 @@ function criarMemaDeBuff(){
   if(!el) return;
   const data = { el, tempoRestante:DURACAO_ICONE_EVENTO };
   memaDeBuffAtual = data;
-  el.addEventListener('click', ()=>{
-    aoClicarNoMemaDeBuff();
+  el.addEventListener('click', (event)=>{
+    aoClicarNoMemaDeBuff(event);
   }, {once:true});
 }
 
-function aoClicarNoMemaBuff(){
+function aoClicarNoMemaBuff(event){
   if(!memaBuffAtual) return;
   removerMemaBuff();
   agendarProximoMemaBuff();
   const efeito = escolherPorPeso(MEMA_BUFF_EFFECTS);
-  aplicarBuff(efeito, 'MemaBuff');
+  if(!efeito) return;
+  const resultado = aplicarBuff(efeito, 'MemaBuff');
+  showBuffFeedback({
+    efeitoId: efeito?.id,
+    origem: 'MemaBuff',
+    instantaneo: Boolean(resultado?.instantaneo),
+    valor: resultado?.valor ?? 0,
+    duracao: resultado?.duracao ?? 0,
+    event
+  });
+  hideBuffTooltip();
 }
 
-function aoClicarNoMemaDeBuff(){
+function aoClicarNoMemaDeBuff(event){
   if(!memaDeBuffAtual) return;
   removerMemaDeBuff();
   if(getQtdNamoradas() >= 1){
     const efeito = escolherPorPeso(MEMA_DEBUFF_EFFECTS);
-    aplicarBuff(efeito, 'MemaDeBuff');
+    if(efeito){
+      const resultado = aplicarBuff(efeito, 'MemaDeBuff');
+      showBuffFeedback({
+        efeitoId: efeito?.id,
+        origem: 'MemaDeBuff',
+        instantaneo: Boolean(resultado?.instantaneo),
+        valor: resultado?.valor ?? 0,
+        duracao: resultado?.duracao ?? 0,
+        event
+      });
+    }
   }
   agendarProximoMemaDeBuff();
+  hideBuffTooltip();
 }
 
 function atualizarEventosTemporarios(delta){
@@ -1486,12 +1729,136 @@ function load(){ try{
 } catch(e){} }
 
 /* HUD (topo) */
+function renderBuffHud(force = false){
+  if(!buffHudEl) return;
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  for(let i = buffFlashEvents.length - 1; i >= 0; i--){
+    if(buffFlashEvents[i].expiresAt <= now){
+      buffFlashEvents.splice(i, 1);
+    }
+  }
+  const ativos = listaBuffsAtivos.slice();
+  const entradas = ativos.map(buff=>({
+    tipo:'temporario',
+    ref:buff,
+    origem: buff.origem,
+    info:getEffectInfo(buff.efeitoId, buff.origem),
+    key: buff.id
+  })).concat(buffFlashEvents.map(evento=>({
+    tipo:'flash',
+    ref:evento,
+    origem:evento.origem,
+    info:getEffectInfo(evento.efeitoId, evento.origem),
+    key: evento.id
+  })));
+  entradas.sort((a, b)=>{
+    if(a.origem !== b.origem){
+      return a.origem === 'MemaBuff' ? -1 : 1;
+    }
+    if(a.tipo !== b.tipo){
+      return a.tipo === 'flash' ? 1 : -1;
+    }
+    if(a.tipo === 'flash' && b.tipo === 'flash'){
+      return a.ref.expiresAt - b.ref.expiresAt;
+    }
+    return (a.ref?.duracaoRestante ?? 0) - (b.ref?.duracaoRestante ?? 0);
+  });
+  const effectiveForce = force || buffHudNeedsForceRender;
+  buffHudNeedsForceRender = false;
+
+  if(!entradas.length){
+    lastBuffHudSignature = '';
+    buffHudEl.innerHTML = '';
+    const empty = document.createElement('span');
+    empty.className = 'buff-hud__empty';
+    empty.textContent = 'Sem eventos ativos';
+    buffHudEl.appendChild(empty);
+    return;
+  }
+  const signature = entradas.map(item=>item.key).join('|');
+  if(!effectiveForce && signature === lastBuffHudSignature){
+    entradas.forEach(item=>{
+      const slot = buffHudEl.querySelector(`[data-buff-id='${item.key}']`);
+      if(!slot) return;
+      const timeEl = slot.querySelector('.buff-slot__time');
+      const timerEl = slot.querySelector('.buff-slot__timer');
+      const restante = item.tipo === 'flash' ? 0 : Math.max(0, item.ref?.duracaoRestante ?? 0);
+      const total = item.tipo === 'flash' ? 0 : Math.max(item.ref?.duracaoTotal ?? restante, 0.0001);
+      const progress = item.tipo === 'flash' ? 1 : Math.min(1, restante / total);
+      if(timeEl) timeEl.textContent = item.tipo === 'flash' ? 'Instantâneo' : `${Math.max(0, Math.ceil(restante))}s`;
+      if(timerEl) timerEl.style.setProperty('--buff-progress', progress);
+    });
+    return;
+  }
+  lastBuffHudSignature = signature;
+  buffHudEl.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  entradas.forEach(item=>{
+    const slot = document.createElement('div');
+    const classes = ['buff-slot', item.origem === 'MemaBuff' ? 'buff-slot--positivo' : 'buff-slot--negativo'];
+    if(item.tipo === 'flash') classes.push('buff-slot--flash');
+    slot.className = classes.join(' ');
+    slot.dataset.buffId = item.key;
+    slot.setAttribute('role', 'group');
+    slot.setAttribute('aria-label', `${item.info.nome} (${item.origem === 'MemaBuff' ? 'positivo' : 'negativo'})`);
+
+    const icon = document.createElement('img');
+    icon.src = item.origem === 'MemaBuff' ? MEMA_BUFF_ICON : MEMA_DEBUFF_ICON;
+    icon.alt = '';
+    icon.className = 'buff-slot__icon';
+    slot.appendChild(icon);
+
+    const textWrap = document.createElement('div');
+    textWrap.className = 'buff-slot__text';
+    const sigla = document.createElement('span');
+    sigla.className = 'buff-slot__sigla';
+    sigla.textContent = item.info.sigla ?? '??';
+    const time = document.createElement('span');
+    const restante = item.tipo === 'flash' ? 0 : Math.max(0, item.ref?.duracaoRestante ?? 0);
+    const total = item.tipo === 'flash' ? 0 : Math.max(item.ref?.duracaoTotal ?? restante, 0.0001);
+    const progress = item.tipo === 'flash' ? 1 : Math.min(1, restante / total);
+    time.className = `buff-slot__time${item.tipo === 'flash' ? ' buff-slot__time--instantaneo' : ''}`;
+    time.textContent = item.tipo === 'flash' ? 'Instantâneo' : `${Math.max(0, Math.ceil(restante))}s`;
+    textWrap.appendChild(sigla);
+    textWrap.appendChild(time);
+    slot.appendChild(textWrap);
+
+    const timer = document.createElement('div');
+    timer.className = 'buff-slot__timer';
+    timer.style.setProperty('--buff-progress', progress);
+    slot.appendChild(timer);
+
+    const tooltipData = {
+      nome: item.info.nome,
+      descricao: item.info.descricao,
+      meta: item.tipo === 'flash'
+        ? (()=>{
+            if(Number.isFinite(item.ref?.valor) && item.ref.valor !== 0){
+              const prefix = item.ref.valor > 0 ? '+' : '−';
+              return `${prefix}${formatNumber(Math.abs(item.ref.valor))} Memas instantâneas`;
+            }
+            return 'Efeito instantâneo (sem duração)';
+          })
+        : ()=> `Restam: ${Math.max(0, Math.ceil(item.ref?.duracaoRestante ?? 0))}s`
+    };
+    slot.addEventListener('mouseenter', (event)=>{
+      showBuffTooltip(tooltipData, event);
+    });
+    slot.addEventListener('mousemove', moveBuffTooltip);
+    slot.addEventListener('mouseleave', hideBuffTooltip);
+
+    frag.appendChild(slot);
+  });
+  buffHudEl.appendChild(frag);
+}
+
 function renderHUD(){
   el('pts').textContent = formatNumber(bancoDeMemas);
   el('pc').textContent = formatNumber(Math.floor(memasPorCliqueEfetivo));
   el('mps').textContent = formatNumber(memasPorSegundoEfetivo, {decimals:2, minimumFractionDigits:2});
   // não re-renderiza a loja aqui
   renderStatsPanel();
+  renderBuffHud();
 }
 
 function getQtdNamoradas(){
@@ -1581,6 +1948,8 @@ function resetState(){
   multiplicadorCustoNamorada = 1;
   modoCliqueCaotico = false;
   listaBuffsAtivos.length = 0;
+  buffFlashEvents.length = 0;
+  buffHudNeedsForceRender = true;
   tempoAteProximoMemaBuff = 0;
   tempoAteProximoMemaDeBuff = 0;
   if(memaBuffAtual?.el?.isConnected) memaBuffAtual.el.remove();
@@ -1606,6 +1975,8 @@ function resetState(){
   applyNumberFormatMode(DEFAULT_NUMBER_FORMAT, {skipSave:true, force:true});
   inicializarEventosTemporarios();
   updateClickImage();
+  renderBuffHud(true);
+  hideBuffTooltip();
 }
 function deleteSave(force=false){
   if(!force){

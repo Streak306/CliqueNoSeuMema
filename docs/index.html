@@ -11,6 +11,11 @@
     <div class="tooltip-effect"></div>
     <div class="tooltip-cost"></div>
   </div>
+  <div id="buffTooltip" class="tooltip-card tooltip-card--buff" role="tooltip" aria-hidden="true">
+    <div class="tooltip-name"></div>
+    <div class="tooltip-effect"></div>
+    <div class="tooltip-meta"></div>
+  </div>
 <body>
 <div class="wrap">
   <!-- TOPO -->
@@ -28,6 +33,7 @@
         Configurações
       </button>
     </div>
+    <div class="buff-hud" id="buffHud" aria-live="polite" aria-label="Efeitos ativos"></div>
   </header>
 
   <!-- GRID -->
