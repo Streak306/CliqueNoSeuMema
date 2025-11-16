@@ -928,6 +928,11 @@ body.collapse-phase-logs main{
 .mema-event-icon--debuff{
   animation:memaPulse 1s ease-in-out infinite;
 }
+.mema-event-icon--flash{
+  width:clamp(48px, 10vw, 72px);
+  height:clamp(48px, 10vw, 72px);
+  z-index:6;
+}
 
 @keyframes memaPulse{
   0%,100%{ opacity:0.9; transform:scale(1); }

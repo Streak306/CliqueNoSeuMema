@@ -29,6 +29,8 @@ let multiplicadorGlobalCliques = 1;
 let multiplicadorDescontoGlobal = 1;
 let multiplicadorCustoNamorada = 1;
 let modoCliqueCaotico = false;
+let valorCliqueConversao = 0;
+let buildingBuffMultipliers = {};
 const listaBuffsAtivos = [];
 let tempoAteProximoMemaBuff = 0;
 let tempoAteProximoMemaDeBuff = 0;
@@ -77,60 +79,95 @@ const MEMA_EVENT_ICON_SIZE = 96;
 const BUFF_FEEDBACK_DURATION_MS = 1500;
 
 const MEMA_EFFECTS_INFO = {
-  'producao-insana': {
-    nome: 'Produção Insana',
-    sigla: 'PI',
-    descricao: 'Multiplica a produção por segundo em ×7 durante 77s.',
-    resumo: 'MpS ×7 por 77s',
-    tipo: 'positivo'
-  },
-  'cliques-freneticos': {
-    nome: 'Cliques Frenéticos',
-    sigla: 'CF',
-    descricao: 'Multiplica o valor dos cliques em ×100 por alguns segundos.',
-    resumo: 'Cliques ×100',
-    tipo: 'positivo'
-  },
-  'bolada-instantanea': {
-    nome: 'Bolada Instantânea',
-    sigla: 'BI',
-    descricao: 'Ganha instantaneamente até 10 minutos de produção (limitado a 15% do banco).',
+  'lucky': {
+    nome: 'Lucky!',
+    sigla: 'LK',
+    descricao: 'Ganha instantaneamente o menor valor entre 15% do banco +13 ou 15 minutos de MpS +13.',
     resumo: 'Bolada imediata',
     tipo: 'positivo'
   },
-  'desconto-relampago': {
-    nome: 'Desconto Relâmpago',
-    sigla: 'DR',
-    descricao: 'Reduz todos os custos da loja em 10% por 60s.',
-    resumo: '-10% em tudo',
+  'frenzy': {
+    nome: 'Frenzy',
+    sigla: 'FZ',
+    descricao: 'Multiplica o MpS total por ×7 durante 77 segundos.',
+    resumo: 'MpS ×7 por 77s',
     tipo: 'positivo'
   },
-  'queda-de-producao': {
-    nome: 'Queda de Produção',
-    sigla: 'QP',
-    descricao: 'Reduz a produção por segundo pela metade por 60s.',
-    resumo: 'MpS ×0,5 por 60s',
+  'building-special': {
+    nome: 'Building Special',
+    sigla: 'BS',
+    descricao: 'Escolhe um prédio e concede +10% de MpS por unidade desse prédio por 30 segundos.',
+    resumo: 'Bônus focado em prédio',
+    tipo: 'positivo'
+  },
+  'aura-ego': {
+    nome: 'Aura x Ego',
+    sigla: 'AE',
+    descricao: 'Multiplica o MpS em ×15 por 60 segundos.',
+    resumo: 'MpS ×15 por 60s',
+    tipo: 'positivo'
+  },
+  'olhar-anjo': {
+    nome: 'Olhar do anjo caído',
+    sigla: 'OA',
+    descricao: 'Multiplica os cliques em ×1111 por 10s e pode encerrar um Click Frenzy ativo.',
+    resumo: 'Cliques ×1111 por 10s',
+    tipo: 'positivo'
+  },
+  'click-frenzy': {
+    nome: 'Click Frenzy',
+    sigla: 'CF',
+    descricao: 'Multiplica os Meminhas por clique em ×777 durante 13 segundos.',
+    resumo: 'Cliques ×777',
+    tipo: 'positivo'
+  },
+  'meminha-storm': {
+    nome: 'Meminha Storm',
+    sigla: 'MS',
+    descricao: 'Tempestade de Meminhas aparece por 7 segundos, cada clique rende 1 a 7 minutos de MpS.',
+    resumo: 'Tempestade de Meminhas',
+    tipo: 'positivo'
+  },
+  'meminha-chain': {
+    nome: 'Meminha Chain',
+    sigla: 'MC',
+    descricao: 'Sequência de Meminhas em 7s crescentes até atingir limites de MpS ou banco.',
+    resumo: 'Sequência crescente',
+    tipo: 'positivo'
+  },
+  'ruin': {
+    nome: 'Ruin!',
+    sigla: 'RN',
+    descricao: 'Perde instantaneamente o menor valor entre 5% do banco +13 ou 10 minutos de MpS +13.',
+    resumo: 'Perda imediata',
     tipo: 'negativo'
   },
-  'perda-de-memas': {
-    nome: 'Perda de Memas',
-    sigla: 'PM',
-    descricao: 'Remove 10% das Memas do banco imediatamente.',
-    resumo: '-10% do banco',
+  'clot': {
+    nome: 'Clot',
+    sigla: 'CL',
+    descricao: 'Reduz o MpS pela metade durante 66 segundos.',
+    resumo: 'MpS ×0,5 por 66s',
     tipo: 'negativo'
   },
-  'relacao-tensa': {
-    nome: 'Relação Tensa',
-    sigla: 'RT',
-    descricao: 'Aumenta em 20% o custo das namoradas por 60s.',
-    resumo: '+20% custo de namoradas',
+  'elder-frenzy': {
+    nome: 'Elder Frenzy',
+    sigla: 'EF',
+    descricao: 'Multiplica o MpS em ×666 por 6 segundos.',
+    resumo: 'MpS ×666 por 6s',
     tipo: 'negativo'
   },
-  'caos-nos-cliques': {
-    nome: 'Caos nos Cliques',
-    sigla: 'CC',
-    descricao: 'Cliques alternam entre ganhos 5× e perdas 2× do valor base por 30s.',
-    resumo: 'Cliques caóticos',
+  'dedo-dinossaurico': {
+    nome: 'Dedo Dinossáurico',
+    sigla: 'DD',
+    descricao: 'Zera o MpS e converte uma janela de produção em cada clique por alguns segundos.',
+    resumo: 'MpS vira clique',
+    tipo: 'negativo'
+  },
+  'building-debuff': {
+    nome: 'Building Debuff',
+    sigla: 'BD',
+    descricao: 'Escolhe um prédio e reduz a produção global com base no número possuído por 30 segundos.',
+    resumo: 'Corte baseado em prédio',
     tipo: 'negativo'
   }
 };
@@ -151,6 +188,7 @@ const MEMA_EVENT_TOOLTIP_CONTENT = {
 const buffFlashEvents = [];
 let lastBuffHudSignature = '';
 let buffHudNeedsForceRender = false;
+let activeChainState = null;
 
 renderBuffHud(true);
 
@@ -209,6 +247,203 @@ function registrarFlashEfeito(efeitoId, origem, valor){
     valor: Number.isFinite(valor) ? valor : 0,
     expiresAt
   });
+}
+
+function getCurrentMps(){
+  return Math.max(0, memasPorSegundoBase * multiplicadorGlobalMPS);
+}
+
+function getOwnedAmount(buildingId){
+  return shopState?.[buildingId]?.owned ?? 0;
+}
+
+function escolherPredioElegivel(minOwned = 10){
+  if(!Array.isArray(SHOP) || !SHOP.length) return null;
+  const elegiveis = SHOP.filter(it=> getOwnedAmount(it.id) >= minOwned);
+  if(elegiveis.length) return elegiveis[Math.floor(Math.random() * elegiveis.length)];
+  const fallback = SHOP.filter(it=> getOwnedAmount(it.id) > 0);
+  if(fallback.length) return fallback[Math.floor(Math.random() * fallback.length)];
+  return null;
+}
+
+function formatPercentValue(value){
+  if(!Number.isFinite(value)) return '0%';
+  return `${formatNumber(value * 100, {decimals:0})}%`;
+}
+
+const BASE_MEMA_EFFECTS = {
+  'lucky': {
+    id:'lucky',
+    instantaneo:true,
+    aplicar:()=>{
+      const mps = getCurrentMps();
+      const ganhoBanco = (bancoDeMemas * 0.15) + 13;
+      const ganhoMps = (mps * 900) + 13;
+      const recompensa = Math.floor(Math.min(ganhoBanco, ganhoMps));
+      if(recompensa > 0){
+        bancoDeMemas += recompensa;
+        return recompensa;
+      }
+      return 0;
+    }
+  },
+  'frenzy': {
+    id:'frenzy',
+    duration:77,
+    modificadores:{ mps:7 }
+  },
+  'building-special': {
+    id:'building-special',
+    duration:30,
+    setup:()=>{
+      const alvo = escolherPredioElegivel(10) ?? escolherPredioElegivel(1);
+      if(!alvo){
+        return {
+          descricao: 'Ainda não há prédios suficientes para receber o Building Special.',
+          meta: 'Sem bônus aplicado'
+        };
+      }
+      const owned = Math.max(1, getOwnedAmount(alvo.id));
+      const bonus = owned * 0.1;
+      const multiplicador = Math.max(1, 1 + bonus);
+      return {
+        modificadores:{ mps: multiplicador },
+        descricao: `${alvo.name} impulsiona sua produção em +${formatPercentValue(bonus)}.` ,
+        meta: ()=> `${alvo.name}: ${formatNumber(owned)} unidades`
+      };
+    }
+  },
+  'aura-ego': {
+    id:'aura-ego',
+    duration:60,
+    modificadores:{ mps:15 }
+  },
+  'olhar-anjo': {
+    id:'olhar-anjo',
+    duration:10,
+    modificadores:{ cliques:1111 },
+    setup:()=>{
+      const removeu = Math.random() < 0.8 ? removerBuffsPorEfeito('click-frenzy') > 0 : false;
+      return {
+        meta: removeu ? 'Click Frenzy encerrado' : 'Nenhum Click Frenzy ativo'
+      };
+    }
+  },
+  'click-frenzy': {
+    id:'click-frenzy',
+    duration:13,
+    modificadores:{ cliques:777 }
+  },
+  'meminha-storm': {
+    id:'meminha-storm',
+    duration:7,
+    setup:({origem, duration})=>{
+      let stopFn = null;
+      return {
+        descricao: 'Múltiplos Meminhas surgem sem parar por alguns segundos. Cada clique rende 1–7 minutos de MpS.',
+        meta: 'Clique o máximo que conseguir!',
+        onStart:(registro)=>{
+          const tempo = registro?.duracaoTotal ?? duration ?? 7;
+          stopFn = iniciarTempestadeMemas({origem, duracao: tempo});
+        },
+        onEnd: ()=>{
+          if(typeof stopFn === 'function') stopFn();
+        }
+      };
+    }
+  },
+  'meminha-chain': {
+    id:'meminha-chain',
+    duration:30,
+    setup:({origem})=>{
+      const totalAssadoAprox = bancoDeMemas + handmadeMemes;
+      if(totalAssadoAprox < 100_000){
+        return {
+          descricao: 'Você ainda não produziu Meminhas suficientes para manter uma chain.',
+          meta: 'Requer ~100.000 Meminhas produzidos'
+        };
+      }
+      let stopFn = null;
+      return {
+        descricao: 'Meminhas em sequência com valores 7, 77, 777... Clique rápido para manter a chain.',
+        meta: 'Termina se perder um clique ou exceder os limites.',
+        onStart:(registro)=>{
+          stopFn = iniciarMeminhaChain({origem, buffId: registro?.id});
+        },
+        onEnd: ()=>{
+          if(typeof stopFn === 'function') stopFn();
+        }
+      };
+    }
+  },
+  'ruin': {
+    id:'ruin',
+    instantaneo:true,
+    aplicar:()=>{
+      const mps = getCurrentMps();
+      const perdaBanco = (bancoDeMemas * 0.05) + 13;
+      const perdaMps = (mps * 600) + 13;
+      const perda = Math.floor(Math.min(perdaBanco, perdaMps));
+      if(perda <= 0) return 0;
+      const efetiva = Math.min(perda, bancoDeMemas);
+      bancoDeMemas -= efetiva;
+      return -efetiva;
+    }
+  },
+  'clot': {
+    id:'clot',
+    duration:66,
+    modificadores:{ mps:0.5 }
+  },
+  'elder-frenzy': {
+    id:'elder-frenzy',
+    duration:6,
+    modificadores:{ mps:666 }
+  },
+  'dedo-dinossaurico': {
+    id:'dedo-dinossaurico',
+    duration:10,
+    setup:({duration})=>{
+      const janela = Math.max(0, getCurrentMps() * (duration ?? 10));
+      return {
+        modificadores:{ mps:0, cursedClicks: janela },
+        descricao: 'Toda a sua produção passiva foi aprisionada dentro dos cliques.',
+        meta: ()=> `Cada clique vale ${formatNumber(janela)} Meminhas`
+      };
+    }
+  },
+  'building-debuff': {
+    id:'building-debuff',
+    duration:30,
+    setup:()=>{
+      const alvo = escolherPredioElegivel(1);
+      if(!alvo){
+        return {
+          modificadores:{ mps:0.5 },
+          descricao: 'O caos reduz temporariamente sua produção.',
+          meta: 'Sem prédios elegíveis'
+        };
+      }
+      const owned = Math.max(1, getOwnedAmount(alvo.id));
+      const divisor = 1 + owned * 0.1;
+      const multiplicador = 1 / divisor;
+      return {
+        modificadores:{ mps: multiplicador },
+        descricao: `${alvo.name} entrou em colapso temporário e drenou sua produção.`,
+        meta: ()=> `Impacto: −${formatPercentValue(1 - multiplicador)} de MpS`
+      };
+    }
+  }
+};
+
+function criarEfeito(id, extras = {}){
+  const base = BASE_MEMA_EFFECTS[id];
+  if(!base){
+    return {id, ...extras};
+  }
+  const clone = {...base};
+  if(base.modificadores) clone.modificadores = {...base.modificadores};
+  return {...clone, ...extras, id};
 }
 
 function positionBuffTooltip(event){
@@ -305,6 +540,8 @@ function recalcularMultiplicadoresGlobais(){
   multiplicadorDescontoGlobal = 1;
   multiplicadorCustoNamorada = 1;
   modoCliqueCaotico = false;
+  valorCliqueConversao = 0;
+  buildingBuffMultipliers = {};
   listaBuffsAtivos.forEach(buff=>{
     const mods = buff?.modificadores ?? {};
     if(typeof mods.mps === 'number') multiplicadorGlobalMPS *= mods.mps;
@@ -312,6 +549,14 @@ function recalcularMultiplicadoresGlobais(){
     if(typeof mods.desconto === 'number') multiplicadorDescontoGlobal *= mods.desconto;
     if(typeof mods.custoNamorada === 'number') multiplicadorCustoNamorada *= mods.custoNamorada;
     if(mods.cliqueCaotico) modoCliqueCaotico = true;
+    if(typeof mods.cursedClicks === 'number') valorCliqueConversao += mods.cursedClicks;
+    if(mods.buildings){
+      Object.entries(mods.buildings).forEach(([buildingId, mult])=>{
+        if(!Number.isFinite(mult)) return;
+        const atual = buildingBuffMultipliers[buildingId] ?? 1;
+        buildingBuffMultipliers[buildingId] = atual * mult;
+      });
+    }
   });
   atualizarValoresEfetivos();
 }
@@ -323,6 +568,13 @@ function atualizarBuffs(delta){
     const buff = listaBuffsAtivos[i];
     buff.duracaoRestante -= delta;
     if(buff.duracaoRestante <= 0){
+      if(typeof buff.onEnd === 'function'){
+        try {
+          buff.onEnd(buff);
+        } catch(err){
+          console.error(err);
+        }
+      }
       listaBuffsAtivos.splice(i, 1);
       changed = true;
     }
@@ -338,73 +590,171 @@ function atualizarBuffs(delta){
 }
 
 const MEMA_BUFF_EFFECTS = [
-  {
-    id:'producao-insana',
-    weight:40,
-    duration:77,
-    modificadores:{ mps:7 }
-  },
-  {
-    id:'cliques-freneticos',
-    weight:30,
-    getDuration:()=> gerarNumeroAleatorio(10, 20),
-    modificadores:{ cliques:100 }
-  },
-  {
-    id:'bolada-instantanea',
-    weight:20,
-    instantaneo:true,
-    aplicar:()=>{
-      const mpsEfetivo = memasPorSegundoBase * multiplicadorGlobalMPS;
-      const ganhoBase = mpsEfetivo * 60 * 10;
-      const limitePorBanco = bancoDeMemas * 0.15;
-      const recompensa = Math.min(ganhoBase, limitePorBanco);
-      if(recompensa > 0){
-        bancoDeMemas += recompensa;
-        return recompensa;
-      }
-      return 0;
-    }
-  },
-  {
-    id:'desconto-relampago',
-    weight:10,
-    duration:60,
-    modificadores:{ desconto:0.9 }
-  }
+  criarEfeito('lucky', {weight:30}),
+  criarEfeito('frenzy', {weight:25}),
+  criarEfeito('building-special', {weight:15}),
+  criarEfeito('aura-ego', {weight:8}),
+  criarEfeito('olhar-anjo', {weight:6}),
+  criarEfeito('click-frenzy', {weight:6}),
+  criarEfeito('meminha-storm', {weight:5}),
+  criarEfeito('meminha-chain', {weight:5})
 ];
 
 const MEMA_DEBUFF_EFFECTS = [
-  {
-    id:'queda-de-producao',
-    weight:40,
-    duration:60,
-    modificadores:{ mps:0.5 }
-  },
-  {
-    id:'perda-de-memas',
-    weight:30,
-    instantaneo:true,
-    aplicar:()=>{
-      if(bancoDeMemas <= 0) return;
-      const perda = bancoDeMemas * 0.10;
-      bancoDeMemas = Math.max(0, bancoDeMemas - perda);
-      return -perda;
-    }
-  },
-  {
-    id:'relacao-tensa',
-    weight:20,
-    duration:60,
-    modificadores:{ custoNamorada:1.2 }
-  },
-  {
-    id:'caos-nos-cliques',
-    weight:10,
-    duration:30,
-    modificadores:{ cliqueCaotico:true }
-  }
+  criarEfeito('ruin', {weight:25}),
+  criarEfeito('clot', {weight:20}),
+  criarEfeito('elder-frenzy', {weight:5}),
+  criarEfeito('dedo-dinossaurico', {weight:10}),
+  criarEfeito('building-debuff', {weight:15}),
+  criarEfeito('lucky', {weight:4}),
+  criarEfeito('building-special', {weight:4}),
+  criarEfeito('aura-ego', {weight:2}),
+  criarEfeito('olhar-anjo', {weight:2}),
+  criarEfeito('click-frenzy', {weight:5}),
+  criarEfeito('meminha-storm', {weight:4}),
+  criarEfeito('meminha-chain', {weight:4})
 ];
+
+function criarIconeTemporario({origem = 'MemaBuff', duracaoMs = 1000, onClick, onExpire} = {}){
+  if(!stageEl) return null;
+  const el = document.createElement('img');
+  el.src = origem === 'MemaBuff' ? MEMA_BUFF_ICON : MEMA_DEBUFF_ICON;
+  el.alt = 'Meminha especial';
+  el.className = `mema-event-icon ${origem === 'MemaBuff' ? 'mema-event-icon--buff' : 'mema-event-icon--debuff'} mema-event-icon--flash`;
+  const {left, top} = obterPosicaoIcone();
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+  stageEl.appendChild(el);
+  const timeoutId = setTimeout(()=>{
+    if(el.isConnected) el.remove();
+    if(typeof onExpire === 'function') onExpire();
+  }, duracaoMs);
+  el.addEventListener('click', (event)=>{
+    clearTimeout(timeoutId);
+    if(el.isConnected) el.remove();
+    if(typeof onClick === 'function') onClick(event, el);
+  });
+  return {
+    el,
+    cancel:()=>{
+      clearTimeout(timeoutId);
+      if(el.isConnected) el.remove();
+    }
+  };
+}
+
+function iniciarTempestadeMemas({origem = 'MemaBuff', duracao = 7} = {}){
+  if(!stageEl) return ()=>{};
+  const getNow = ()=> typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const fim = getNow() + duracao * 1000;
+  const spawn = ()=>{
+    const agora = getNow();
+    if(agora >= fim) return;
+    criarIconeTemporario({
+      origem,
+      duracaoMs: 1000,
+      onClick:(event)=>{
+        const mps = getCurrentMps();
+        const minimo = mps * 60;
+        const maximo = mps * 420;
+        const valor = Math.max(13, Math.floor(gerarNumeroAleatorio(minimo, maximo)));
+        if(valor > 0){
+          bancoDeMemas += valor;
+          renderHUD();
+          updateAffordability();
+          save();
+          if(typeof mostrarBonusTexto === 'function'){
+            mostrarBonusTexto(`+${formatNumber(valor)} Meminhas`, event?.clientX ?? 0, event?.clientY ?? 0);
+          }
+        }
+      }
+    });
+  };
+  spawn();
+  const intervalo = setInterval(()=>{
+    const agora = getNow();
+    if(agora >= fim){
+      clearInterval(intervalo);
+      return;
+    }
+    spawn();
+  }, 350);
+  return ()=> clearInterval(intervalo);
+}
+
+function encerrarMeminhaChain(state){
+  const alvo = state ?? activeChainState;
+  if(!alvo) return;
+  if(alvo.timeoutId) clearTimeout(alvo.timeoutId);
+  if(alvo.iconHandle){
+    alvo.iconHandle.cancel();
+    alvo.iconHandle = null;
+  }
+  if(activeChainState === alvo) activeChainState = null;
+}
+
+function agendarProximoMeminhaChain(state){
+  if(activeChainState !== state) return;
+  if(state.timeoutId) clearTimeout(state.timeoutId);
+  state.timeoutId = setTimeout(()=> spawnMeminhaChain(state), 3000);
+}
+
+function spawnMeminhaChain(state){
+  if(activeChainState !== state) return;
+  const mps = getCurrentMps();
+  const limiteMps = mps * 3600 * 6;
+  const limiteBanco = bancoDeMemas * 0.5;
+  const limite = Math.min(
+    Number.isFinite(limiteMps) ? limiteMps : Number.POSITIVE_INFINITY,
+    Number.isFinite(limiteBanco) ? limiteBanco : Number.POSITIVE_INFINITY
+  );
+  if(!(limite > 0)){
+    encerrarMeminhaChain(state);
+    return;
+  }
+  const proximoValor = (state.valorAtual ?? 0) * 10 + 7;
+  if(!Number.isFinite(proximoValor) || proximoValor > limite){
+    encerrarMeminhaChain(state);
+    return;
+  }
+  state.valorAtual = proximoValor;
+  state.iconHandle = criarIconeTemporario({
+    origem: state.origem,
+    duracaoMs: 1800,
+    onClick:(event)=>{
+      if(activeChainState !== state) return;
+      const valor = state.valorAtual ?? 0;
+      if(valor > 0){
+        bancoDeMemas += valor;
+        renderHUD();
+        updateAffordability();
+        save();
+        if(typeof mostrarBonusTexto === 'function'){
+          mostrarBonusTexto(`+${formatNumber(valor)} Meminhas`, event?.clientX ?? 0, event?.clientY ?? 0);
+        }
+      }
+      if(state.iconHandle){
+        state.iconHandle.cancel();
+        state.iconHandle = null;
+      }
+      agendarProximoMeminhaChain(state);
+    },
+    onExpire:()=> encerrarMeminhaChain(state)
+  });
+}
+
+function iniciarMeminhaChain({origem = 'MemaBuff'} = {}){
+  encerrarMeminhaChain();
+  const state = {
+    origem,
+    valorAtual:0,
+    timeoutId:null,
+    iconHandle:null
+  };
+  activeChainState = state;
+  spawnMeminhaChain(state);
+  return ()=> encerrarMeminhaChain(state);
+}
 
 function obterDuracaoBuff(def){
   if(typeof def.getDuration === 'function'){
@@ -413,26 +763,83 @@ function obterDuracaoBuff(def){
   return Math.max(0, Number(def.duration ?? 0));
 }
 
-function registrarBuffTemporario(def, origem){
-  const duracao = obterDuracaoBuff(def);
+function normalizarModificadores(source){
+  if(!source) return {};
+  const mods = {};
+  if(typeof source.mps === 'number') mods.mps = source.mps;
+  if(typeof source.cliques === 'number') mods.cliques = source.cliques;
+  if(typeof source.desconto === 'number') mods.desconto = source.desconto;
+  if(typeof source.custoNamorada === 'number') mods.custoNamorada = source.custoNamorada;
+  if(source.cliqueCaotico) mods.cliqueCaotico = true;
+  if(typeof source.cursedClicks === 'number') mods.cursedClicks = Math.max(0, source.cursedClicks);
+  if(source.buildings && typeof source.buildings === 'object'){
+    const entries = Object.entries(source.buildings).filter(([id, value])=>{
+      return typeof id === 'string' && Number.isFinite(value) && value > 0;
+    });
+    if(entries.length){
+      mods.buildings = {};
+      entries.forEach(([id, value])=>{
+        mods.buildings[id] = value;
+      });
+    }
+  }
+  return mods;
+}
+
+function registrarBuffTemporario(def, origem, overrides = {}){
+  const duracao = overrides.duracao ?? obterDuracaoBuff(def);
   if(!(duracao > 0)) return;
-  const modificadores = {};
-  if(typeof def.modificadores?.mps === 'number') modificadores.mps = def.modificadores.mps;
-  if(typeof def.modificadores?.cliques === 'number') modificadores.cliques = def.modificadores.cliques;
-  if(typeof def.modificadores?.desconto === 'number') modificadores.desconto = def.modificadores.desconto;
-  if(typeof def.modificadores?.custoNamorada === 'number') modificadores.custoNamorada = def.modificadores.custoNamorada;
-  if(def.modificadores?.cliqueCaotico) modificadores.cliqueCaotico = true;
-  listaBuffsAtivos.push({
+  const modificadores = normalizarModificadores(overrides.modificadores ?? def.modificadores);
+  const registroBase = {
     id:`${origem}-${def.id}-${Date.now()}-${Math.random()}`,
     origem,
     efeitoId:def.id,
     duracaoRestante:duracao,
     duracaoTotal:duracao,
-    modificadores
-  });
+    modificadores,
+    meta: overrides.meta ?? def.meta ?? null,
+    descricaoPersonalizada: overrides.descricao ?? def.descricao ?? null,
+    onEnd: overrides.onEnd ?? def.onEnd ?? null
+  };
+  listaBuffsAtivos.push(registroBase);
   const registro = listaBuffsAtivos[listaBuffsAtivos.length - 1];
   recalcularMultiplicadoresGlobais();
+  const onStart = overrides.onStart ?? def.onStart;
+  if(typeof onStart === 'function'){
+    try {
+      onStart(registro);
+    } catch(err){
+      console.error(err);
+    }
+  }
   return registro;
+}
+
+function removerBuffsPorEfeito(efeitoId){
+  if(!efeitoId) return 0;
+  let removidos = 0;
+  for(let i = listaBuffsAtivos.length - 1; i >= 0; i--){
+    const buff = listaBuffsAtivos[i];
+    if(buff?.efeitoId !== efeitoId) continue;
+    if(typeof buff.onEnd === 'function'){
+      try {
+        buff.onEnd(buff);
+      } catch(err){
+        console.error(err);
+      }
+    }
+    listaBuffsAtivos.splice(i, 1);
+    removidos++;
+  }
+  if(removidos){
+    recalcularMultiplicadoresGlobais();
+    renderShop();
+    renderUpgrades();
+    updateAffordability();
+    renderHUD();
+    save();
+  }
+  return removidos;
 }
 
 function aplicarBuff(def, origem){
@@ -452,7 +859,11 @@ function aplicarBuff(def, origem){
     registrarFlashEfeito(def.id, origem, delta);
     buffHudNeedsForceRender = true;
   } else {
-    const registro = registrarBuffTemporario(def, origem);
+    const baseDuration = obterDuracaoBuff(def);
+    const setupOverrides = typeof def.setup === 'function'
+      ? def.setup({origem, duration: baseDuration})
+      : null;
+    const registro = registrarBuffTemporario(def, origem, setupOverrides ?? {});
     resultado.duracao = registro?.duracaoTotal ?? 0;
     resultado.restante = registro?.duracaoRestante ?? 0;
     buffHudNeedsForceRender = true;
@@ -1828,18 +2239,24 @@ function renderBuffHud(force = false){
     timer.style.setProperty('--buff-progress', progress);
     slot.appendChild(timer);
 
+    const descricaoCompleta = item.ref?.descricaoPersonalizada ?? item.info.descricao;
     const tooltipData = {
       nome: item.info.nome,
-      descricao: item.info.descricao,
-      meta: item.tipo === 'flash'
-        ? (()=>{
-            if(Number.isFinite(item.ref?.valor) && item.ref.valor !== 0){
-              const prefix = item.ref.valor > 0 ? '+' : '−';
-              return `${prefix}${formatNumber(Math.abs(item.ref.valor))} Memas instantâneas`;
-            }
-            return 'Efeito instantâneo (sem duração)';
-          })
-        : ()=> `Restam: ${Math.max(0, Math.ceil(item.ref?.duracaoRestante ?? 0))}s`
+      descricao: descricaoCompleta,
+      meta: ()=>{
+        const extraMeta = typeof item.ref?.meta === 'function'
+          ? item.ref.meta(item.ref)
+          : (item.ref?.meta ?? '');
+        if(item.tipo === 'flash'){
+          const base = Number.isFinite(item.ref?.valor) && item.ref.valor !== 0
+            ? `${item.ref.valor > 0 ? '+' : '−'}${formatNumber(Math.abs(item.ref.valor))} Memas instantâneas`
+            : 'Efeito instantâneo (sem duração)';
+          return extraMeta ? `${base} • ${extraMeta}` : base;
+        }
+        const restante = Math.max(0, Math.ceil(item.ref?.duracaoRestante ?? 0));
+        const base = `Restam: ${restante}s`;
+        return extraMeta ? `${base} • ${extraMeta}` : base;
+      }
     };
     slot.addEventListener('mouseenter', (event)=>{
       showBuffTooltip(tooltipData, event);
@@ -2366,6 +2783,9 @@ function getBuildingMultiplier(buildingId){
       }
     });
   });
+  if(buildingBuffMultipliers[buildingId]){
+    multiplier *= buildingBuffMultipliers[buildingId];
+  }
   return multiplier;
 }
 
@@ -2555,6 +2975,10 @@ startAutoSave();
 
 /* clique na imagem = ganhar pontos */
 function getClickOutcome(){
+  const conversao = Math.max(0, Math.floor(valorCliqueConversao));
+  if(conversao > 0){
+    return {delta: conversao, handmade: conversao};
+  }
   const base = Math.max(1, Math.floor(memasPorCliqueEfetivo));
   if(!modoCliqueCaotico){
     return {delta: base, handmade: base};
