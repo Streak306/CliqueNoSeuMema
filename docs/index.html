@@ -6,17 +6,17 @@
   <title>Clique no seu Mema</title>
   <link rel="stylesheet" href="styles/main.css">
 </head>
-  <div id="upgradeTooltip" class="tooltip-card" role="tooltip" aria-hidden="true">
-    <div class="tooltip-name"></div>
-    <div class="tooltip-effect"></div>
-    <div class="tooltip-cost"></div>
-  </div>
-  <div id="buffTooltip" class="tooltip-card tooltip-card--buff" role="tooltip" aria-hidden="true">
-    <div class="tooltip-name"></div>
-    <div class="tooltip-effect"></div>
-    <div class="tooltip-meta"></div>
-  </div>
 <body>
+<div id="upgradeTooltip" class="tooltip-card" role="tooltip" aria-hidden="true">
+  <div class="tooltip-name"></div>
+  <div class="tooltip-effect"></div>
+  <div class="tooltip-cost"></div>
+</div>
+<div id="buffTooltip" class="tooltip-card tooltip-card--buff" role="tooltip" aria-hidden="true">
+  <div class="tooltip-name"></div>
+  <div class="tooltip-effect"></div>
+  <div class="tooltip-meta"></div>
+</div>
 <div class="wrap layout-root">
   <!--
     Layout reorganizado para topo fixo com estatísticas + botão central (Messias),
@@ -108,6 +108,14 @@
             <button class="btn number-format-option" data-number-format="exact">Valor exato</button>
             <button class="btn number-format-option" data-number-format="name">Nome</button>
             <button class="btn number-format-option" data-number-format="suffix">Sufixo</button>
+          </div>
+        </section>
+        <section class="settings-section" aria-labelledby="volumeTitle">
+          <h3 id="volumeTitle">Volume geral</h3>
+          <p class="muted">Ajuste o volume dos sons do jogo.</p>
+          <div class="settings-slider">
+            <input type="range" id="masterVolume" min="0" max="100" step="1" value="75" aria-label="Volume geral (0 a 100)">
+            <span id="masterVolumeValue" class="settings-slider__value">75%</span>
           </div>
         </section>
         <button class="btn" id="redeemCode" style="margin-top:12px;max-width:220px;">Inserir código</button>
