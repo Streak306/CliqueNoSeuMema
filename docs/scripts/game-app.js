@@ -2684,6 +2684,7 @@ function renderShop(){
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
     const itemName = it.name ?? it.id;
     const displayName = (!locked && st.owned === 0) ? '?????' : itemName;
+    const iconSrc = it.icon ? it.icon.replace(/^\.\//,'').replace(/^docs\//,'') : '';
 
     const formattedCost = formatNumber(priceSingle);
     const formattedPerUnit = formatNumber(perUnit, {decimals:2, minimumFractionDigits:2});
@@ -2692,7 +2693,10 @@ function renderShop(){
 
     tr.innerHTML = `
       <td class="name">
-        <div>${displayName}</div>
+        <div class="shop-item-header">
+          <div class="shop-icon" aria-hidden="true">${iconSrc ? `<img src="${iconSrc}" alt="" loading="lazy">` : ''}</div>
+          <div class="shop-title-text">${displayName}</div>
+        </div>
         <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${formattedCost}</div>
         <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
