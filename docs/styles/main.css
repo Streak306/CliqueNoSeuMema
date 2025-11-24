@@ -949,8 +949,6 @@ body.collapse-phase-logs main{
 .memarkez-button{
   position:relative;
   isolation:isolate;
-  width:380px;
-  height:520px;
   background:transparent;
   border:none;
   border-radius:0;
@@ -983,8 +981,6 @@ body.collapse-phase-logs main{
   box-shadow:0 16px 42px rgba(0,0,0,.32);
 }
 .memarkez-portrait{
-  width:100%;
-  height:100%;
   object-fit:contain;
   object-position:center;
   display:block;
