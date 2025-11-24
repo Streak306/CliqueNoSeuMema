@@ -45,9 +45,9 @@ let collapseState = makeInitialCollapseState();
 let numberFormatMode = DEFAULT_NUMBER_FORMAT;
 const DEFAULT_MASTER_VOLUME = 0.75;
 let masterVolume = DEFAULT_MASTER_VOLUME;
-const clickAudio = new Audio('assets/images/fundo/audioclick.mp3');
-clickAudio.preload = 'auto';
-clickAudio.volume = masterVolume;
+const CLICK_AUDIO_SRC = 'assets/images/fundo/audioclick.mp3';
+const clickAudioPool = [];
+const MAX_CLICK_VOICES = 8;
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
@@ -207,9 +207,44 @@ function clampVolume(value){
   return Math.min(1, Math.max(0, value));
 }
 
+function makeClickAudio(){
+  const audio = new Audio(CLICK_AUDIO_SRC);
+  audio.preload = 'auto';
+  audio.volume = masterVolume;
+  return audio;
+}
+
+function primeClickAudioPool(count = 4){
+  if(clickAudioPool.length) return;
+  for(let i=0;i<count;i++){
+    clickAudioPool.push(makeClickAudio());
+  }
+}
+
+function getAvailableClickAudio(){
+  for(const audio of clickAudioPool){
+    if(audio.paused || audio.ended){
+      audio.currentTime = 0;
+      return audio;
+    }
+  }
+  if(clickAudioPool.length < MAX_CLICK_VOICES){
+    const freshAudio = makeClickAudio();
+    clickAudioPool.push(freshAudio);
+    return freshAudio;
+  }
+  const recycled = clickAudioPool.shift();
+  clickAudioPool.push(recycled);
+  recycled.currentTime = 0;
+  return recycled;
+}
+
 function applyMasterVolume(volume, {skipSave = false} = {}){
   masterVolume = clampVolume(volume ?? DEFAULT_MASTER_VOLUME);
-  clickAudio.volume = masterVolume;
+  primeClickAudioPool();
+  clickAudioPool.forEach(audio=>{
+    audio.volume = masterVolume;
+  });
   const percent = Math.round(masterVolume * 100);
   if(volumeSliderEl){
     volumeSliderEl.value = String(percent);
@@ -224,8 +259,10 @@ function applyMasterVolume(volume, {skipSave = false} = {}){
 
 function playClickAudio(){
   try{
-    clickAudio.currentTime = 0;
-    const maybePromise = clickAudio.play();
+    primeClickAudioPool();
+    const audio = getAvailableClickAudio();
+    audio.volume = masterVolume;
+    const maybePromise = audio.play();
     if(maybePromise?.catch){
       maybePromise.catch(()=>{});
     }
