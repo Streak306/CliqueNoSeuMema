@@ -27,18 +27,45 @@ body{
 }
 .wrap{
   width:100%;
-  height:100%;
+  height:100vh;
+  min-height:100vh;
   margin:0 auto;
-  padding:12px 12px 14px;
+  padding:12px;
   position:relative;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
 }
 
-.layout-root{min-height:100%;}
-.top-area{
+.layout-root{height:100%;}
+.app-shell{
+  display:grid;
+  grid-template-columns: 1fr 1.05fr 1fr;
+  gap:var(--gap);
+  height:100%;
+  min-height:0;
+}
+.side-column{
+  min-height:0;
+  height:100%;
+  display:flex;
+  align-items:stretch;
+}
+.center-column{
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px 16px;
+  overflow:hidden;
   position:relative;
+}
+.center-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  width:min(820px, 100%);
+  margin:0 auto;
+  min-height:100%;
 }
 .top-header{
   width:100%;
@@ -175,17 +202,7 @@ header{ text-align:center; position:relative; z-index:10; padding-bottom:4px; }
 .settings-slider__value{ min-width:54px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--fg); }
 
 /* Grid principal */
-.grid{
-  display:grid;
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  gap: var(--gap);
-  align-items:stretch;
-  height:100%;
-  min-height:0;
-  width:100%;
-}
-.bottom-panels{ flex:1; min-height:0; }
-.card{ border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--card-bg); }
+.card{ border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--card-bg); height:100%; }
 .card p{ color:var(--muted); }
 .muted{ color:var(--muted); }
 
@@ -907,20 +924,36 @@ body.collapse-phase-logs main{
 }
 
 /* Palco */
+.stage-wrapper{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:1;
+  min-height:0;
+}
 .stage{
   position:relative;
   display:grid;
   place-items:center;
-  height:auto;
-  width:100%;
+  width:min(520px, 90%);
+  min-height:320px;
   margin:0 auto;
   border:1px dashed var(--stage-border);
-  border-radius:16px;
+  border-radius:18px;
   background:var(--panel-bg);
   overflow:hidden;
-  border:1px solid var(--border);border-radius:18px;cursor:pointer;
+  cursor:pointer;
   box-shadow:0 10px 28px rgba(0,0,0,.38);
   transition:transform .06s ease, filter .15s ease; user-select:none;
+  padding:16px;
+}
+.click-img{
+  width:min(360px, 78vw);
+  max-height:60vh;
+  height:auto;
+  object-fit:contain;
+  display:block;
 }
 .click-img:hover{ filter:brightness(1.06); }
 .click-img:active{ transform:translateY(1px) scale(.98); }

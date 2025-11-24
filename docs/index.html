@@ -18,72 +18,71 @@
   <div class="tooltip-meta"></div>
 </div>
 <div class="wrap layout-root">
-  <!--
-    Layout reorganizado para topo fixo com estatísticas + botão central (Messias),
-    divisórias usando barra.png e painéis laterais com rolagem própria (upgrades à esquerda, loja à direita).
-    Arquivos ajustados: index.html e styles/main.css. Novos contêineres: layout-root, top-area, top-stage, panel/panel-header/panel-content.
-  -->
-  <!-- TOPO -->
-  <section class="top-area" aria-label="Painel superior">
-    <header class="top-header">
-      <div class="top-info">
-        <h1>Memarkez</h1>
-        <div class="top-meta">
-          <div class="stats">
-            <span class="pill">Meminha: <b id="pts">0</b></span>
-            <span class="pill">Por clique: <b id="pc">1</b></span>
-            <span class="pill">MPS: <b id="mps">0</b></span>
-          </div>
-          <button class="btn settings-btn" id="openSettings" aria-haspopup="dialog">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.51.41 1.08.4 1.66V11a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            Configurações
-          </button>
+  <div class="app-shell" aria-label="Jogo Clique no seu Mema">
+    <aside class="side-column upgrades-column">
+      <div class="card panel upgrades-card">
+        <div class="panel-header">
+          <h3 class="upgrades-title">Upgrades</h3>
+          <p class="muted upgrades-sub">Desbloqueie melhorias comprando prédios específicos e conquiste cliques mais fortes.</p>
+        </div>
+        <div class="panel-content">
+          <div id="upgradesGrid" class="upgrade-grid"></div>
         </div>
       </div>
-      <div class="buff-hud" id="buffHud" aria-live="polite" aria-label="Efeitos ativos"></div>
-    </header>
-
-    <div class="top-stage">
-      <section class="stage" aria-label="Área principal do Messias">
-        <img id="click" class="click-img" src="assets/images/variacoes-mema/mema_back.png" alt="Clique no seu Mema">
-      </section>
-    </div>
-  </section>
-
-  <!-- GRID -->
-  <main class="grid bottom-panels" aria-label="Painéis inferiores">
-    <aside class="card panel upgrades-card">
-      <div class="panel-header">
-        <h3 class="upgrades-title">Upgrades</h3>
-        <p class="muted upgrades-sub">Desbloqueie melhorias comprando prédios específicos e conquiste cliques mais fortes.</p>
-      </div>
-      <div class="panel-content">
-        <div id="upgradesGrid" class="upgrade-grid"></div>
-      </div>
     </aside>
 
-    <aside class="card panel shop-card">
-      <div class="panel-header">
-        <div class="shop-title">Loja</div>
+    <section class="center-column" aria-label="Área principal do Messias">
+      <div class="center-stack">
+        <header class="top-header">
+          <div class="top-info">
+            <h1>Memarkez</h1>
+            <div class="top-meta">
+              <div class="stats">
+                <span class="pill">Meminha: <b id="pts">0</b></span>
+                <span class="pill">Por clique: <b id="pc">1</b></span>
+                <span class="pill">MPS: <b id="mps">0</b></span>
+              </div>
+              <button class="btn settings-btn" id="openSettings" aria-haspopup="dialog">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.51.41 1.08.4 1.66V11a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Configurações
+              </button>
+            </div>
+          </div>
+          <div class="buff-hud" id="buffHud" aria-live="polite" aria-label="Efeitos ativos"></div>
+        </header>
+
+        <div class="stage-wrapper">
+          <section class="stage" aria-label="Área principal do Messias">
+            <img id="click" class="click-img" src="assets/images/variacoes-mema/mema_back.png" alt="Clique no seu Mema">
+          </section>
+        </div>
       </div>
-      <div class="panel-content">
-        <table class="shop">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>+MPS</th>
-              <th>Qtde</th>
-            </tr>
-          </thead>
-          <tbody id="shopBody"></tbody>
-        </table>
-        <p class="muted" style="margin-top:8px">Passe o mouse e clique na linha para comprar. Itens seguintes aparecem somente após comprar 1 do anterior.</p>
+    </section>
+
+    <aside class="side-column shop-column">
+      <div class="card panel shop-card">
+        <div class="panel-header">
+          <div class="shop-title">Loja</div>
+        </div>
+        <div class="panel-content">
+          <table class="shop">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>+MPS</th>
+                <th>Qtde</th>
+              </tr>
+            </thead>
+            <tbody id="shopBody"></tbody>
+          </table>
+          <p class="muted" style="margin-top:8px">Passe o mouse e clique na linha para comprar. Itens seguintes aparecem somente após comprar 1 do anterior.</p>
+        </div>
       </div>
     </aside>
-  </main>
+  </div>
 </div>
 
 <div id="settingsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
