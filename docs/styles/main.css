@@ -949,10 +949,8 @@ body.collapse-phase-logs main{
 .memarkez-button{
   position:relative;
   isolation:isolate;
-  width:420px;
-  height:360px;
-  max-width:92vw;
-  max-height:82vh;
+  width:380px;
+  height:520px;
   background:transparent;
   border:none;
   border-radius:0;
@@ -972,25 +970,26 @@ body.collapse-phase-logs main{
 }
 .memarkez-frame{
   position:relative;
-  border-radius:0;
-  padding:0;
-  background:transparent;
   width:100%;
   height:100%;
-  display:grid;
-  place-items:center;
-  overflow:visible;
-  box-shadow:none;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:var(--panel-bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 16px 42px rgba(0,0,0,.32);
 }
 .memarkez-portrait{
   width:100%;
   height:100%;
-  max-height:unset;
   object-fit:contain;
   object-position:center;
   display:block;
   filter:none;
-  border-radius:0;
+  border-radius:12px;
   border:none;
   margin:0 auto;
 }
