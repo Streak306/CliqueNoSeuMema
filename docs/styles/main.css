@@ -950,8 +950,8 @@ body.collapse-phase-logs main{
 .memarkez-button{
   position:relative;
   isolation:isolate;
-  width:min(420px, 90vw);
-  max-width:100%;
+  width:clamp(360px, 88vw, 440px);
+  height:clamp(320px, 70vw, 380px);
   background:rgba(15,18,25,.92);
   border:1px solid var(--border);
   border-radius:30px;
@@ -984,9 +984,6 @@ body.collapse-phase-logs main{
 }
 .memarkez-frame{
   position:relative;
-  width:min(360px, 80vw);
-  max-width:100%;
-  height:min(320px, 70vh);
   border:1px solid var(--border);
   border-radius:20px;
   padding:16px;
