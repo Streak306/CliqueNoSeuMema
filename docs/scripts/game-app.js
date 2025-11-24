@@ -43,6 +43,11 @@ let selectedCollectionUpgradeId = null;
 let redeemedCodes = new Set();
 let collapseState = makeInitialCollapseState();
 let numberFormatMode = DEFAULT_NUMBER_FORMAT;
+const DEFAULT_MASTER_VOLUME = 0.75;
+let masterVolume = DEFAULT_MASTER_VOLUME;
+const clickAudio = new Audio('assets/images/fundo/audioclick.mp3');
+clickAudio.preload = 'auto';
+clickAudio.volume = masterVolume;
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
@@ -58,6 +63,8 @@ const buffTooltipEl = document.getElementById('buffTooltip');
 const buffTooltipNameEl = buffTooltipEl?.querySelector('.tooltip-name') ?? null;
 const buffTooltipEffectEl = buffTooltipEl?.querySelector('.tooltip-effect') ?? null;
 const buffTooltipMetaEl = buffTooltipEl?.querySelector('.tooltip-meta') ?? null;
+const volumeSliderEl = document.getElementById('masterVolume');
+const volumeValueEl = document.getElementById('masterVolumeValue');
 
 const collapseScene = {
   active:false,
@@ -194,6 +201,36 @@ renderBuffHud(true);
 
 /* Helpers */
 const el=(id)=>document.getElementById(id);
+
+function clampVolume(value){
+  if(!Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, value));
+}
+
+function applyMasterVolume(volume, {skipSave = false} = {}){
+  masterVolume = clampVolume(volume ?? DEFAULT_MASTER_VOLUME);
+  clickAudio.volume = masterVolume;
+  const percent = Math.round(masterVolume * 100);
+  if(volumeSliderEl){
+    volumeSliderEl.value = String(percent);
+  }
+  if(volumeValueEl){
+    volumeValueEl.textContent = `${percent}%`;
+  }
+  if(!skipSave){
+    save();
+  }
+}
+
+function playClickAudio(){
+  try{
+    clickAudio.currentTime = 0;
+    const maybePromise = clickAudio.play();
+    if(maybePromise?.catch){
+      maybePromise.catch(()=>{});
+    }
+  } catch(_){}
+}
 
 function gerarNumeroAleatorio(min, max){
   const a = Number(min);
@@ -2068,6 +2105,7 @@ function save(showToast=false){
     achievementsState,
     collapseState,
     numberFormatMode,
+    masterVolume,
     codes: Array.from(redeemedCodes)
   }));
   if(showToast) flashSave();
@@ -2121,6 +2159,11 @@ function load(){ try{
     applyNumberFormatMode(d.numberFormatMode, {skipSave:true, force:true});
   } else {
     applyNumberFormatMode(DEFAULT_NUMBER_FORMAT, {skipSave:true, force:true});
+  }
+  if(Number.isFinite(d.masterVolume)){
+    applyMasterVolume(d.masterVolume, {skipSave:true});
+  } else {
+    applyMasterVolume(DEFAULT_MASTER_VOLUME, {skipSave:true});
   }
   if(d.collapseState && typeof d.collapseState === 'object'){
     const base = makeInitialCollapseState();
@@ -3013,6 +3056,7 @@ if(clickImageEl){
     updateAffordability();
     save();
     showFront();
+    playClickAudio();
 
     if(typeof criarParticula === 'function'){
       criarParticula(e.clientX, e.clientY);
@@ -3022,6 +3066,12 @@ if(clickImageEl){
 
 
 /* ações */
+if(volumeSliderEl){
+  volumeSliderEl.addEventListener('input', ()=>{
+    const newVolume = Number(volumeSliderEl.value) / 100;
+    applyMasterVolume(newVolume);
+  });
+}
 if(redeemCodeButtonEl){
   redeemCodeButtonEl.addEventListener('click', promptAndRedeemCode);
 }

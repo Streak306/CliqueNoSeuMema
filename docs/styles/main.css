@@ -38,14 +38,15 @@ body{
 
 .layout-root{min-height:100%;}
 .top-area{
-  --top-height: clamp(210px, 26vh, 280px);
+  --top-height: clamp(260px, 32vh, 360px);
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:10px;
-  flex:0 0 var(--top-height);
+  gap:14px;
+  flex:0 0 auto;
   min-height:var(--top-height);
-  padding:6px 8px 4px;
+  width:100%;
+  padding:10px 8px 8px;
   position:relative;
 }
 .top-header{
@@ -57,7 +58,7 @@ h1{ margin:0; font-size:2.4rem; letter-spacing:.3px; }
 .top-meta{ display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; }
 .stats{ display:flex;gap:12px;flex-wrap:wrap;justify-content:center; }
 .settings-btn{ display:flex; align-items:center; gap:8px; }
-.top-stage{ flex:1; width:100%; display:flex; align-items:center; justify-content:center; min-height:0; padding:2px 0 8px; }
+.top-stage{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:8px 0 12px; }
 
 /* Topo */
 header{ text-align:center; position:relative; z-index:10; padding-bottom:4px; }
@@ -179,6 +180,10 @@ header{ text-align:center; position:relative; z-index:10; padding-bottom:4px; }
   color:var(--accent);
 }
 .number-format-option[aria-pressed="true"]{ box-shadow:0 0 0 2px rgba(96,165,250,.3); }
+
+.settings-slider{ display:flex; align-items:center; gap:12px; }
+.settings-slider input[type="range"]{ flex:1; accent-color:var(--accent); }
+.settings-slider__value{ min-width:54px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--fg); }
 
 /* Grid principal */
 .grid{
@@ -917,16 +922,19 @@ body.collapse-phase-logs main{
   position:relative;
   display:grid;
   place-items:center;
-  height:100%;
-  min-height:0;
-  max-width:min(720px, 95vw);
+  height:auto;
+  min-height:clamp(200px, 28vh, 280px);
+  max-width:min(760px, 95vw);
+  width:100%;
+  margin:0 auto;
   border:1px dashed var(--stage-border);
   border-radius:16px;
   background:var(--panel-bg);
   overflow:hidden;
+  padding:12px;
 }
 .click-img{
-  width:clamp(150px, 20vh, 170px); height:clamp(150px, 20vh, 170px); object-fit:cover;
+  width:clamp(170px, 24vh, 210px); height:clamp(170px, 24vh, 210px); object-fit:cover;
   border:1px solid var(--border);border-radius:18px;cursor:pointer;
   box-shadow:0 10px 28px rgba(0,0,0,.38);
   transition:transform .06s ease, filter .15s ease; user-select:none;
