@@ -1072,9 +1072,9 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
   position:relative;
 }
 .shop tbody td{padding:14px 12px; vertical-align:middle; overflow:hidden}
+.shop tbody td.name{padding-left:10px;}
 .shop .name{font-weight:700}
 .shop-item-header{display:flex; align-items:center; gap:12px;}
-.shop-icon{width:46px; height:46px; border-radius:10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;}
 .shop-icon img{width:100%; height:100%; object-fit:contain; display:block;}
 .shop-title-text{line-height:1.2;}
 .shop .limit{opacity:.85}
