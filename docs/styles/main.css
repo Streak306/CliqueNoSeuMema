@@ -945,31 +945,24 @@ body.collapse-phase-logs main{
   overflow:hidden;
   box-shadow:0 10px 28px rgba(0,0,0,.38);
   transition:transform .06s ease, filter .15s ease; user-select:none;
-  padding:20px;
+  padding:24px 18px;
 }
 .memarkez-button{
   position:relative;
   isolation:isolate;
   width:clamp(360px, 88vw, 440px);
   height:clamp(320px, 70vw, 380px);
-  background:rgba(15,18,25,.92);
-  border:1px solid var(--border);
+  background:radial-gradient(circle at 30% 30%, rgba(96,165,250,.08), transparent 42%),
+    radial-gradient(circle at 78% 72%, rgba(99,102,241,.08), transparent 46%),
+    rgba(14,18,27,.94);
+  border:1px solid rgba(255,255,255,.06);
   border-radius:30px;
-  padding:22px;
+  padding:18px;
   display:grid;
   place-items:center;
-  box-shadow:0 14px 36px rgba(0,0,0,.42);
+  box-shadow:0 14px 36px rgba(0,0,0,.42), 0 0 0 1px rgba(0,0,0,.35) inset;
   cursor:pointer;
   transition:transform .08s ease, filter .15s ease, box-shadow .2s ease;
-}
-.memarkez-button::before{
-  content:"";
-  position:absolute;
-  inset:8px;
-  border-radius:22px;
-  background:rgba(255,255,255,.02);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
-  z-index:-1;
 }
 .memarkez-button:focus-visible{
   outline:2px solid var(--accent);
@@ -984,14 +977,13 @@ body.collapse-phase-logs main{
 }
 .memarkez-frame{
   position:relative;
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:16px;
-  background:linear-gradient(180deg, rgba(44,52,66,.38), rgba(18,22,29,.92));
+  border-radius:22px;
+  padding:12px;
+  background:linear-gradient(180deg, rgba(24,30,40,.72), rgba(9,12,18,.9));
   display:grid;
   place-items:center;
   overflow:hidden;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+  box-shadow:0 18px 36px rgba(0,0,0,.26) inset, 0 8px 18px rgba(0,0,0,.24);
 }
 .memarkez-portrait{
   width:100%;
@@ -1001,7 +993,8 @@ body.collapse-phase-logs main{
   object-position:center;
   display:block;
   filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
-  border-radius:16px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.06);
   margin:0 auto;
 }
 
