@@ -213,7 +213,10 @@ function makeClickAudio(){
   audio.preload = 'auto';
   audio.volume = masterVolume;
   audio.isPlaying = false;
-  });
+  const markStopped = ()=>{ audio.isPlaying = false; };
+  audio.addEventListener('ended', markStopped);
+  audio.addEventListener('pause', markStopped);
+  audio.addEventListener('play', ()=>{ audio.isPlaying = true; });
   return audio;
 }
 
@@ -265,9 +268,10 @@ function playClickAudio(){
     const audio = getAvailableClickAudio();
     audio.volume = masterVolume;
     audio.isPlaying = true;
+    const resetPlaying = ()=>{ audio.isPlaying = false; };
     const maybePromise = audio.play();
     if(maybePromise?.catch){
-      maybePromise.catch(()=>{ audio.isPlaying = false; });
+      maybePromise.catch(resetPlaying);
     }
   } catch(_){}
 }
