@@ -212,6 +212,17 @@ function makeClickAudio(){
   const audio = new Audio(CLICK_AUDIO_SRC);
   audio.preload = 'auto';
   audio.volume = masterVolume;
+  audio.isPlaying = false;
+  const markIdle = ()=>{
+    audio.isPlaying = false;
+    audio.currentTime = 0;
+  };
+  audio.addEventListener('playing', ()=>{ audio.isPlaying = true; });
+  audio.addEventListener('ended', markIdle);
+  audio.addEventListener('pause', ()=>{
+    if(audio.ended) return;
+    audio.isPlaying = false;
+  });
   return audio;
 }
 
@@ -223,18 +234,17 @@ function primeClickAudioPool(count = 4){
 }
 
 function getAvailableClickAudio(){
-  for(const audio of clickAudioPool){
-    if(audio.paused || audio.ended){
-      audio.currentTime = 0;
-      return audio;
-    }
+  const available = clickAudioPool.find(audio => !audio.isPlaying);
+  if(available){
+    available.currentTime = 0;
+    return available;
   }
   const freshAudio = makeClickAudio();
   clickAudioPool.push(freshAudio);
   if(clickAudioPool.length > MAX_CLICK_VOICES){
-    const endedIndex = clickAudioPool.findIndex(a=>a.ended);
-    if(endedIndex >= 0){
-      clickAudioPool.splice(endedIndex, 1);
+    const removableIndex = clickAudioPool.findIndex(a=>!a.isPlaying);
+    if(removableIndex >= 0){
+      clickAudioPool.splice(removableIndex, 1);
     }
   }
   return freshAudio;
@@ -263,9 +273,10 @@ function playClickAudio(){
     primeClickAudioPool();
     const audio = getAvailableClickAudio();
     audio.volume = masterVolume;
+    audio.isPlaying = true;
     const maybePromise = audio.play();
     if(maybePromise?.catch){
-      maybePromise.catch(()=>{});
+      maybePromise.catch(()=>{ audio.isPlaying = false; });
     }
   } catch(_){}
 }
@@ -2431,6 +2442,14 @@ function showFront(){
   }
 }
 
+function animateMemarkezButton(){
+  if(!clickButtonEl) return;
+  clickButtonEl.classList.remove('is-pressed');
+  // força reflow para reiniciar a animação em cliques rápidos
+  void clickButtonEl.offsetWidth;
+  clickButtonEl.classList.add('is-pressed');
+}
+
 /* reset */
 function resetState(){
   stopCollapseScene();
@@ -3092,6 +3111,7 @@ function handleMemarkezClick(e){
   }
   updateAffordability();
   save();
+  animateMemarkezButton();
   showFront();
   playClickAudio();
 
