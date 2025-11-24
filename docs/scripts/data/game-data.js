@@ -55,6 +55,12 @@ export const SHOP = [
   {id:'dedo',        name:'Dedo',               base:15,           r:1.15, p:0.10,      limit:100, icon:'docs/assets/images/fundo/Dedo.png'},
   {id:'roupa',       name:'Roupa',              base:100,          r:1.15, p:1.00,      limit:20,  icon:'docs/assets/images/fundo/roupa.png'},
   {id:'agua',        name:'Água',               base:1100,         r:1.15, p:8.00,      limit:20,  icon:'docs/assets/images/fundo/agua.png'},
+  {id:'jardim',      name:'Jardim',             base:12000,        r:1.15, p:47.00,     limit:20,  icon:'docs/assets/images/fundo/jardim.png'},
+  {id:'criadouro',   name:'Criadouro',          base:130000,       r:1.15, p:260.00,    limit:20,  icon:'docs/assets/images/fundo/criadouro.png'},
+  {id:'mineracao',   name:'Mineração',          base:1400000,      r:1.15, p:1400.00,   limit:20,  icon:'docs/assets/images/fundo/mineracao.png'},
+  {id:'vila',        name:'Vila',               base:20000000,     r:1.15, p:7800.00,   limit:20,  icon:'docs/assets/images/fundo/vila.png'},
+  {id:'energia',     name:'Gerador de Energia', base:330000000,    r:1.15, p:44000.00,  limit:20,  icon:'docs/assets/images/fundo/energia.png'},
+  {id:'musica',      name:'Estúdio de musica',  base:5100000000,   r:1.15, p:260000.00, limit:20,  icon:'docs/assets/images/fundo/musica.png'},
   {id:'namorada',    name:'Namorada',           base:75000000000,  r:1.15, p:1600000.0, limit:1,   icon:'docs/assets/images/fundo/namorada.png'}
 ];
 
