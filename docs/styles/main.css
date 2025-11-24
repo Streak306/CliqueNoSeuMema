@@ -1075,7 +1075,6 @@ table.shop{width:100%; border-collapse:separate; border-spacing:0 12px; table-la
 .shop tbody td.name{padding-left:10px;}
 .shop .name{font-weight:700}
 .shop-item-header{display:flex; align-items:center; gap:12px;}
-.shop-icon{width:64px; height:64px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; margin-left:-4px; padding:0; background:transparent; border:none;}
 .shop-icon img{width:100%; height:100%; object-fit:contain; display:block;}
 .shop-title-text{line-height:1.2;}
 .shop .limit{opacity:.85}
