@@ -55,12 +55,6 @@ export const SHOP = [
   {id:'dedo',        name:'Dedo',               base:15,           r:1.15, p:0.10,      limit:100, icon:'docs/assets/images/fundo/Dedo.png'},
   {id:'roupa',       name:'Roupa',              base:100,          r:1.15, p:1.00,      limit:20,  icon:'docs/assets/images/fundo/roupa.png'},
   {id:'agua',        name:'Água',               base:1100,         r:1.15, p:8.00,      limit:20,  icon:'docs/assets/images/fundo/agua.png'},
-  {id:'jardim',      name:'Jardim',             base:12000,        r:1.15, p:47.0,      limit:12,  icon:'docs/assets/images/fundo/jardim.png'},
-  {id:'criadouro',   name:'Criadouro',          base:130000,       r:1.15, p:260.0,     limit:8,   icon:'docs/assets/images/fundo/criadouro.png'},
-  {id:'mineracao',   name:'Mineração',          base:1400000,      r:1.15, p:1400.0,    limit:5,   icon:'docs/assets/images/fundo/mineracao.png'},
-  {id:'vila',        name:'Vila',               base:20000000,     r:1.15, p:7800.0,    limit:3,   icon:'docs/assets/images/fundo/vila.png'},
-  {id:'energia',     name:'Gerador de Energia', base:330000000,    r:1.15, p:44000.0,   limit:3,   icon:'docs/assets/images/fundo/energia.png'},
-  {id:'musica',      name:'Estúdio de musica',  base:5100000000,   r:1.15, p:260000.0,  limit:2,   icon:'docs/assets/images/fundo/musica.png'},
   {id:'namorada',    name:'Namorada',           base:75000000000,  r:1.15, p:1600000.0, limit:1,   icon:'docs/assets/images/fundo/namorada.png'}
 ];
 
@@ -180,9 +174,6 @@ export const UPGRADE_DATA = [
     effect:'Os fertilizantes são duas vezes tão eficientes.',
     cost:120000,
     img:'assets/images/melhorias-futuras/up-plantacao-t1.png',
-    requirement:{type:'building', building:'jardim', count:1},
-    requirementText:'Possuir 1 Jardim',
-    bonus:{type:'building', target:'jardim', amount:1.0}
   },
   {
     id:'up-alojamento-t1',
@@ -190,9 +181,6 @@ export const UPGRADE_DATA = [
     effect:'Os criadouros são duas vezes tão eficientes.',
     cost:1300000,
     img:'assets/images/melhorias-futuras/up-alojamento-t1.png',
-    requirement:{type:'building', building:'criadouro', count:1},
-    requirementText:'Possuir 1 Criadouro',
-    bonus:{type:'building', target:'criadouro', amount:1.0}
   },
   {
     id:'up-casa-t1',
@@ -200,9 +188,6 @@ export const UPGRADE_DATA = [
     effect:'As minerações são duas vezes tão eficientes.',
     cost:14000000,
     img:'assets/images/melhorias-futuras/up-casa-t1.png',
-    requirement:{type:'building', building:'mineracao', count:1},
-    requirementText:'Possuir 1 Mineração',
-    bonus:{type:'building', target:'mineracao', amount:1.0}
   },
   {
     id:'up-xbox-t1',
@@ -210,9 +195,6 @@ export const UPGRADE_DATA = [
     effect:'As vilas são duas vezes tão eficientes.',
     cost:200000000,
     img:'assets/images/melhorias-futuras/up-xbox-t1.png',
-    requirement:{type:'building', building:'vila', count:1},
-    requirementText:'Possuir 1 Vila',
-    bonus:{type:'building', target:'vila', amount:1.0}
   },
   {
     id:'up-computador-t1',
@@ -220,9 +202,6 @@ export const UPGRADE_DATA = [
     effect:'Os geradores de Energia são duas vezes tão eficientes.',
     cost:3300000000,
     img:'assets/images/melhorias-futuras/up-computador-t1.png',
-    requirement:{type:'building', building:'energia', count:1},
-    requirementText:'Possuir 1 Gerador de Energia',
-    bonus:{type:'building', target:'energia', amount:1.0}
   },
   {
     id:'up-microfone-t1',
@@ -230,9 +209,6 @@ export const UPGRADE_DATA = [
     effect:'Os estúdios de musica são duas vezes tão eficientes.',
     cost:51000000000,
     img:'assets/images/melhorias-futuras/up-microfone-t1.png',
-    requirement:{type:'building', building:'musica', count:1},
-    requirementText:'Possuir 1 Estúdio de musica',
-    bonus:{type:'building', target:'musica', amount:1.0}
   },
   {
     id:'up-cursor-t1',
@@ -396,12 +372,6 @@ export const ACHIEVEMENT_DATA = [
   { id:'ach-polidactilia', name:'Polidactilia', description:'Tenha 50 Dedos', requirement:{ type:'building', building:'dedo', count:50 } },
   { id:'ach-calcinha', name:'Calcinha', description:'Tenha 20 Dedos', requirement:{ type:'building', building:'dedo', count:20 } },
   { id:'ach-h20', name:'H20', description:'Tenha 20 Águas', requirement:{ type:'building', building:'agua', count:20 } },
-  { id:'ach-stardew', name:'Stardew Valley', description:'Tenha 12 Jardins', requirement:{ type:'building', building:'jardim', count:12 } },
-  { id:'ach-estabulo', name:'Estábulo', description:'Tenha 8 Jardins', requirement:{ type:'building', building:'jardim', count:8 } },
-  { id:'ach-aluguel', name:'Aluguel', description:'Tenha 5 Minerações', requirement:{ type:'building', building:'mineracao', count:5 } },
-  { id:'ach-xbox', name:'Xbox One', description:'Tenha 3 Vilas', requirement:{ type:'building', building:'vila', count:3 } },
-  { id:'ach-garoto-programas', name:'Garoto dos programas', description:'Tenha 3 Geradores de Energia', requirement:{ type:'building', building:'energia', count:3 } },
-  { id:'ach-cantor', name:'Cantor', description:'Tenha 2 Estúdios de musica', requirement:{ type:'building', building:'musica', count:2 } },
   { id:'ach-me-perdoe', name:'Me perdoe pelos meus atos.', description:'Tenha 1 Namorada', requirement:{ type:'building', building:'namorada', count:1 } },
   { id:'ach-pegador', name:'Pegador', description:'Adquira 5 upgrades', requirement:{ type:'upgrade-count', count:5 } },
   { id:'ach-eu-sou', name:'eu sou melhor que todos vocês', description:'Adquira 10 upgrades', requirement:{ type:'upgrade-count', count:10 } },
