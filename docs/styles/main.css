@@ -955,8 +955,6 @@ body.collapse-phase-logs main{
   padding:0;
   width:380px;
   height:520px;
-  display:grid;
-  place-items:center;
   box-shadow:none;
   cursor:pointer;
   transition:filter .12s ease;
