@@ -982,16 +982,39 @@ body.collapse-phase-logs main{
 .memarkez-button:active{
   transform:translateY(2px) scale(.99);
 }
+.memarkez-frame{
+  position:relative;
+  width:min(360px, 80vw);
+  max-width:100%;
+  height:min(320px, 70vh);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:16px;
+  background:linear-gradient(180deg, rgba(44,52,66,.38), rgba(18,22,29,.92));
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
 .memarkez-portrait{
-  width:min(360px, 78vw);
-  max-height:60vh;
-  height:auto;
+  width:100%;
+  height:100%;
+  max-height:unset;
   object-fit:contain;
   object-position:center;
   display:block;
   filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
-  border-radius:22px;
+  border-radius:16px;
   margin:0 auto;
+}
+
+@keyframes memarkezPress {
+  0%{ transform:scale(1); }
+  50%{ transform:scale(.96); }
+  100%{ transform:scale(1); }
+}
+.memarkez-button.is-pressed{
+  animation:memarkezPress 180ms ease;
 }
 
 .glitch-jitter{
