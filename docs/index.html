@@ -110,6 +110,14 @@
             <button class="btn number-format-option" data-number-format="suffix">Sufixo</button>
           </div>
         </section>
+        <section class="settings-section" aria-labelledby="volumeTitle">
+          <h3 id="volumeTitle">Volume geral</h3>
+          <p class="muted">Ajuste o volume dos sons do jogo.</p>
+          <div class="settings-slider">
+            <input type="range" id="masterVolume" min="0" max="100" step="1" value="75" aria-label="Volume geral (0 a 100)">
+            <span id="masterVolumeValue" class="settings-slider__value">75%</span>
+          </div>
+        </section>
         <button class="btn" id="redeemCode" style="margin-top:12px;max-width:220px;">Inserir código</button>
         <button class="btn" id="deleteSave" style="margin-top:12px;max-width:220px;border-color:#3a2224;background:#24181a;color:#ef4444">Apagar save</button>
       </div>
