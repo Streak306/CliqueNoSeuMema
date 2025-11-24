@@ -47,11 +47,12 @@ const DEFAULT_MASTER_VOLUME = 0.75;
 let masterVolume = DEFAULT_MASTER_VOLUME;
 const CLICK_AUDIO_SRC = 'assets/images/fundo/audioclick.mp3';
 const clickAudioPool = [];
-const MAX_CLICK_VOICES = 8;
+const MAX_CLICK_VOICES = 12;
 
 const wrapEl = document.querySelector('.wrap');
 const stageEl = document.querySelector('.stage');
 const clickImageEl = document.getElementById('click');
+const clickButtonEl = document.getElementById('memarkezButton');
 const redeemCodeButtonEl = document.getElementById('redeemCode');
 const deleteSaveButtonEl = document.getElementById('deleteSave');
 const numberFormatButtons = Array.from(document.querySelectorAll('.number-format-option'));
@@ -228,15 +229,15 @@ function getAvailableClickAudio(){
       return audio;
     }
   }
-  if(clickAudioPool.length < MAX_CLICK_VOICES){
-    const freshAudio = makeClickAudio();
-    clickAudioPool.push(freshAudio);
-    return freshAudio;
+  const freshAudio = makeClickAudio();
+  clickAudioPool.push(freshAudio);
+  if(clickAudioPool.length > MAX_CLICK_VOICES){
+    const endedIndex = clickAudioPool.findIndex(a=>a.ended);
+    if(endedIndex >= 0){
+      clickAudioPool.splice(endedIndex, 1);
+    }
   }
-  const recycled = clickAudioPool.shift();
-  clickAudioPool.push(recycled);
-  recycled.currentTime = 0;
-  return recycled;
+  return freshAudio;
 }
 
 function applyMasterVolume(volume, {skipSave = false} = {}){
@@ -3070,35 +3071,37 @@ function getClickOutcome(){
   const perda = Math.max(1, Math.floor(base * 2));
   return {delta: -perda, handmade: 0};
 }
-if(clickImageEl){
-  clickImageEl.addEventListener('click', (e)=>{
-    const outcome = getClickOutcome();
-    const previousHandmade = handmadeMemes;
-    if(outcome.delta >= 0){
-      bancoDeMemas += outcome.delta;
-      handmadeMemes += outcome.handmade;
-    } else {
-      const perda = Math.min(bancoDeMemas, Math.abs(outcome.delta));
-      bancoDeMemas -= perda;
-    }
-    totalClicks += 1;
-    const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
-    evaluateAchievements();
-    renderHUD();
-    if(unlockedHandmadeUpgrade){
-      renderUpgrades();
-    } else {
-      updateUpgradeAffordability();
-    }
-    updateAffordability();
-    save();
-    showFront();
-    playClickAudio();
+function handleMemarkezClick(e){
+  const outcome = getClickOutcome();
+  const previousHandmade = handmadeMemes;
+  if(outcome.delta >= 0){
+    bancoDeMemas += outcome.delta;
+    handmadeMemes += outcome.handmade;
+  } else {
+    const perda = Math.min(bancoDeMemas, Math.abs(outcome.delta));
+    bancoDeMemas -= perda;
+  }
+  totalClicks += 1;
+  const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
+  evaluateAchievements();
+  renderHUD();
+  if(unlockedHandmadeUpgrade){
+    renderUpgrades();
+  } else {
+    updateUpgradeAffordability();
+  }
+  updateAffordability();
+  save();
+  showFront();
+  playClickAudio();
 
-    if(typeof criarParticula === 'function'){
-      criarParticula(e.clientX, e.clientY);
-    }
-  });
+  if(typeof criarParticula === 'function'){
+    criarParticula(e.clientX, e.clientY);
+  }
+}
+const clickTargetEl = clickButtonEl ?? clickImageEl;
+if(clickTargetEl){
+  clickTargetEl.addEventListener('click', handleMemarkezClick);
 }
 
 

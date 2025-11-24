@@ -939,24 +939,59 @@ body.collapse-phase-logs main{
   width:min(520px, 90%);
   min-height:320px;
   margin:0 auto;
-  border:1px dashed var(--stage-border);
-  border-radius:18px;
-  background:var(--panel-bg);
+  border:1px solid var(--stage-border);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(33,39,50,.85), rgba(20,23,28,.95));
   overflow:hidden;
-  cursor:pointer;
   box-shadow:0 10px 28px rgba(0,0,0,.38);
   transition:transform .06s ease, filter .15s ease; user-select:none;
-  padding:16px;
+  padding:20px;
 }
-.click-img{
-  width:min(360px, 78vw);
-  max-height:60vh;
+.memarkez-button{
+  position:relative;
+  isolation:isolate;
+  width:min(380px, 86vw);
+  max-width:100%;
+  background:linear-gradient(135deg, rgba(96,165,250,.5), rgba(139,92,246,.45));
+  border:none;
+  border-radius:28px;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 14px 36px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.03);
+  cursor:pointer;
+  transition:transform .08s ease, filter .15s ease, box-shadow .2s ease;
+}
+.memarkez-button::before{
+  content:"";
+  position:absolute;
+  inset:3px;
+  border-radius:22px;
+  background:radial-gradient(circle at 25% 25%, rgba(255,255,255,.12), rgba(255,255,255,.02));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  z-index:-1;
+}
+.memarkez-button:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:4px;
+}
+.memarkez-button:hover{
+  filter:brightness(1.04);
+  box-shadow:0 18px 38px rgba(0,0,0,.48), 0 0 0 1px rgba(255,255,255,.05);
+}
+.memarkez-button:active{
+  transform:translateY(2px) scale(.99);
+}
+.memarkez-portrait{
+  width:min(340px, 74vw);
+  max-height:58vh;
   height:auto;
   object-fit:contain;
   display:block;
+  filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
+  border-radius:22px;
 }
-.click-img:hover{ filter:brightness(1.06); }
-.click-img:active{ transform:translateY(1px) scale(.98); }
 
 .glitch-jitter{
   filter:contrast(.98) saturate(.94) blur(.3px);
