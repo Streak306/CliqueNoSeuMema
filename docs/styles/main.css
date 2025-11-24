@@ -38,15 +38,6 @@ body{
 
 .layout-root{min-height:100%;}
 .top-area{
-  --top-height: clamp(260px, 32vh, 360px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:14px;
-  flex:0 0 auto;
-  min-height:var(--top-height);
-  width:100%;
-  padding:10px 8px 8px;
   position:relative;
 }
 .top-header{
@@ -58,8 +49,6 @@ h1{ margin:0; font-size:2.4rem; letter-spacing:.3px; }
 .top-meta{ display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; }
 .stats{ display:flex;gap:12px;flex-wrap:wrap;justify-content:center; }
 .settings-btn{ display:flex; align-items:center; gap:8px; }
-.top-stage{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:8px 0 12px; }
-
 /* Topo */
 header{ text-align:center; position:relative; z-index:10; padding-bottom:4px; }
 .pill{
@@ -923,18 +912,12 @@ body.collapse-phase-logs main{
   display:grid;
   place-items:center;
   height:auto;
-  min-height:clamp(200px, 28vh, 280px);
-  max-width:min(760px, 95vw);
   width:100%;
   margin:0 auto;
   border:1px dashed var(--stage-border);
   border-radius:16px;
   background:var(--panel-bg);
   overflow:hidden;
-  padding:12px;
-}
-.click-img{
-  width:clamp(170px, 24vh, 210px); height:clamp(170px, 24vh, 210px); object-fit:cover;
   border:1px solid var(--border);border-radius:18px;cursor:pointer;
   box-shadow:0 10px 28px rgba(0,0,0,.38);
   transition:transform .06s ease, filter .15s ease; user-select:none;
