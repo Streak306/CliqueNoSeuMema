@@ -26,20 +26,22 @@
   <!-- TOPO -->
   <section class="top-area" aria-label="Painel superior">
     <header class="top-header">
-      <h1>Memarkez</h1>
-      <div class="top-meta">
-        <div class="stats">
-          <span class="pill">Meminha: <b id="pts">0</b></span>
-          <span class="pill">Por clique: <b id="pc">1</b></span>
-          <span class="pill">MPS: <b id="mps">0</b></span>
+      <div class="top-info">
+        <h1>Memarkez</h1>
+        <div class="top-meta">
+          <div class="stats">
+            <span class="pill">Meminha: <b id="pts">0</b></span>
+            <span class="pill">Por clique: <b id="pc">1</b></span>
+            <span class="pill">MPS: <b id="mps">0</b></span>
+          </div>
+          <button class="btn settings-btn" id="openSettings" aria-haspopup="dialog">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.51.41 1.08.4 1.66V11a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Configurações
+          </button>
         </div>
-        <button class="btn settings-btn" id="openSettings" aria-haspopup="dialog">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.27.51.41 1.08.4 1.66V11a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          Configurações
-        </button>
       </div>
       <div class="buff-hud" id="buffHud" aria-live="polite" aria-label="Efeitos ativos"></div>
     </header>
@@ -49,7 +51,6 @@
         <img id="click" class="click-img" src="assets/images/variacoes-mema/mema_back.png" alt="Clique no seu Mema">
       </section>
     </div>
-    <div class="bar-divider" aria-hidden="true"></div>
   </section>
 
   <!-- GRID -->
@@ -59,7 +60,6 @@
         <h3 class="upgrades-title">Upgrades</h3>
         <p class="muted upgrades-sub">Desbloqueie melhorias comprando prédios específicos e conquiste cliques mais fortes.</p>
       </div>
-      <div class="bar-divider" aria-hidden="true"></div>
       <div class="panel-content">
         <div id="upgradesGrid" class="upgrade-grid"></div>
       </div>
@@ -69,7 +69,6 @@
       <div class="panel-header">
         <div class="shop-title">Loja</div>
       </div>
-      <div class="bar-divider" aria-hidden="true"></div>
       <div class="panel-content">
         <table class="shop">
           <thead>
