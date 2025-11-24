@@ -85,6 +85,14 @@ const MEMA_BUFF_ICON = 'assets/images/variacoes-mema/MemaBuff.png';
 const MEMA_DEBUFF_ICON = 'assets/images/variacoes-mema/MemaDeBuff.png';
 const MEMA_EVENT_ICON_SIZE = 96;
 const BUFF_FEEDBACK_DURATION_MS = 1500;
+const LEGACY_SHOP_ID_MAP = {
+  plantacao: 'jardim',
+  alojamento: 'criadouro',
+  casa: 'mineracao',
+  xbox: 'vila',
+  computador: 'energia',
+  microfone: 'musica'
+};
 
 const MEMA_EFFECTS_INFO = {
   'lucky': {
@@ -2170,7 +2178,18 @@ function load(){ try{
   playTimeSeconds = d.playTimeSeconds ?? d.playTime ?? 0;
   totalClicks = d.totalClicks ?? 0;
   handmadeMemes = d.handmadeMemes ?? 0;
-  if(d.shopState) shopState = {...makeInitialShopState(), ...d.shopState};
+  if(d.shopState){
+    const base = makeInitialShopState();
+    const migrated = {...base};
+    Object.keys(d.shopState).forEach(id=>{
+      const targetId = LEGACY_SHOP_ID_MAP[id] ?? id;
+      if(!migrated[targetId]) return;
+      const prevOwned = Number(d.shopState[id]?.owned ?? 0);
+      const currentOwned = migrated[targetId]?.owned ?? 0;
+      migrated[targetId] = {owned: currentOwned + (Number.isFinite(prevOwned) ? prevOwned : 0)};
+    });
+    shopState = migrated;
+  }
   if(d.upgradesState){
     const base = makeInitialUpgradeState();
     upgradesState = {...base};
@@ -2684,6 +2703,7 @@ function renderShop(){
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
     const itemName = it.name ?? it.id;
     const displayName = (!locked && st.owned === 0) ? '?????' : itemName;
+    const iconSrc = it.icon ? it.icon.replace(/^\.\//,'').replace(/^docs\//,'') : '';
 
     const formattedCost = formatNumber(priceSingle);
     const formattedPerUnit = formatNumber(perUnit, {decimals:2, minimumFractionDigits:2});
@@ -2692,7 +2712,10 @@ function renderShop(){
 
     tr.innerHTML = `
       <td class="name">
-        <div>${displayName}</div>
+        <div class="shop-item-header">
+          <div class="shop-icon" aria-hidden="true">${iconSrc ? `<img src="${iconSrc}" alt="" loading="lazy">` : ''}</div>
+          <div class="shop-title-text">${displayName}</div>
+        </div>
         <div class="cost ${canAffordSingle ? 'can' : 'cant'}">Custo: ${formattedCost}</div>
         <div class="status">${atLimit ? 'MAX' : ''}</div>
       </td>
