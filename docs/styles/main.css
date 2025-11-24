@@ -984,8 +984,6 @@ body.collapse-phase-logs main{
 }
 .memarkez-frame{
   position:relative;
-  width:100%;
-  height:100%;
   border:1px solid var(--border);
   border-radius:20px;
   padding:16px;
@@ -994,7 +992,6 @@ body.collapse-phase-logs main{
   place-items:center;
   overflow:hidden;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-  box-sizing:border-box;
 }
 .memarkez-portrait{
   width:100%;

@@ -213,15 +213,6 @@ function makeClickAudio(){
   audio.preload = 'auto';
   audio.volume = masterVolume;
   audio.isPlaying = false;
-  const markIdle = ()=>{
-    audio.isPlaying = false;
-    audio.currentTime = 0;
-  };
-  audio.addEventListener('playing', ()=>{ audio.isPlaying = true; });
-  audio.addEventListener('ended', markIdle);
-  audio.addEventListener('pause', ()=>{
-    if(audio.ended) return;
-    audio.isPlaying = false;
   });
   return audio;
 }
