@@ -1,6 +1,6 @@
 // 🎁 Tabela de códigos resgatáveis — mantém os presentes organizados em um único lugar.
 export const CODE_REWARDS = {
-  entreak: 1_000_000_000_000_000
+  entreak: 1_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000
 };
 
 // 🎨 Caminhos centrais das imagens do Mema; usados tanto no preload quanto nas trocas de rosto.
