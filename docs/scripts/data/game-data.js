@@ -287,6 +287,24 @@ const NAMORADA_UPS = makeDoubleUpgradeSeries('namorada','namorada', [
   {name:'Coração de Diamante', req:600, cost:37_500_000_000_000_000_000_000_000_000_000_00}
 ]);
 
+const VILA_UPS = makeDoubleUpgradeSeries('vila','vila', [
+  {name:'Barraca', req:1, cost:200_000_000},
+  {name:'Casa de pedra', req:5, cost:1_000_000_000},
+  {name:'Chaminé', req:25, cost:10_000_000_000},
+  {name:'Sino do prefeito', req:50, cost:100_000_000_000},
+  {name:'Portão de Ferro', req:100, cost:10_000_000_000_000},
+  {name:'Presente músical', req:150, cost:1_000_000_000_000_000},
+  {name:'Lanterna para noite', req:200, cost:100_000_000_000_000_000},
+  {name:'Prefeitura do bigode', req:250, cost:10_000_000_000_000_000_000},
+  {name:'Rede de sinais', req:300, cost:1_000_000_000_000_000_000_000},
+  {name:'Energia nuclear', req:350, cost:100_000_000_000_000_000_000_00},
+  {name:'Benção da vida', req:400, cost:10_000_000_000_000_000_000_000_000},
+  {name:'Plantações enormes', req:450, cost:1_000_000_000_000_000_000_000_000_000},
+  {name:'Exploração marítima', req:500, cost:100_000_000_000_000_000_000_000_000_000},
+  {name:'Religião e magia', req:550, cost:10_000_000_000_000_000_000_000_000_000_00},
+  {name:'Utopia', req:600, cost:1_000_000_000_000_000_000_000_000_000_000_000}
+]);
+
 const TROPHY_UPS = [
   {name:'Troféu antigo', req:13, cost:9_000_000, factor:0.10},
   {name:'Troféu de Pedra', req:25, cost:9_000_000_000, factor:0.125},
@@ -326,6 +344,7 @@ export const UPGRADE_DATA = [
   ...GERADOR_UPS,
   ...MUSICA_UPS,
   ...NAMORADA_UPS,
+  ...VILA_UPS,
   ...TROPHY_UPS
 ];
 
@@ -379,5 +398,6 @@ export const ACHIEVEMENT_DATA = [
   ...buildingAchievementSet('mineracao','Minerações'),
   ...buildingAchievementSet('energia','Geradores'),
   ...buildingAchievementSet('musica','Estúdios'),
-  ...buildingAchievementSet('namorada','Namoradas')
+  ...buildingAchievementSet('namorada','Namoradas'),
+  ...buildingAchievementSet('vila','Vilas')
 ];
