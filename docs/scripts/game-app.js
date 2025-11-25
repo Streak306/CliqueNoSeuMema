@@ -28,8 +28,12 @@ let multiplicadorGlobalMPS = 1;
 let multiplicadorGlobalCliques = 1;
 let multiplicadorDescontoGlobal = 1;
 let multiplicadorCustoNamorada = 1;
+let trophyMultiplier = 1;
 let modoCliqueCaotico = false;
 let valorCliqueConversao = 0;
+let buildingMultiplierCache = {};
+let buildingMpsBreakdown = {};
+let fingerState = {efficiency:1, bonusPerDedo:0.1};
 let buildingBuffMultipliers = {};
 const listaBuffsAtivos = [];
 let tempoAteProximoMemaBuff = 0;
@@ -339,7 +343,7 @@ function registrarFlashEfeito(efeitoId, origem, valor){
 }
 
 function getCurrentMps(){
-  return Math.max(0, memasPorSegundoBase * multiplicadorGlobalMPS);
+  return Math.max(0, memasPorSegundoBase * multiplicadorGlobalMPS * trophyMultiplier);
 }
 
 function getOwnedAmount(buildingId){
@@ -618,9 +622,9 @@ function showBuffFeedback({efeitoId, origem, instantaneo, valor, duracao, event}
 }
 
 function atualizarValoresEfetivos(){
-  memasPorSegundoEfetivo = memasPorSegundoBase * multiplicadorGlobalMPS;
+  memasPorSegundoEfetivo = memasPorSegundoBase * multiplicadorGlobalMPS * trophyMultiplier;
   const baseCliques = Math.max(0, memasPorCliqueBase);
-  memasPorCliqueEfetivo = Math.max(1, baseCliques * multiplicadorGlobalCliques);
+  memasPorCliqueEfetivo = Math.max(1, baseCliques * multiplicadorGlobalCliques * trophyMultiplier);
 }
 
 function recalcularMultiplicadoresGlobais(){
@@ -1995,6 +1999,8 @@ function isAchievementRequirementMet(ach){
       return getPurchasedUpgradeCount() >= (req.count ?? 0);
     case 'clicks':
       return totalClicks >= (req.count ?? 0);
+    case 'handmade':
+      return handmadeMemes >= (req.amount ?? 0);
     default:
       return false;
   }
@@ -2668,6 +2674,23 @@ function getUpgradeCost(up){
   const base = up.cost ?? 0;
   return aplicarDescontoAoCusto(base);
 }
+
+function getBuildingPerUnitMps(id){
+  const owned = shopState?.[id]?.owned ?? 0;
+  if(id === 'dedo'){
+    if(owned > 0){
+      const total = buildingMpsBreakdown[id] ?? 0;
+      if(total > 0) return total / owned;
+    }
+    return fingerState.efficiency * fingerState.bonusPerDedo;
+  }
+  const total = buildingMpsBreakdown[id] ?? 0;
+  if(owned > 0 && total > 0){
+    return total / owned;
+  }
+  const base = SHOP_LOOKUP[id]?.p ?? 0;
+  return base * (buildingMultiplierCache[id] ?? 1);
+}
 /* Render da loja — atualiza visibilidade e cores com base em bancoDeMemas e desbloqueio */
 function renderShop(){
   const body = document.getElementById('shopBody');
@@ -2697,7 +2720,7 @@ function renderShop(){
     // determinar se pode comprar agora (custo alcançável e não no limite)
     const canAffordSingle = (!atLimit) && (bancoDeMemas >= priceSingle);
 
-    const perUnit = it.p * getBuildingMultiplier(it.id);
+    const perUnit = getBuildingPerUnitMps(it.id);
 
     // Se o item estiver desbloqueado mas você ainda não possui NENHUM (owned === 0),
     // mostramos "?????" no lugar do nome para criar surpresa antes da primeira compra.
@@ -2768,6 +2791,12 @@ function canShowUpgrade(up){
   } else if(req?.type === 'handmade'){
     const required = req.amount ?? 0;
     if(handmadeMemes < required) return false;
+  } else if(req?.type === 'clicks'){
+    const required = req.count ?? 0;
+    if(totalClicks < required) return false;
+  } else if(req?.type === 'achievements'){
+    const required = req.count ?? 0;
+    if(getUnlockedAchievementCount() < required) return false;
   }
   return true;
 }
@@ -2784,6 +2813,14 @@ function getUpgradeRequirementLines(up){
     const amount = Math.max(0, Math.floor(up.requirement.amount ?? 0));
     const formatted = formatNumber(amount);
     lines.push(`${formatted} Meminhas feitos com click`);
+  }
+  if(up.requirement?.type === 'clicks' && !up.requirementText){
+    const count = Math.max(0, Math.floor(up.requirement.count ?? 0));
+    lines.push(`${formatNumber(count)} cliques feitos`);
+  }
+  if(up.requirement?.type === 'achievements' && !up.requirementText){
+    const count = Math.max(0, Math.floor(up.requirement.count ?? 0));
+    lines.push(`${formatNumber(count)} conquistas desbloqueadas`);
   }
   if(up.requires && up.requires.length){
     up.requires.forEach(reqId=>{
@@ -2846,17 +2883,27 @@ function getUpgradeElement(id){
   return el;
 }
 
-function shouldRefreshHandmadeUpgrades(previousValue, currentValue){
-  if(!(Number.isFinite(previousValue) && Number.isFinite(currentValue))) return false;
-  if(currentValue < previousValue) return false;
+function shouldRefreshHandmadeUpgrades(previousHandmade, currentHandmade, previousClicks, currentClicks){
   return UPGRADE_DATA.some(up=>{
-    if(up.requirement?.type !== 'handmade') return false;
-    if(isUpgradePurchased(up.id)) return false;
-    const threshold = up.requirement.amount ?? Number.POSITIVE_INFINITY;
-    if(!Number.isFinite(threshold)) return false;
-    if(currentValue < threshold) return false;
-    if(previousValue >= threshold && getUpgradeElement(up.id)) return false;
-    return true;
+    const req = up.requirement;
+    if(!req || isUpgradePurchased(up.id)) return false;
+    if(req.type === 'handmade'){
+      if(!(Number.isFinite(previousHandmade) && Number.isFinite(currentHandmade))) return false;
+      const threshold = req.amount ?? Number.POSITIVE_INFINITY;
+      if(!Number.isFinite(threshold)) return false;
+      if(currentHandmade < threshold) return false;
+      if(previousHandmade >= threshold && getUpgradeElement(up.id)) return false;
+      return true;
+    }
+    if(req.type === 'clicks'){
+      if(!(Number.isFinite(previousClicks) && Number.isFinite(currentClicks))) return false;
+      const threshold = req.count ?? Number.POSITIVE_INFINITY;
+      if(!Number.isFinite(threshold)) return false;
+      if(currentClicks < threshold) return false;
+      if(previousClicks >= threshold && getUpgradeElement(up.id)) return false;
+      return true;
+    }
+    return false;
   });
 }
 
@@ -2885,22 +2932,8 @@ function tryBuyUpgrade(id){
   save(true);
 }
 
-function getUpgradeBonuses(up){
-  if(!up?.bonus) return [];
-  return Array.isArray(up.bonus) ? up.bonus : [up.bonus];
-}
-
 function getBuildingMultiplier(buildingId){
-  let multiplier = 1;
-  UPGRADE_DATA.forEach(up=>{
-    if(!isUpgradePurchased(up.id)) return;
-    getUpgradeBonuses(up).forEach(bonus=>{
-      if(bonus?.type === 'building' && bonus.target === buildingId){
-        const amount = bonus.amount ?? 0;
-        multiplier *= 1 + amount;
-      }
-    });
-  });
+  let multiplier = buildingMultiplierCache[buildingId] ?? 1;
   if(buildingBuffMultipliers[buildingId]){
     multiplier *= buildingBuffMultipliers[buildingId];
   }
@@ -2908,29 +2941,73 @@ function getBuildingMultiplier(buildingId){
 }
 
 function recalculateProduction(){
-  let total = 0;
-  SHOP.forEach(it=>{
-    const owned = shopState[it.id]?.owned ?? 0;
-    if(!owned) return;
-    const multiplier = getBuildingMultiplier(it.id);
-    total += owned * it.p * multiplier;
-  });
-  memasPorSegundoBase = total;
-  let clickMult = 1;
+  const ownedMap = {};
+  SHOP.forEach(it=> ownedMap[it.id] = shopState[it.id]?.owned ?? 0);
+
+  buildingMultiplierCache = {};
+  buildingMpsBreakdown = {};
+
+  let dedoK = 0;
+  let fingerMultiplierValue = 0;
   let clickPctOfMps = 0;
+  let trophyFactorSum = 0;
+
   UPGRADE_DATA.forEach(up=>{
     if(!isUpgradePurchased(up.id)) return;
-    getUpgradeBonuses(up).forEach(bonus=>{
-      if(bonus?.type === 'click'){
-        const mult = bonus.mult ?? 1;
-        clickMult *= mult;
-        const pct = bonus.pctOfMps ?? 0;
-        clickPctOfMps += pct;
+    if(up.kind === 'building' && up.target){
+      buildingMultiplierCache[up.target] = (buildingMultiplierCache[up.target] ?? 1) * (up.multiplier ?? 1);
+    } else if(up.kind === 'dedo'){
+      if(up.dedoEffect === 'k'){
+        dedoK += 1;
+      } else if(up.dedoEffect === 'activate'){
+        fingerMultiplierValue = Math.max(fingerMultiplierValue, 1);
+      } else if(up.dedoEffect === 'bonus' && fingerMultiplierValue > 0){
+        fingerMultiplierValue *= (up.fingerMultiplier ?? 1);
       }
-    });
+    } else if(up.kind === 'click'){
+      clickPctOfMps += 0.01;
+    } else if(up.kind === 'trophy'){
+      trophyFactorSum += up.trophyFactor ?? 0;
+    }
   });
+
+  SHOP.forEach(it=>{
+    if(!buildingMultiplierCache[it.id]) buildingMultiplierCache[it.id] = 1;
+  });
+
+  const totalNonDedos = Object.entries(ownedMap).reduce((sum,[id, qty])=> id === 'dedo' ? sum : sum + qty, 0);
+  const dedosOwned = ownedMap['dedo'] ?? 0;
+  const dedoEfficiency = Math.pow(2, dedoK);
+  const bonusPorDedo = fingerMultiplierValue > 0 ? 0.1 * totalNonDedos * fingerMultiplierValue : 0;
+  const dedoPerUnit = (0.1 + bonusPorDedo) * dedoEfficiency;
+  const dedoBuff = buildingBuffMultipliers['dedo'] ?? 1;
+  fingerState = {efficiency: dedoEfficiency * dedoBuff, bonusPerDedo: 0.1 + bonusPorDedo};
+  const mpsDedos = dedosOwned * dedoPerUnit * dedoBuff;
+  buildingMpsBreakdown['dedo'] = mpsDedos;
+
+  let total = mpsDedos;
+  SHOP.forEach(it=>{
+    if(it.id === 'dedo') return;
+    const owned = ownedMap[it.id] ?? 0;
+    if(!owned){
+      buildingMpsBreakdown[it.id] = 0;
+      return;
+    }
+    const mult = getBuildingMultiplier(it.id);
+    const contrib = owned * it.p * mult;
+    buildingMpsBreakdown[it.id] = contrib;
+    total += contrib;
+  });
+
+  memasPorSegundoBase = total;
+
+  const achievementsOwned = getUnlockedAchievementCount();
+  const achievementsTotal = ACHIEVEMENT_DATA?.length ?? 0;
+  const completionRatio = achievementsTotal > 0 ? achievementsOwned / achievementsTotal : 0;
+  trophyMultiplier = 1 + completionRatio * trophyFactorSum;
+
   const baseClick = 1;
-  memasPorCliqueBase = baseClick * clickMult + (memasPorSegundoBase * clickPctOfMps);
+  memasPorCliqueBase = baseClick + (memasPorSegundoBase * clickPctOfMps);
   atualizarValoresEfetivos();
 }
 
@@ -3111,6 +3188,7 @@ function getClickOutcome(){
 function handleMemarkezClick(e){
   const outcome = getClickOutcome();
   const previousHandmade = handmadeMemes;
+  const previousClicks = totalClicks;
   if(outcome.delta >= 0){
     bancoDeMemas += outcome.delta;
     handmadeMemes += outcome.handmade;
@@ -3119,7 +3197,7 @@ function handleMemarkezClick(e){
     bancoDeMemas -= perda;
   }
   totalClicks += 1;
-  const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes);
+  const unlockedHandmadeUpgrade = shouldRefreshHandmadeUpgrades(previousHandmade, handmadeMemes, previousClicks, totalClicks);
   evaluateAchievements();
   renderHUD();
   if(unlockedHandmadeUpgrade){
