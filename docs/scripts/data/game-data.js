@@ -60,7 +60,7 @@ export const SHOP = [
   {id:'mineracao',   name:'Mineração',          base:1400000,      r:1.15, p:1400.00,   limit:9999, icon:'docs/assets/images/fundo/mineracao.png'},
   {id:'vila',        name:'Vila',               base:20000000,     r:1.15, p:7800.00,   limit:9999, icon:'docs/assets/images/fundo/vila.png'},
   {id:'energia',     name:'Gerador de Energia', base:330000000,    r:1.15, p:44000.00,  limit:9999, icon:'docs/assets/images/fundo/energia.png'},
-  {id:'musica',      name:'Estúdio de musica',  base:5100000000,   r:1.15, p:260000.00, limit:9999, icon:'docs/assets/images/fundo/musica.png'},
+  {id:'musica',      name:'Estúdio de Música',  base:5100000000,   r:1.15, p:260000.00, limit:9999, icon:'docs/assets/images/fundo/musica.png'},
   {id:'namorada',    name:'Namorada',           base:75000000000,  r:1.15, p:1600000.0, limit:9999, icon:'docs/assets/images/fundo/namorada.png'}
 ];
 
@@ -74,21 +74,21 @@ const TAGS = ['Normal','Pedra','Carvão','Cobre','Ferro','Bronze','Prata','Ouro'
 const upgradeIcon = (type, idx)=> `assets/images/Upgrade/up-${type}-t${idx}.png`;
 
 const CLICK_UPGRADES = [
-  {name:'Click', unlock:1_000, cost:50_000},
-  {name:'Click de pedra', unlock:100_000, cost:5_000_000},
-  {name:'Click de Carvão', unlock:10_000_000, cost:500_000_000},
-  {name:'Click de Cobre', unlock:1_000_000_000, cost:50_000_000_000},
-  {name:'Click de Ferro', unlock:100_000_000_000, cost:5_000_000_000_000},
-  {name:'Click de Bronze', unlock:10_000_000_000_000, cost:500_000_000_000_000},
-  {name:'Click de Prata', unlock:1_000_000_000_000_000, cost:50_000_000_000_000_000},
-  {name:'Click de Ouro', unlock:100_000_000_000_000_000, cost:5_000_000_000_000_000_000},
-  {name:'Click de Titânio', unlock:10_000_000_000_000_000_000, cost:500_000_000_000_000_000_000},
-  {name:'Click de Urânio', unlock:1_000_000_000_000_000_000_000, cost:50_000_000_000_000_000_000_000},
-  {name:'Click de Rubi', unlock:100_000_000_000_000_000_000_000, cost:5_000_000_000_000_000_000_000_000},
-  {name:'Click de Esmeralda', unlock:10_000_000_000_000_000_000_000_000, cost:500_000_000_000_000_000_000_000_000},
-  {name:'Click de Safira', unlock:1_000_000_000_000_000_000_000_000_000, cost:50_000_000_000_000_000_000_000_000_000},
-  {name:'Click de Ametista', unlock:100_000_000_000_000_000_000_000_000_000, cost:5_000_000_000_000_000_000_000_000_000_000},
-  {name:'Click de Diamante', unlock:10_000_000_000_000_000_000_000_000_000_000, cost:500_000_000_000_000_000_000_000_000_000_000}
+  {name:'Clique', unlock:1_000, cost:50_000},
+  {name:'Clique de Pedra', unlock:100_000, cost:5_000_000},
+  {name:'Clique de Carvão', unlock:10_000_000, cost:500_000_000},
+  {name:'Clique de Cobre', unlock:1_000_000_000, cost:50_000_000_000},
+  {name:'Clique de Ferro', unlock:100_000_000_000, cost:5_000_000_000_000},
+  {name:'Clique de Bronze', unlock:10_000_000_000_000, cost:500_000_000_000_000},
+  {name:'Clique de Prata', unlock:1_000_000_000_000_000, cost:50_000_000_000_000_000},
+  {name:'Clique de Ouro', unlock:100_000_000_000_000_000, cost:5_000_000_000_000_000_000},
+  {name:'Clique de Titânio', unlock:10_000_000_000_000_000_000, cost:500_000_000_000_000_000_000},
+  {name:'Clique de Urânio', unlock:1_000_000_000_000_000_000_000, cost:50_000_000_000_000_000_000_000},
+  {name:'Clique de Rubi', unlock:100_000_000_000_000_000_000_000, cost:5_000_000_000_000_000_000_000_000},
+  {name:'Clique de Esmeralda', unlock:10_000_000_000_000_000_000_000_000, cost:500_000_000_000_000_000_000_000_000},
+  {name:'Clique de Safira', unlock:1_000_000_000_000_000_000_000_000_000, cost:50_000_000_000_000_000_000_000_000_000},
+  {name:'Clique de Ametista', unlock:100_000_000_000_000_000_000_000_000_000, cost:5_000_000_000_000_000_000_000_000_000_000},
+  {name:'Clique de Diamante', unlock:10_000_000_000_000_000_000_000_000_000_000, cost:500_000_000_000_000_000_000_000_000_000_000}
 ].map((item, idx)=> ({
   id:`up-cursor-t${idx+1}`,
   name:item.name,
@@ -103,20 +103,20 @@ const CLICK_UPGRADES = [
 
 const DEDO_UPGRADES = [
   {name:'Dedão', req:1, cost:100, effect:'k'},
-  {name:'Dedo de pedra', req:1, cost:500, effect:'k'},
-  {name:'Dedo de Carvão', req:10, cost:10_000, effect:'k'},
-  {name:'Dedo de Cobre', req:25, cost:100_000, effect:'activate', mult:1},
-  {name:'Dedo de Ferro', req:50, cost:10_000_000, effect:'bonus', mult:5},
-  {name:'Dedo de Bronze', req:100, cost:100_000_000, effect:'bonus', mult:10},
-  {name:'Dedo de Prata', req:150, cost:1_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Ouro', req:200, cost:10_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Titânio', req:250, cost:10_000_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Urânio', req:300, cost:10_000_000_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Rubi', req:350, cost:10_000_000_000_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Esmeralda', req:400, cost:10_000_000_000_000_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Safira', req:450, cost:10_000_000_000_000_000_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Ametista', req:500, cost:10_000_000_000_000_000_000_000_000_000, effect:'bonus', mult:20},
-  {name:'Dedo de Diamante', req:550, cost:10_000_000_000_000_000_000_000_000_000_000, effect:'bonus', mult:20}
+  {name:'Dedo de Pedra', req:5, cost:500, effect:'k'},
+  {name:'Dedo de Carvão', req:10, cost:5_000, effect:'k'},
+  {name:'Dedo de Cobre', req:25, cost:50_000, effect:'activate', mult:1},
+  {name:'Dedo de Ferro', req:50, cost:750_000, effect:'bonus', mult:5},
+  {name:'Dedo de Bronze', req:100, cost:12_500_000, effect:'bonus', mult:10},
+  {name:'Dedo de Prata', req:150, cost:250_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Ouro', req:200, cost:5_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Titânio', req:250, cost:100_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Urânio', req:300, cost:2_500_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Rubi', req:350, cost:65_000_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Esmeralda', req:400, cost:1_750_000_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Safira', req:450, cost:50_000_000_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Ametista', req:500, cost:1_500_000_000_000_000_000, effect:'bonus', mult:20},
+  {name:'Dedo de Diamante', req:550, cost:45_000_000_000_000_000_000, effect:'bonus', mult:20}
 ].map((item, idx)=> ({
   id:`up-dedo-t${idx+1}`,
   name:item.name,
@@ -143,184 +143,196 @@ const makeDoubleUpgradeSeries = (type, building, entries)=> entries.map((item, i
   multiplier:2
 }));
 
-const ROUPA_UPS = makeDoubleUpgradeSeries('roupa','roupa', [
-  {name:'Cabide', req:1, cost:1_000},
-  {name:'Capacete', req:5, cost:5_000},
-  {name:'Broche', req:25, cost:50_000},
-  {name:'Colar', req:50, cost:5_000_000},
-  {name:'Pulseira', req:100, cost:500_000_000},
-  {name:'Medalha de primeiro lugar', req:150, cost:50_000_000_000},
-  {name:'Piercing de lua', req:200, cost:50_000_000_000_000},
-  {name:'Coroa', req:250, cost:50_000_000_000_000_000},
-  {name:'Peitoral', req:300, cost:50_000_000_000_000_000_000},
-  {name:'Mascara de radiação', req:350, cost:50_000_000_000_000_000_000_000},
-  {name:'Brinco de Rubi', req:400, cost:500_000_000_000_000_000_000_000_000},
-  {name:'Colar de Esmeralda', req:450, cost:5_000_000_000_000_000_000_000_000_000},
-  {name:'Brinco de Safira', req:500, cost:50_000_000_000_000_000_000_000_000_000_000},
-  {name:'Revestimento magico de coração', req:550, cost:500_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Anel de casamento', req:600, cost:5_000_000_000_000_000_000_000_000_000_000_000_000_000}
-]);
+const STANDARD_UPGRADE_MULTS = [
+  10, 50, 500, 5_000, 50_000,
+  500_000, 5_000_000, 50_000_000, 500_000_000, 5_000_000_000,
+  50_000_000_000, 500_000_000_000, 5_000_000_000_000, 50_000_000_000_000, 500_000_000_000_000
+];
 
-const AGUA_UPS = makeDoubleUpgradeSeries('agua','agua', [
-  {name:'Garrafa da agua', req:1, cost:11_000},
-  {name:'Agua de rios e pedras', req:5, cost:55_000},
-  {name:'Caldeirão de purificar agua', req:25, cost:550_000},
-  {name:'Encanamento de Cobre', req:50, cost:55_000_000},
-  {name:"caixa d'agua", req:100, cost:5_500_000_000},
-  {name:'pote de Bronzze', req:150, cost:550_000_000_000},
-  {name:'Lagrima lunar', req:200, cost:550_000_000_000_000},
-  {name:'Agua real', req:250, cost:550_000_000_000_000_000},
-  {name:'Energia movida a agua', req:300, cost:550_000_000_000_000_000_000},
-  {name:'Agua radioativa', req:350, cost:550_000_000_000_000_000_000_000},
-  {name:'Agua de sangue humano', req:400, cost:5_500_000_000_000_000_000_000_000_000},
-  {name:'Agua tirada da vida das plantas', req:450, cost:55_000_000_000_000_000_000_000_000_000_000},
-  {name:'Bolhas de Agua', req:500, cost:550_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Slime de agua magico', req:550, cost:5_500_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Tranformador de Luz em Agua', req:600, cost:55_000_000_000_000_000_000_000_000_000_000_000_000_000}
-]);
+const applyStandardCosts = (building, entries) => {
+  const base = SHOP_LOOKUP[building]?.base ?? 0;
+  return entries.map((item, idx)=> ({ ...item, cost: base * STANDARD_UPGRADE_MULTS[idx] }));
+};
 
-const JARDIM_UPS = makeDoubleUpgradeSeries('Jardim','jardim', [
-  {name:'Fertilizante', req:1, cost:120_000},
-  {name:'Arador de Pedra', req:5, cost:600_000},
-  {name:'Churrasco', req:25, cost:6_000_000},
-  {name:'Aspersor de cobre', req:50, cost:600_000_000},
-  {name:'Foice', req:100, cost:60_000_000_000},
-  {name:'Sino', req:150, cost:6_000_000_000_000},
-  {name:'Lâmpada de energia lunar', req:200, cost:6_000_000_000_000_000},
-  {name:'Espantalho real do rei bigode', req:250, cost:6_000_000_000_000_000_000},
-  {name:'Drone irrigador e coletador', req:300, cost:6_000_000_000_000_000_000_000},
-  {name:'Fertilizante duvidoso', req:350, cost:6_000_000_000_000_000_000_000_000},
-  {name:'Totem de Outono', req:400, cost:60_000_000_000_000_000_000_000_000_000},
-  {name:'Totem da Primavera', req:450, cost:600_000_000_000_000_000_000_000_000_000_000},
-  {name:'Totem do Inverno', req:500, cost:6_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Totem do Verão', req:550, cost:60_000_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Totem de todas as estações', req:600, cost:600_000_000_000_000_000_000_000_000_000_000_000_000_000}
-]);
+const ROUPA_UPS = makeDoubleUpgradeSeries('roupa','roupa', applyStandardCosts('roupa', [
+  {name:'Cabide', req:1},
+  {name:'Capacete', req:5},
+  {name:'Broche', req:25},
+  {name:'Colar', req:50},
+  {name:'Pulseira', req:100},
+  {name:'Medalha de Primeiro Lugar', req:150},
+  {name:'Piercing de Lua', req:200},
+  {name:'Coroa', req:250},
+  {name:'Peitoral', req:300},
+  {name:'Máscara de Radiação', req:350},
+  {name:'Brinco de Rubi', req:400},
+  {name:'Colar de Esmeralda', req:450},
+  {name:'Brinco de Safira', req:500},
+  {name:'Revestimento Mágico de Coração', req:550},
+  {name:'Anel de Casamento', req:600}
+]));
 
-const CRIADOURO_UPS = makeDoubleUpgradeSeries('criadouro','criadouro', [
-  {name:'Palha', req:1, cost:1_300_000},
-  {name:'Tijela', req:5, cost:6_500_000},
-  {name:'Aquecedor', req:25, cost:65_000_000},
-  {name:'mangueira', req:50, cost:6_500_000_000},
-  {name:'Portão', req:100, cost:650_000_000_000},
-  {name:'Chocadeira', req:150, cost:65_000_000_000_000},
-  {name:'kit medico lunar', req:200, cost:65_000_000_000_000_000},
-  {name:'ração automatizada', req:250, cost:6_500_000_000_000_000_000},
-  {name:'Cuidador de animais', req:300, cost:65_000_000_000_000_000_000_000},
-  {name:'Animais evoluidos', req:350, cost:65_000_000_000_000_000_000_000_000},
-  {name:'Cama quente', req:400, cost:65_000_000_000_000_000_000_000_000_000},
-  {name:'Arvores abençoadas', req:450, cost:650_000_000_000_000_000_000_000_000_000_000},
-  {name:'Água infinita para animais', req:500, cost:65_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Comida magica que cura e fortalece', req:550, cost:650_000_000_000_000_000_000_000_000_000_000_000_000},
-  {name:'Clonador', req:600, cost:65_000_000_000_000_000_000_000_000_000_000_000_000_000_000}
-]);
+const AGUA_UPS = makeDoubleUpgradeSeries('agua','agua', applyStandardCosts('agua', [
+  {name:'Garrafa de Água', req:1},
+  {name:'Água de Rios e Pedras', req:5},
+  {name:'Caldeirão de Purificar Água', req:25},
+  {name:'Encanamento de Cobre', req:50},
+  {name:"Caixa d'Água", req:100},
+  {name:'Pote de Bronze', req:150},
+  {name:'Lágrima Lunar', req:200},
+  {name:'Água Real', req:250},
+  {name:'Energia Movida a Água', req:300},
+  {name:'Água Radioativa', req:350},
+  {name:'Água de Sangue Humano', req:400},
+  {name:'Água Tirada da Vida das Plantas', req:450},
+  {name:'Bolhas de Água', req:500},
+  {name:'Slime de Água Mágico', req:550},
+  {name:'Transformador de Luz em Água', req:600}
+]));
 
-const MINERACAO_UPS = makeDoubleUpgradeSeries('mineracao','mineracao', [
-  {name:'Picareta de madeira', req:1, cost:14_000_000},
-  {name:'Picareta antiga', req:5, cost:70_000_000},
-  {name:'Carrinho de carvão', req:25, cost:700_000_000},
-  {name:'Luzes de fio de cobre', req:50, cost:70_000_000_000},
-  {name:'Marreta e pá', req:100, cost:7_000_000_000_000},
-  {name:'Capacete com lanterna', req:150, cost:700_000_000_000_000},
-  {name:'Bússola', req:200, cost:70_000_000_000_000_000},
-  {name:'Mapa real', req:250, cost:7_000_000_000_000_000_000},
-  {name:'Broca', req:300, cost:700_000_000_000_000_000_000},
-  {name:'Laser de perfuração', req:350, cost:70_000_000_000_000_000_000_000},
-  {name:'Luva que aguenta qualquer temperatura', req:400, cost:7_000_000_000_000_000_000_000_000},
-  {name:'Lanterna de minérios raros', req:450, cost:700_000_000_000_000_000_000_000_000},
-  {name:'Relíquia dos oceanos profundos', req:500, cost:70_000_000_000_000_000_000_000_000_000},
-  {name:'Portal do mundo dos minérios', req:550, cost:7_000_000_000_000_000_000_000_000_000_000},
-  {name:'Minerador automático', req:600, cost:700_000_000_000_000_000_000_000_000_000}
-]);
+const JARDIM_UPS = makeDoubleUpgradeSeries('Jardim','jardim', applyStandardCosts('jardim', [
+  {name:'Fertilizante', req:1},
+  {name:'Arado de Pedra', req:5},
+  {name:'Churrasqueira', req:25},
+  {name:'Aspersor de Cobre', req:50},
+  {name:'Foice', req:100},
+  {name:'Sino', req:150},
+  {name:'Lâmpada de Energia Lunar', req:200},
+  {name:'Espantalho Real do Rei Bigode', req:250},
+  {name:'Drone Irrigador e Coletador', req:300},
+  {name:'Fertilizante Duvidoso', req:350},
+  {name:'Totem de Outono', req:400},
+  {name:'Totem da Primavera', req:450},
+  {name:'Totem do Inverno', req:500},
+  {name:'Totem do Verão', req:550},
+  {name:'Totem de Todas as Estações', req:600}
+]));
 
-const GERADOR_UPS = makeDoubleUpgradeSeries('energia','energia', [
-  {name:'Pistão', req:1, cost:3_300_000_000},
-  {name:'Engrenagem', req:5, cost:16_500_000_000},
-  {name:'Energia a carvão', req:25, cost:165_000_000_000},
-  {name:'Fio de Cobre', req:50, cost:1_650_000_000_000},
-  {name:'Motor estacionário antigo', req:100, cost:165_000_000_000_000},
-  {name:'Energia a vapor', req:150, cost:165_000_000_000_000_000},
-  {name:'Painel Lunar', req:200, cost:16_500_000_000_000_000_000},
-  {name:'Gerador de energia a partir da fé', req:250, cost:1_650_000_000_000_000_000_000},
-  {name:'Hélice', req:300, cost:165_000_000_000_000_000_000_000},
-  {name:'Energia nuclear', req:350, cost:16_500_000_000_000_000_000_000_00},
-  {name:'Energia do calor', req:400, cost:1_650_000_000_000_000_000_000_000_000},
-  {name:'Energia vital', req:450, cost:165_000_000_000_000_000_000_000_000_000},
-  {name:'Gerador hídrico', req:500, cost:16_500_000_000_000_000_000_000_000_000_00},
-  {name:'Energia arcana', req:550, cost:1_650_000_000_000_000_000_000_000_000_000_000},
-  {name:'Buraco Branco', req:600, cost:165_000_000_000_000_000_000_000_000_000_000_00}
-]);
+const CRIADOURO_UPS = makeDoubleUpgradeSeries('criadouro','criadouro', applyStandardCosts('criadouro', [
+  {name:'Palha', req:1},
+  {name:'Tigela', req:5},
+  {name:'Aquecedor', req:25},
+  {name:'Mangueira', req:50},
+  {name:'Portão', req:100},
+  {name:'Chocadeira', req:150},
+  {name:'Kit Médico Lunar', req:200},
+  {name:'Ração Automatizada', req:250},
+  {name:'Cuidador de Animais', req:300},
+  {name:'Animais Evoluídos', req:350},
+  {name:'Cama Quente', req:400},
+  {name:'Árvores Abençoadas', req:450},
+  {name:'Água Infinita para Animais', req:500},
+  {name:'Comida Mágica que Cura e Fortalece', req:550},
+  {name:'Clonador', req:600}
+]));
 
-const MUSICA_UPS = makeDoubleUpgradeSeries('musica','musica', [
-  {name:'Microfone velho', req:1, cost:51_000_000_000},
-  {name:'Bateria de pedra', req:5, cost:255_000_000_000},
-  {name:'Caixa de música suja', req:25, cost:2_550_000_000_000},
-  {name:'Megafone', req:50, cost:255_000_000_000_000},
-  {name:'Mesa de instrumentos', req:100, cost:25_500_000_000_000_000},
-  {name:'Bateria', req:150, cost:2_550_000_000_000_000_000},
-  {name:'Microfone profissional', req:200, cost:255_000_000_000_000_000_000},
-  {name:'Edição de áudio', req:250, cost:25_500_000_000_000_000_000_00},
-  {name:'Visualização de áudio futurista', req:300, cost:2_550_000_000_000_000_000_000_000},
-  {name:'Som energético', req:350, cost:255_000_000_000_000_000_000_000_000},
-  {name:'Piano térmico', req:400, cost:25_500_000_000_000_000_000_000_000_00},
-  {name:'Planta cantora', req:450, cost:2_550_000_000_000_000_000_000_000_000_0},
-  {name:'Caixa de Slowed + Reverb', req:500, cost:255_000_000_000_000_000_000_000_000_000_000},
-  {name:'Sons mágicos', req:550, cost:25_500_000_000_000_000_000_000_000_000_000_00},
-  {name:'A música pode ser sentida pelos 5 sentidos', req:600, cost:2_550_000_000_000_000_000_000_000_000_000_000_000}
-]);
+const MINERACAO_UPS = makeDoubleUpgradeSeries('mineracao','mineracao', applyStandardCosts('mineracao', [
+  {name:'Picareta de Madeira', req:1},
+  {name:'Picareta Antiga', req:5},
+  {name:'Carrinho de Carvão', req:25},
+  {name:'Luzes de Fio de Cobre', req:50},
+  {name:'Marreta e Pá', req:100},
+  {name:'Capacete com Lanterna', req:150},
+  {name:'Bússola', req:200},
+  {name:'Mapa Real', req:250},
+  {name:'Broca', req:300},
+  {name:'Laser de Perfuração', req:350},
+  {name:'Luva que Aguenta Qualquer Temperatura', req:400},
+  {name:'Lanterna de Minérios Raros', req:450},
+  {name:'Relíquia dos Oceanos Profundos', req:500},
+  {name:'Portal do Mundo dos Minérios', req:550},
+  {name:'Minerador Automático', req:600}
+]));
 
-const NAMORADA_UPS = makeDoubleUpgradeSeries('namorada','namorada', [
-  {name:'Coração Vazio', req:1, cost:750_000_000_000},
-  {name:'Coração de Pedra', req:5, cost:3_750_000_000_000},
-  {name:'Coração de Carvão', req:25, cost:37_500_000_000_000},
-  {name:'Coração de Cobre', req:50, cost:3_750_000_000_000_000},
-  {name:'Coração de Ferro', req:100, cost:375_000_000_000_000_000},
-  {name:'Coração de Bronze', req:150, cost:37_500_000_000_000_000_00},
-  {name:'Coração de Prata', req:200, cost:3_750_000_000_000_000_000_000},
-  {name:'Coração de Ouro', req:250, cost:375_000_000_000_000_000_000_000},
-  {name:'Coração de Titânio', req:300, cost:37_500_000_000_000_000_000_000_00},
-  {name:'Coração de Urânio', req:350, cost:3_750_000_000_000_000_000_000_000_000},
-  {name:'Coração de Rubi', req:400, cost:375_000_000_000_000_000_000_000_000_00},
-  {name:'Coração de Esmeralda', req:450, cost:37_500_000_000_000_000_000_000_000_000_00},
-  {name:'Coração de Safira', req:500, cost:3_750_000_000_000_000_000_000_000_000_000_0},
-  {name:'Coração de Ametista', req:550, cost:375_000_000_000_000_000_000_000_000_000_000_0},
-  {name:'Coração de Diamante', req:600, cost:37_500_000_000_000_000_000_000_000_000_000_00}
-]);
+const GERADOR_UPS = makeDoubleUpgradeSeries('energia','energia', applyStandardCosts('energia', [
+  {name:'Pistão', req:1},
+  {name:'Engrenagem', req:5},
+  {name:'Energia a Carvão', req:25},
+  {name:'Fio de Cobre', req:50},
+  {name:'Motor Estacionário Antigo', req:100},
+  {name:'Energia a Vapor', req:150},
+  {name:'Painel Lunar', req:200},
+  {name:'Gerador de Energia pela Fé', req:250},
+  {name:'Hélice', req:300},
+  {name:'Energia Nuclear', req:350},
+  {name:'Energia de Calor', req:400},
+  {name:'Energia Vital', req:450},
+  {name:'Gerador Hídrico', req:500},
+  {name:'Energia Arcana', req:550},
+  {name:'Buraco Branco', req:600}
+]));
 
-const VILA_UPS = makeDoubleUpgradeSeries('vila','vila', [
-  {name:'Barraca', req:1, cost:200_000_000},
-  {name:'Casa de pedra', req:5, cost:1_000_000_000},
-  {name:'Chaminé', req:25, cost:10_000_000_000},
-  {name:'Sino do prefeito', req:50, cost:100_000_000_000},
-  {name:'Portão de Ferro', req:100, cost:10_000_000_000_000},
-  {name:'Presente músical', req:150, cost:1_000_000_000_000_000},
-  {name:'Lanterna para noite', req:200, cost:100_000_000_000_000_000},
-  {name:'Prefeitura do bigode', req:250, cost:10_000_000_000_000_000_000},
-  {name:'Rede de sinais', req:300, cost:1_000_000_000_000_000_000_000},
-  {name:'Energia nuclear', req:350, cost:100_000_000_000_000_000_000_00},
-  {name:'Benção da vida', req:400, cost:10_000_000_000_000_000_000_000_000},
-  {name:'Plantações enormes', req:450, cost:1_000_000_000_000_000_000_000_000_000},
-  {name:'Exploração marítima', req:500, cost:100_000_000_000_000_000_000_000_000_000},
-  {name:'Religião e magia', req:550, cost:10_000_000_000_000_000_000_000_000_000_00},
-  {name:'Utopia', req:600, cost:1_000_000_000_000_000_000_000_000_000_000_000}
-]);
+const MUSICA_UPS = makeDoubleUpgradeSeries('musica','musica', applyStandardCosts('musica', [
+  {name:'Microfone Velho', req:1},
+  {name:'Bateria de Pedra', req:5},
+  {name:'Caixa de Música', req:25},
+  {name:'Megafone', req:50},
+  {name:'Mesa de Instrumentos', req:100},
+  {name:'Bateria', req:150},
+  {name:'Microfone Profissional', req:200},
+  {name:'Edição de Áudio', req:250},
+  {name:'Visualização de Áudio Futurista', req:300},
+  {name:'Som Energético', req:350},
+  {name:'Piano Térmico', req:400},
+  {name:'Planta Cantora', req:450},
+  {name:'Caixa Slowed + Reverb', req:500},
+  {name:'Sons Mágicos', req:550},
+  {name:'Música Sentida pelos 5 Sentidos', req:600}
+]));
+
+// Progressão de custo uniformizada para suavizar os saltos entre os upgrades mais caros.
+const NAMORADA_UPS = makeDoubleUpgradeSeries('namorada','namorada', applyStandardCosts('namorada', [
+  {name:'Coração Vazio', req:1},
+  {name:'Coração de Pedra', req:5},
+  {name:'Coração de Carvão', req:25},
+  {name:'Coração de Cobre', req:50},
+  {name:'Coração de Ferro', req:100},
+  {name:'Coração de Bronze', req:150},
+  {name:'Coração de Prata', req:200},
+  {name:'Coração de Ouro', req:250},
+  {name:'Coração de Titânio', req:300},
+  {name:'Coração de Urânio', req:350},
+  {name:'Coração de Rubi', req:400},
+  {name:'Coração de Esmeralda', req:450},
+  {name:'Coração de Safira', req:500},
+  {name:'Coração de Ametista', req:550},
+  {name:'Coração de Diamante', req:600}
+]));
+
+const VILA_UPS = makeDoubleUpgradeSeries('vila','vila', applyStandardCosts('vila', [
+  {name:'Barraca', req:1},
+  {name:'Casa de Pedra', req:5},
+  {name:'Chaminé', req:25},
+  {name:'Sino do Prefeito', req:50},
+  {name:'Portão de Ferro', req:100},
+  {name:'Presente Musical', req:150},
+  {name:'Lanterna Noturna', req:200},
+  {name:'Prefeitura do Bigode', req:250},
+  {name:'Rede de Sinais', req:300},
+  {name:'Energia Nuclear', req:350},
+  {name:'Benção da Vida', req:400},
+  {name:'Plantações Enormes', req:450},
+  {name:'Exploração Marítima', req:500},
+  {name:'Religião e Magia', req:550},
+  {name:'Utopia', req:600}
+]));
 
 const TROPHY_UPS = [
-  {name:'Troféu antigo', req:13, cost:9_000_000, factor:0.10},
-  {name:'Troféu de Pedra', req:25, cost:9_000_000_000, factor:0.125},
-  {name:'Troféu de Carvão', req:50, cost:90_000_000_000_000, factor:0.15},
-  {name:'Troféu de Cobre', req:75, cost:90_000_000_000_000_000, factor:0.175},
-  {name:'Troféu de Ferro', req:100, cost:900_000_000_000_000_000_000, factor:0.20},
-  {name:'Troféu de Bronze', req:125, cost:900_000_000_000_000_000_000_000, factor:0.20},
-  {name:'Troféu de Prata', req:150, cost:900_000_000_000_000_000_000_000_000, factor:0.20},
-  {name:'Troféu de Ouro', req:175, cost:900_000_000_000_000_000_000_000_000_000, factor:0.20},
-  {name:'Troféu de Titânio', req:200, cost:900_000_000_000_000_000_000_000_000_000_000, factor:0.20},
-  {name:'Troféu de Urânio', req:225, cost:900_000_000_000_000_000_000_000_000_000_000_000, factor:0.175},
-  {name:'Troféu de Rubi', req:250, cost:900_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.15},
-  {name:'Troféu de Esmeralda', req:275, cost:900_000_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.125},
-  {name:'Troféu de Safira', req:300, cost:900_000_000_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.115},
-  {name:'Troféu de Ametista', req:325, cost:900_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.11},
-  {name:'Troféu de Diamante', req:350, cost:900_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.105}
+  {name:'Troféu Antigo', req:13, cost:9_000_000, factor:0.10},
+  {name:'Troféu de Pedra', req:25, cost:9_000_000_000, factor:0.13},
+  {name:'Troféu de Carvão', req:50, cost:9_000_000_000_000, factor:0.16},
+  {name:'Troféu de Cobre', req:75, cost:9_000_000_000_000_000, factor:0.18},
+  {name:'Troféu de Ferro', req:100, cost:9_000_000_000_000_000_000, factor:0.20},
+  {name:'Troféu de Bronze', req:125, cost:900_000_000_000_000_000_000, factor:0.19},
+  {name:'Troféu de Prata', req:150, cost:90_000_000_000_000_000_000_000, factor:0.18},
+  {name:'Troféu de Ouro', req:175, cost:9_000_000_000_000_000_000_000_000, factor:0.17},
+  {name:'Troféu de Titânio', req:200, cost:900_000_000_000_000_000_000_000_000, factor:0.16},
+  {name:'Troféu de Urânio', req:225, cost:90_000_000_000_000_000_000_000_000_000, factor:0.15},
+  {name:'Troféu de Rubi', req:250, cost:9_000_000_000_000_000_000_000_000_000_000, factor:0.14},
+  {name:'Troféu de Esmeralda', req:275, cost:900_000_000_000_000_000_000_000_000_000_000, factor:0.13},
+  {name:'Troféu de Safira', req:300, cost:90_000_000_000_000_000_000_000_000_000_000_000, factor:0.12},
+  {name:'Troféu de Ametista', req:325, cost:9_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.11},
+  {name:'Troféu de Diamante', req:350, cost:900_000_000_000_000_000_000_000_000_000_000_000_000, factor:0.10}
 ].map((item, idx)=> ({
   id:`up-trofeu-t${idx+1}`,
   name:item.name,
